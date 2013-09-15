@@ -60,7 +60,7 @@
 
 #define BMAGIC 0x4675636B596F754661736369737473
 
-#define BASE_VERSION "Unreal"
+#define BASE_VERSION "RabbitIRCD"
 #ifndef _WIN32
 #define FDwrite(x,y,z) write(x, y, z)
 #else

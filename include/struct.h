@@ -1776,7 +1776,6 @@ extern MODVAR char *gnulicense[];
 #ifdef USE_SSL
 #include "ssl.h"
 #endif
-#define EVENT_HASHES EVENT_DRUGS
 #include "events.h"
 struct Command {
 	aCommand		*prev, *next;
