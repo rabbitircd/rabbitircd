@@ -39,18 +39,11 @@ Computing Center and Jarkko Oikarinen";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef _WIN32
-#include <io.h>
-#endif
 #include <fcntl.h>
 #include "h.h"
 #include "proto.h"
 #ifdef STRIPBADWORDS
 #include "badwords.h"
-#endif
-
-#ifdef _WIN32
-#include "version.h"
 #endif
 
 void send_umode_out(aClient *, aClient *, long);
@@ -300,7 +293,6 @@ int  hunt_server(aClient *cptr, aClient *sptr, char *command, int server, int pa
 */
 int  check_for_target_limit(aClient *sptr, void *target, const char *name)
 {
-#ifndef _WIN32			/* This is not windows compatible */
 	u_char *p;
 #ifndef __alpha
 	u_int tmp = ((u_int)(intptr_t)target & 0xffff00) >> 8;
@@ -343,7 +335,6 @@ int  check_for_target_limit(aClient *sptr, void *target, const char *name)
 
 	memmove(&sptr->targets[1], &sptr->targets[0], MAXTARGETS - 1);
 	sptr->targets[0] = hash;
-#endif
 	return 0;
 }
 

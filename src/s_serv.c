@@ -36,9 +36,6 @@ static char sccsid[] =
 #include "version.h"
 #include <sys/stat.h>
 #include <fcntl.h>
-#ifdef _WIN32
-#include <io.h>
-#endif
 #include <time.h>
 #include "h.h"
 #include "proto.h"
@@ -47,10 +44,8 @@ static char sccsid[] =
 #include "url.h"
 #include <curl/curl.h>
 #endif
-#ifndef _WIN32
 /* for uname(), is POSIX so should be OK... */
 #include <sys/utsname.h>
-#endif
 extern VOIDSIG s_die();
 
 static char buf[BUFSIZE];
@@ -141,7 +136,6 @@ void reread_motdsandrules();
 **		note:	it is guaranteed that parv[0]..parv[parc-1] are all
 **			non-NULL pointers.
 */
-#ifndef _WIN32
 char *getosname(void)
 {
 static char buf[1024];
@@ -166,7 +160,6 @@ char *p;
 		}
 	return buf;
 }
-#endif
 
 /*
 ** m_version
@@ -534,11 +527,7 @@ EVENT(save_tunefile)
 	tunefile = fopen(conf_files->tune_file, "w");
 	if (!tunefile)
 	{
-#if !defined(_WIN32) && !defined(_AMIGA)
 		sendto_ops("Unable to write tunefile.. %s", strerror(errno));
-#else
-		sendto_ops("Unable to write tunefile..");
-#endif
 		return;
 	}
 	fprintf(tunefile, "%li\n", TSoffset);
@@ -1211,29 +1200,6 @@ CMD_FUNC(m_die)
 	(void)s_die();
 	return 0;
 }
-
-#ifdef _WIN32
-/*
- * Added to let the local console shutdown the server without just
- * calling exit(-1), in Windows mode.  -Cabal95
- */
-int  localdie(void)
-{
-	aClient *acptr;
-
-	list_for_each_entry(acptr, &lclient_list, lclient_node)
-	{
-		if (IsClient(acptr))
-			sendnotice(acptr, "Server Terminated by local console");
-		else if (IsServer(acptr))
-			sendto_one(acptr,
-			    ":%s ERROR :Terminated by local console", me.name);
-	}
-	(void)s_die();
-	return 0;
-}
-
-#endif
 
 aClient *find_match_server(char *mask)
 {

@@ -35,9 +35,6 @@ static char sccsid[] =
 #include "msg.h"
 #include <stdarg.h>
 #include <stdio.h>
-#ifdef _WIN32
-#include <io.h>
-#endif
 #include <string.h>
 
 void vsendto_one(aClient *to, const char *pattern, va_list vl);

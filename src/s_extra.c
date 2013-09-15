@@ -32,9 +32,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
-#ifdef _WIN32
-#include <io.h>
-#endif
 #include <fcntl.h>
 #include "h.h"
 #include "proto.h"
@@ -310,21 +307,13 @@ static int last_log_file_warning = 0;
 			{
 				if (logs->logfd != -1)
 					fd_close(logs->logfd);
-#ifndef _WIN32
 				logs->logfd = fd_fileopen(logs->file, O_CREAT|O_WRONLY|O_TRUNC);
-#else
-				logs->logfd = fd_fileopen(logs->file, O_CREAT|O_WRONLY|O_TRUNC);
-#endif
 				if (logs->logfd == -1)
 					continue;
 				write(logs->logfd, "Max file size reached, starting new log file\n", 45);
 			}
 			else if (logs->logfd == -1) {
-#ifndef _WIN32
 				logs->logfd = fd_fileopen(logs->file, O_CREAT|O_APPEND|O_WRONLY);
-#else
-				logs->logfd = fd_fileopen(logs->file, O_CREAT|O_APPEND|O_WRONLY);
-#endif
 				if (logs->logfd == -1)
 				{
 					if (!loop.ircd_booted)
@@ -363,9 +352,7 @@ static int last_log_file_warning = 0;
 				}
 				write_failure = 1;
 			}
-#ifndef _WIN32
 			fsync(logs->logfd);
-#endif
 		}
 	}
 	
@@ -376,9 +363,6 @@ static int last_log_file_warning = 0;
 	if (!written && write_failure && !loop.ircd_booted)
 	{
 		config_status("ERROR: Unable to write to any log file. Please check your log { } blocks and file permissions!");
-#ifdef _WIN32
-		win_error();
-#endif
 		exit(9);
 	}
 }

@@ -25,15 +25,12 @@
 #include "msg.h"
 #include <stdarg.h>
 #include <stdio.h>
-#ifdef _WIN32
-#include <io.h>
-#endif
 #include <string.h>
 
 /* The following functions have been taken from Hybrid-7.0.1 simply because
  * I didn't feel like writing my own when they had ones that work just fine :)
  * However, several bugs were found and some stuff was moved around to work
- * better.
+ * better. --someone?
  */
 
 #ifdef INET6

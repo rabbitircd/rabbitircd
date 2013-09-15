@@ -35,20 +35,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
-#ifdef _WIN32
-#include <io.h>
-#define RTLD_NOW 0
-const char *our_dlerror(void);
-#elif defined(HPUX)
+#ifdef HPUX
 #include <dl.h>
 #define RTLD_NOW BIND_IMMEDIATE
 #else
 #include <dlfcn.h>
 #endif
 #include <fcntl.h>
-#ifndef _WIN32
 #include <dirent.h>
-#endif
 #include "h.h"
 #include "proto.h"
 #ifndef RTLD_NOW
@@ -67,11 +61,7 @@ MODVAR Versionflag     *Versionflags = NULL;
 
 int     Module_Depend_Resolve(Module *p, char *path);
 Module *Module_make(ModuleHeader *header, 
-#ifdef _WIN32
-       HMODULE mod
-#else
        void *mod
-#endif
        );
 
 typedef struct {
@@ -183,7 +173,6 @@ void *obsd_dlsym(void *handle, char *symbol) {
 void DeleteTempModules(void)
 {
 	char tempbuf[PATH_MAX+1];
-#ifndef _WIN32
 	DIR *fd = opendir("tmp");
 	struct dirent *dir;
 
@@ -204,26 +193,6 @@ void DeleteTempModules(void)
 		remove(tempbuf);
 	}
 	closedir(fd);
-#else
-	WIN32_FIND_DATA hData;
-	HANDLE hFile = FindFirstFile("tmp/*", &hData);
-	if (hFile != INVALID_HANDLE_VALUE)
-	{
-		if (strcmp(hData.cFileName, ".") || strcmp(hData.cFileName, ".."))
-		{
-			ircsnprintf(tempbuf, sizeof(tempbuf), "tmp/%s", hdata.cFileName);
-			remove(tempbuf);
-		}
-	}
-	while (FindNextFile(hFile, &hData))
-	{
-		if (!strcmp(hData.cFileName, ".") || !strcmp(hData.cFileName, ".."))
-			continue;
-		ircsnprintf(tempbuf, sizeof(tempbuf), "tmp/%s", hData.cFileName);
-		remove(tempbuf);
-	}
-	FindClose(hFile);
-#endif	
 }
 
 void Module_Init(void)
@@ -303,11 +272,7 @@ unsigned int maj, min, plevel;
 char  *Module_Create(char *path_)
 {
 #ifndef STATIC_LINKING
-#ifdef _WIN32
-	HMODULE 	Mod;
-#else /* _WIN32 */
 	void   		*Mod;
-#endif /* _WIN32 */
 	int		(*Mod_Test)();
 	int		(*Mod_Init)();
 	int             (*Mod_Load)();
@@ -338,11 +303,7 @@ char  *Module_Create(char *path_)
 	tmppath = unreal_mktemp("tmp", unreal_getfilename(path));
 	if (!tmppath)
 		return "Unable to create temporary file!";
-#ifndef _WIN32
 	if(!strchr(path, '/'))
-#else
-	if (!strchr(path, '\\') && !strchr(path, '/'))
-#endif
 	{
                 size_t pathsize = strlen(path)+3;
 		path = MyMalloc(pathsize);
@@ -515,13 +476,7 @@ void Module_DelayChildren(Module *m)
 	}
 }
 
-Module *Module_make(ModuleHeader *header, 
-#ifdef _WIN32
-       HMODULE mod
-#else
-       void *mod
-#endif
-       )
+Module *Module_make(ModuleHeader *header, void *mod)
 {
 	Module *modp = NULL;
 	
@@ -852,13 +807,7 @@ int     Module_Unload(char *name, int unload)
 	return 1;
 }
 
-vFP Module_SymEx(
-#ifdef _WIN32
-	HMODULE mod
-#else
-	void *mod
-#endif
-	, char *name)
+vFP Module_SymEx(void *mod, char *name)
 {
 #ifndef STATIC_LINKING
 	vFP	fp;
@@ -869,9 +818,8 @@ vFP Module_SymEx(
 	irc_dlsym(mod, name, fp);
 	if (fp)
 		return (fp);
-	return NULL;
 #endif
-	
+	return NULL;
 }
 
 vFP Module_Sym(char *name)
@@ -1737,18 +1685,3 @@ int i;
 				break;
 			}
 }
-
-#ifdef _WIN32
-const char *our_dlerror(void)
-{
-	static char errbuf[513];
-	DWORD err = GetLastError();
-	FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM|FORMAT_MESSAGE_IGNORE_INSERTS, NULL, err,
-		0, errbuf, 512, NULL);
-	if (err == 126) /* FIXME: find the correct code for 126  */
-		strlcat(errbuf, " This could be because the DLL depends on another DLL, for example if you "
-		               "are trying to load a 3rd party module which was compiled with a different compiler version.",
-		               sizeof(errbuf));
-	return errbuf;
-}
-#endif

@@ -24,13 +24,9 @@
 #include "h.h"
 #include <signal.h>
 #include "inet.h"
-#ifndef _WIN32
 extern int errno;		/* ...seems that errno.h doesn't define this everywhere */
-#endif
 #include <sys/types.h>
-#ifndef _WIN32
 #include <sys/socket.h>
-#endif
 
 /*
 ** deliver_it
@@ -109,13 +105,8 @@ int  deliver_it(aClient *cptr, char *str, int len)
 	   **
 	   ** ...now, would this work on VMS too? --msa
 	 */
-# ifndef _WIN32
 	if (retval < 0 && (errno == EWOULDBLOCK || errno == EAGAIN ||
 	    errno == ENOBUFS))
-# else
-		if (retval < 0 && (WSAGetLastError() == WSAEWOULDBLOCK ||
-		    WSAGetLastError() == WSAENOBUFS))
-# endif
 			retval = 0;
 
 	if (retval > 0)

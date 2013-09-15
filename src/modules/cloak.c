@@ -32,14 +32,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef _WIN32
-#include <io.h>
-#endif
 #include <fcntl.h>
 #include "h.h"
-#ifdef _WIN32
-#include "version.h"
-#endif
 
 static char *cloak_key1 = NULL, *cloak_key2 = NULL, *cloak_key3 = NULL;
 static char cloak_checksum[64];

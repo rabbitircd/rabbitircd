@@ -33,20 +33,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef _WIN32
-#include <io.h>
-#else
 #include <sys/socket.h>
-#endif
 #include <fcntl.h>
 #include "inet.h"
 #include "h.h"
 #include "proto.h"
 #ifdef STRIPBADWORDS
 #include "badwords.h"
-#endif
-#ifdef _WIN32
-#include "version.h"
 #endif
 /* This is all for getrusage and friends.. taken from src/s_debug.c so should be safe. */
 #ifdef HPUX

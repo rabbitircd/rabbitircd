@@ -32,16 +32,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef _WIN32
-#include <io.h>
-#endif
 #include <fcntl.h>
 #include "h.h"
 #ifdef STRIPBADWORDS
 #include "badwords.h"
-#endif
-#ifdef _WIN32
-#include "version.h"
 #endif
 
 DLLFUNC int m_trace(aClient *cptr, aClient *sptr, int parc, char *parv[]);

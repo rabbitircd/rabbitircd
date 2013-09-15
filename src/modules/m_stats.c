@@ -32,16 +32,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef _WIN32
-#include <io.h>
-#endif
 #include <fcntl.h>
 #include "h.h"
 #ifdef STRIPBADWORDS
 #include "badwords.h"
-#endif
-#ifdef _WIN32
-#include "version.h"
 #endif
 
 DLLFUNC int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[]);
@@ -987,7 +981,6 @@ int stats_mem(aClient *sptr, char *para)
 
 	sendto_one(sptr, ":%s %d %s :Total: ww %ld ch %ld cl %ld co %ld db %ld",
 	    me.name, RPL_STATSDEBUG, sptr->name, totww, totch, totcl, com, db);
-#if !defined(_WIN32) && !defined(_AMIGA)
 #ifdef __alpha
 	sendto_one(sptr, ":%s %d %s :TOTAL: %d sbrk(0)-etext: %u",
 	    me.name, RPL_STATSDEBUG, sptr->name, tot,
@@ -997,10 +990,6 @@ int stats_mem(aClient *sptr, char *para)
 	    me.name, RPL_STATSDEBUG, sptr->name, tot,
 	    (u_long)sbrk((size_t)0) - (u_long)sbrk0);
 
-#endif
-#else
-	sendto_one(sptr, ":%s %d %s :TOTAL: %lu",
-	    me.name, RPL_STATSDEBUG, sptr->name, tot);
 #endif
 	return 0;
 }

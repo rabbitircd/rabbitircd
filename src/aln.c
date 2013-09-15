@@ -32,9 +32,6 @@
 #endif
 
 #include <string.h>
-#ifdef _WIN32
-#include <io.h>
-#endif
 #ifndef STANDALONE
 #include "h.h"
 #include "proto.h"

@@ -46,10 +46,8 @@
 #include "hash.h"
 #include <stdio.h>
 #include <sys/types.h>
-#ifndef _WIN32
 #include <netinet/in.h>
 #include <netdb.h>
-#endif
 #ifdef STDDEFH
 # include <stddef.h>
 #endif
@@ -992,8 +990,6 @@ struct Client {
 	long receiveM;		/* Statistics: protocol messages received */
 #ifdef USE_SSL
 	SSL		*ssl;
-#elif defined(_WIN32)
-	void	*ssl_NOTUSED; /* (win32 binary compatability) */
 #endif
 #ifndef NO_FDLIST
 	long lastrecvM;		/* to check for activity --Mika */
@@ -1242,8 +1238,6 @@ struct _configitem_link {
 	time_t			hold;
 #ifdef USE_SSL
 	char		*ciphers;
-#elif defined(_WIN32)
-	void *ciphers_NOTUSED;
 #endif
 };
 

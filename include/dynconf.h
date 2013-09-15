@@ -108,11 +108,6 @@ struct zConfiguration {
 	long ssl_options;
 	int ssl_renegotiate_bytes;
 	int ssl_renegotiate_timeout;
-	
-#elif defined(_WIN32)
-	void *bogus1, *bogus2, *bogus3, *bogus5, *bogus8;
-	long bogus4;
-	int bogus6, bogus7;
 #endif
 	enum UHAllowed userhost_allowed;
 	char *restrict_usermodes;

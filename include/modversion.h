@@ -39,17 +39,17 @@
  *       but this prevents (most) binary incompatability problems
  *       making it easier for module coders to ship dll's.
  */
- #if defined(USE_SSL) && !defined(_WIN32)
+ #ifdef USE_SSL
   #define MYTOKEN_SSL "/SSL"
  #else
   #define MYTOKEN_SSL ""
  #endif
- #if !defined(JOINTHROTTLE)
+ #ifndef JOINTHROTTLE
   #define MYTOKEN_JOINTHROTTLE "/NOJTHR"
  #else
   #define MYTOKEN_JOINTHROTTLE ""
  #endif
- #if !defined(NO_FLOOD_AWAY)
+ #ifndef NO_FLOOD_AWAY
   #define MYTOKEN_NOFLDAWAY "/NONFA"
  #else
   #define MYTOKEN_NOFLDAWAY ""

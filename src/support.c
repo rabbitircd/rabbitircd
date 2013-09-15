@@ -34,9 +34,6 @@ static char sccsid[] = "@(#)support.c	2.21 4/13/94 1990, 1991 Armin Gruner;\
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <limits.h>
-#ifdef _WIN32
-#include <io.h>
-#else
 extern uid_t irc_uid;
 extern gid_t irc_gid;
 #include <sys/socket.h>
@@ -52,11 +49,7 @@ extern void outofmemory();
 char	*my_itoa(int i)
 {
 	static char buf[128];
-#ifndef _WIN32	
 	ircsnprintf(buf, sizeof(buf), "%d", i);
-#else
-	_itoa_s(i, buf, sizeof(buf), 10);
-#endif
 	return (buf);
 }
 
@@ -1610,11 +1603,7 @@ int unreal_copyfile(const char *src, const char *dest)
 
 	mtime = unreal_getfilemodtime(src);
 
-#ifndef _WIN32
 	srcfd = open(src, O_RDONLY);
-#else
-	srcfd = open(src, _O_RDONLY|_O_BINARY);
-#endif
 
 	if (srcfd < 0)
 	{
@@ -1622,15 +1611,11 @@ int unreal_copyfile(const char *src, const char *dest)
 		return 0;
 	}
 
-#ifndef _WIN32
 #if DEFAULT_PERMISSIONS
 	destfd  = open(dest, O_WRONLY|O_CREAT, DEFAULT_PERMISSIONS);
 #else
 	destfd  = open(dest, O_WRONLY|O_CREAT, S_IRUSR | S_IXUSR);
 #endif /* DEFAULT_PERMISSIONS */
-#else
-	destfd = open(dest, _O_BINARY|_O_WRONLY|_O_CREAT, _S_IWRITE);
-#endif /* _WIN32 */
 	if (destfd < 0)
 	{
 		config_error("Unable to create file '%s': %s", dest, strerror(errno));
@@ -1669,70 +1654,26 @@ fail:
 /* Same as unreal_copyfile, but with an option to try hardlinking first */
 int unreal_copyfileex(const char *src, const char *dest, int tryhardlink)
 {
-#ifndef _WIN32
 	/* Try a hardlink first... */
 	if (tryhardlink && !link(src, dest))
 		return 1; /* success */
-#endif
 	return unreal_copyfile(src, dest);
 }
 
 
 void unreal_setfilemodtime(const char *filename, time_t mtime)
 {
-#ifndef _WIN32
 	struct utimbuf utb;
 	utb.actime = utb.modtime = mtime;
 	utime(filename, &utb);
-#else
-	FILETIME mTime;
-	LONGLONG llValue;
-	HANDLE hFile = CreateFile(filename, GENERIC_WRITE, 0, NULL, OPEN_EXISTING,
-				  FILE_ATTRIBUTE_NORMAL, NULL);
-	if (hFile == INVALID_HANDLE_VALUE)
-		return;
-	llValue = Int32x32To64(mtime, 10000000) + 116444736000000000;
-	mTime.dwLowDateTime = (long)llValue;
-	mTime.dwHighDateTime = llValue >> 32;
-	
-	SetFileTime(hFile, &mTime, &mTime, &mTime);
-	CloseHandle(hFile);
-#endif
 }
 
 time_t unreal_getfilemodtime(const char *filename)
 {
-#ifndef _WIN32
 	struct stat sb;
 	if (stat(filename, &sb))
 		return 0;
 	return sb.st_mtime;
-#else
-	/* See how much more fun WinAPI programming is??? */
-	FILETIME cTime;
-	SYSTEMTIME sTime, lTime;
-	ULARGE_INTEGER fullTime;
-	time_t result;
-	HANDLE hFile = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING,
-				  FILE_ATTRIBUTE_NORMAL, NULL);
-	if (hFile == INVALID_HANDLE_VALUE)
-		return 0;
-	if (!GetFileTime(hFile, NULL, NULL, &cTime))
-		return 0;
-
-	CloseHandle(hFile);
-
-	FileTimeToSystemTime(&cTime, &sTime);
-	SystemTimeToTzSpecificLocalTime(NULL, &sTime, &lTime);
-	SystemTimeToFileTime(&sTime, &cTime);
-
-	fullTime.LowPart = cTime.dwLowDateTime;
-	fullTime.HighPart = cTime.dwHighDateTime;
-	fullTime.QuadPart -= 116444736000000000;
-	fullTime.QuadPart /= 10000000;
-	
-	return fullTime.LowPart;	
-#endif
 }
 
 #ifndef	AF_INET6
@@ -1835,11 +1776,7 @@ const char *inet_ntop(int af, const void *src, char *dst, size_t size)
 	case AF_INET6:
 		return (inet_ntop6(src, dst, size));
 	default:
-#ifndef _WIN32
 		errno = EAFNOSUPPORT;
-#else
-		WSASetLastError(WSAEAFNOSUPPORT);
-#endif
 		return (NULL);
 	}
 	/* NOTREACHED */
@@ -1863,11 +1800,7 @@ static const char *inet_ntop4(const u_char *src, char *dst, size_t size)
 
 	snprintf(tmp, sizeof(tmp), fmt, src[0], src[1], src[2], src[3]);
 	if ((size_t)strlen(tmp)+1 > size) {
-#ifndef _WIN32
 		errno = ENOSPC;
-#else
-		WSASetLastError(WSAENOBUFS);
-#endif
 		return (NULL);
 	}
 	strlcpy(dst, tmp, size);
@@ -1961,11 +1894,7 @@ static const char *inet_ntop6(const u_char *src, char *dst, size_t size)
 	 * Check for overflow, copy, and we're done.
 	 */
 	if ((size_t) (tp - tmp) > size) {
-#ifndef _WIN32
 		errno = ENOSPC;
-#else
-		WSASetLastError(WSAENOBUFS);
-#endif
 		return (NULL);
 	}
 	strlcpy(dst, tmp, size);
@@ -2002,11 +1931,7 @@ int inet_pton(int af, const char *src, void *dst)
 	case AF_INET6:
 		return (inet_pton6(src, dst));
 	default:
-#ifndef _WIN32
 		errno = EAFNOSUPPORT;
-#else
-		WSASetLastError(WSAEAFNOSUPPORT);
-#endif
 		return (-1);
 	}
 	/* NOTREACHED */
@@ -2191,101 +2116,3 @@ void inet6_to_inet4(const void *src, void *dst)
 {
 	memcpy(dst, (char *)src + 12, 4);
 }
-
-
-#ifdef _WIN32
-/* Microsoft makes things nice and fun for us! */
-struct u_WSA_errors {
-	int error_code;
-	char *error_string;
-};
-
-/* Must be sorted ascending by error code */
-struct u_WSA_errors WSAErrors[] = {
- { WSAEINTR,              "Interrupted system call" },
- { WSAEBADF,              "Bad file number" },
- { WSAEACCES,             "Permission denied" },
- { WSAEFAULT,             "Bad address" },
- { WSAEINVAL,             "Invalid argument" },
- { WSAEMFILE,             "Too many open sockets" },
- { WSAEWOULDBLOCK,        "Operation would block" },
- { WSAEINPROGRESS,        "Operation now in progress" },
- { WSAEALREADY,           "Operation already in progress" },
- { WSAENOTSOCK,           "Socket operation on non-socket" },
- { WSAEDESTADDRREQ,       "Destination address required" },
- { WSAEMSGSIZE,           "Message too long" },
- { WSAEPROTOTYPE,         "Protocol wrong type for socket" },
- { WSAENOPROTOOPT,        "Bad protocol option" },
- { WSAEPROTONOSUPPORT,    "Protocol not supported" },
- { WSAESOCKTNOSUPPORT,    "Socket type not supported" },
- { WSAEOPNOTSUPP,         "Operation not supported on socket" },
- { WSAEPFNOSUPPORT,       "Protocol family not supported" },
- { WSAEAFNOSUPPORT,       "Address family not supported" },
- { WSAEADDRINUSE,         "Address already in use" },
- { WSAEADDRNOTAVAIL,      "Can't assign requested address" },
- { WSAENETDOWN,           "Network is down" },
- { WSAENETUNREACH,        "Network is unreachable" },
- { WSAENETRESET,          "Net connection reset" },
- { WSAECONNABORTED,       "Software caused connection abort" },
- { WSAECONNRESET,         "Connection reset by peer" },
- { WSAENOBUFS,            "No buffer space available" },
- { WSAEISCONN,            "Socket is already connected" },
- { WSAENOTCONN,           "Socket is not connected" },
- { WSAESHUTDOWN,          "Can't send after socket shutdown" },
- { WSAETOOMANYREFS,       "Too many references, can't splice" },
- { WSAETIMEDOUT,          "Connection timed out" },
- { WSAECONNREFUSED,       "Connection refused" },
- { WSAELOOP,              "Too many levels of symbolic links" },
- { WSAENAMETOOLONG,       "File name too long" },
- { WSAEHOSTDOWN,          "Host is down" },
- { WSAEHOSTUNREACH,       "No route to host" },
- { WSAENOTEMPTY,          "Directory not empty" },
- { WSAEPROCLIM,           "Too many processes" },
- { WSAEUSERS,             "Too many users" },
- { WSAEDQUOT,             "Disc quota exceeded" },
- { WSAESTALE,             "Stale NFS file handle" },
- { WSAEREMOTE,            "Too many levels of remote in path" },
- { WSASYSNOTREADY,        "Network subsystem is unavailable" },
- { WSAVERNOTSUPPORTED,    "Winsock version not supported" },
- { WSANOTINITIALISED,     "Winsock not yet initialized" },
- { WSAHOST_NOT_FOUND,     "Host not found" },
- { WSATRY_AGAIN,          "Non-authoritative host not found" },
- { WSANO_RECOVERY,        "Non-recoverable errors" },
- { WSANO_DATA,            "Valid name, no data record of requested type" },
- { WSAEDISCON,            "Graceful disconnect in progress" },
- { WSASYSCALLFAILURE,     "System call failure" },
- { 0,NULL}
-};
-
-char *sock_strerror(int error)
-{
-	static char unkerr[64];
-	int start = 0;
-	int stop = sizeof(WSAErrors)/sizeof(WSAErrors[0])-1;
-	int mid;
-	
-	if (!error) /* strerror compatibility */
-		return NULL;
-
-	if (error < WSABASEERR) /* Just a regular error code */
-		return strerror(error);
-
-	/* Microsoft decided not to use sequential numbers for the error codes,
-	 * so we can't just use the array index for the code. But, at least
-	 * use a binary search to make it as fast as possible. 
-	 */
-	while (start <= stop)
-	{
-		mid = (start+stop)/2;
-		if (WSAErrors[mid].error_code > error)
-			stop = mid-1;
-		
-		else if (WSAErrors[mid].error_code < error)
-			start = mid+1;
-		else
-			return WSAErrors[mid].error_string;	
-	}
-	snprintf(unkerr, sizeof(unkerr), "Unknown Error: %d", error);
-	return unkerr;
-}
-#endif

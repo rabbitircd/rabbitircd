@@ -58,9 +58,6 @@ MODVAR char serveropts[] = {
 #ifdef	VALLOC
 	'V',
 #endif
-#ifdef	_WIN32
-	'W',
-#endif
 #ifdef	USE_SYSLOG
 	'Y',
 #endif
@@ -92,14 +89,11 @@ char *extraflags = NULL;
 #include "sys.h"
 #include "whowas.h"
 #include "hash.h"
-#ifndef _WIN32
 #include <sys/file.h>
-#endif
 #ifdef HPUX
 #include <fcntl.h>
 #endif
-#if !defined(ULTRIX) && !defined(SGI) && \
-    !defined(__convex__) && !defined(_WIN32)
+#if !defined(ULTRIX) && !defined(SGI) && !defined(__convex__)
 # include <sys/param.h>
 #endif
 #ifdef HPUX
@@ -173,11 +167,7 @@ void	flag_del(char ch)
 
 
 #ifdef DEBUGMODE
-#ifndef _WIN32
 #define SET_ERRNO(x) errno = x
-#else
-#define SET_ERRNO(x) WSASetLastError(x)
-#endif /* _WIN32 */
 
 static char debugbuf[4096];
 
@@ -204,13 +194,8 @@ void debug(int level, char *form, ...)
 		(void)ircvsnprintf(debugbuf, sizeof(debugbuf), form, vl);
 #endif
 
-#ifndef _WIN32
 		(void)fprintf(stderr, "%s", debugbuf);
 		(void)fputc('\n', stderr);
-#else
-		strncat(debugbuf, "\r\n", sizeof(debugbuf)-strlen(debugbuf)-1);
-		OutputDebugString(debugbuf);
-#endif
 	}
 	va_end(vl);
 	SET_ERRNO(err);

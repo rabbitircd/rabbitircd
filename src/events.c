@@ -33,9 +33,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef _WIN32
-#include <io.h>
-#endif
 #include <fcntl.h>
 #include "h.h"
 #include "modules.h"
@@ -156,11 +153,7 @@ int EventMod(Event *event, EventInfo *mods) {
 	return 0;
 }
 
-#ifndef _WIN32
 inline void	DoEvents(void)
-#else
-void DoEvents(void)
-#endif
 {
 	Event *eventptr;
 	Event temp;

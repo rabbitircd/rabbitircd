@@ -22,12 +22,8 @@
 #include "numeric.h"
 #include "channel.h"
 #include <fcntl.h>
-#ifndef _WIN32
 #include <sys/socket.h>
 #include <sys/wait.h>
-#else
-#include <io.h>
-#endif
 #include <sys/stat.h>
 #ifdef __hpux
 #include "inet.h"

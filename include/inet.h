@@ -34,20 +34,16 @@ extern int inet_pton(int af, const char *src, void *dst);
 extern const char *inet_ntop(int af, const void *src, char *dst, size_t cnt);
 
 #ifdef __STDC__
-# ifndef _WIN32
 extern __u_l inet_addr(char *);
 extern char *inet_ntoa(struct in_addr);
 extern int inet_aton(const char *, struct in_addr *);
 extern int  inet_netof(struct in_addr);
-# endif
 extern __u_l inet_makeaddr(int, int);
 extern __u_l inet_network(char *);
 extern __u_l inet_lnaof(struct in_addr);
 #else
-# ifndef _WIN32
 extern __u_l inet_addr();
 extern char *inet_ntoa();
-# endif
 #ifndef HPUX
 extern __u_l inet_makeaddr();
 #endif

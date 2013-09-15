@@ -30,18 +30,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef _WIN32
-#include <io.h>
-#endif
 #include <sys/timeb.h>
 #include <fcntl.h>
 #include "h.h"
 #include "proto.h"
 #ifdef STRIPBADWORDS
 #include "badwords.h"
-#endif
-#ifdef _WIN32
-#include "version.h"
 #endif
 
 DLLFUNC int m_rping(aClient *cptr, aClient *sptr, int parc, char *parv[]);
@@ -216,29 +210,13 @@ DLLFUNC char *militime(char *sec, char *usec)
  * compatability and just use msec instead of usec crap. -- Syzop
  */
 
-#ifndef _WIN32
 	struct timeval tv;
-#else
-	struct _timeb tv;
-#endif
 	static char timebuf[18];
-#ifndef _WIN32
 	gettimeofday(&tv, NULL);
-#else
-	_ftime(&tv);
-#endif
 	if (sec && usec)
 		ircsnprintf(timebuf, sizeof(timebuf), "%ld",
-#ifndef _WIN32
 		    (tv.tv_sec - atoi(sec)) * 1000 + (tv.tv_usec - atoi(usec)) / 1000);
-#else
-		    (tv.time - atoi(sec)) * 1000 + (tv.millitm - (atoi(usec)/1000)));
-#endif
 	else
-#ifndef _WIN32
 		ircsnprintf(timebuf, sizeof(timebuf), "%ld %ld", tv.tv_sec, tv.tv_usec);
-#else
-		ircsnprintf(timebuf, sizeof(timebuf), "%ld %ld", tv.time, tv.millitm * 1000);
-#endif
 	return timebuf;
 }

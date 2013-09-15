@@ -25,12 +25,8 @@
 #include "channel.h"
 #include "macros.h"
 #include <fcntl.h>
-#ifndef _WIN32
 #include <sys/socket.h>
 #include <sys/wait.h>
-#else
-#include <io.h>
-#endif
 #include <sys/stat.h>
 #ifdef __hpux
 #include "inet.h"
@@ -48,9 +44,6 @@
 #include "h.h"
 #include "inet.h"
 #include "proto.h"
-#ifdef _WIN32
-#undef GLOBH
-#endif
 #include "badwords.h"
 
 #define ircstrdup(x,y) do { if (x) MyFree(x); if (!y) x = NULL; else x = strdup(y); } while(0)
@@ -332,10 +325,6 @@ void 			config_error(char *format, ...);
 void 			config_status(char *format, ...);
 void 			config_progress(char *format, ...);
 
-#ifdef _WIN32
-extern void 	win_log(char *format, ...);
-extern void		win_error();
-#endif
 extern void add_entropy_configfile(struct stat st, char *buf);
 extern void unload_all_unused_snomasks(void);
 extern void unload_all_unused_umodes(void);
@@ -995,11 +984,7 @@ ConfigFile *config_load(char *filename)
 	char		*buf = NULL;
 	ConfigFile	*cfptr;
 
-#ifndef _WIN32
 	fd = open(filename, O_RDONLY);
-#else
-	fd = open(filename, O_RDONLY|O_BINARY);
-#endif
 	if (fd == -1)
 	{
 		config_error("Couldn't open \"%s\": %s\n", filename, strerror(errno));
@@ -1384,11 +1369,7 @@ void config_error(char *format, ...)
 	if ((ptr = strchr(buffer, '\n')) != NULL)
 		*ptr = '\0';
 	if (!loop.ircd_booted)
-#ifndef _WIN32
 		fprintf(stderr, "[error] %s\n", buffer);
-#else
-		win_log("[error] %s", buffer);
-#endif
 	else
 		ircd_log(LOG_ERROR, "config error: %s", buffer);
 	sendto_realops("error: %s", buffer);
@@ -1449,11 +1430,7 @@ void config_status(char *format, ...)
 	if ((ptr = strchr(buffer, '\n')) != NULL)
 		*ptr = '\0';
 	if (!loop.ircd_booted)
-#ifndef _WIN32
 		fprintf(stderr, "* %s\n", buffer);
-#else
-		win_log("* %s", buffer);
-#endif
 	sendto_realops("%s", buffer);
 }
 
@@ -1469,11 +1446,7 @@ void config_warn(char *format, ...)
 	if ((ptr = strchr(buffer, '\n')) != NULL)
 		*ptr = '\0';
 	if (!loop.ircd_booted)
-#ifndef _WIN32
 		fprintf(stderr, "[warning] %s\n", buffer);
-#else
-		win_log("[warning] %s", buffer);
-#endif
 	sendto_realops("[warning] %s", buffer);
 }
 
@@ -1567,11 +1540,7 @@ void config_progress(char *format, ...)
 	if ((ptr = strchr(buffer, '\n')) != NULL)
 		*ptr = '\0';
 	if (!loop.ircd_booted)
-#ifndef _WIN32
 		fprintf(stderr, "* %s\n", buffer);
-#else
-		win_log("* %s", buffer);
-#endif
 	sendto_realops("%s", buffer);
 }
 
@@ -1823,10 +1792,6 @@ int	init_conf(char *rootconf, int rehash)
 		    (charsys_postconftest() < 0))
 		{
 			config_error("IRCd configuration failed to pass testing");
-#ifdef _WIN32
-			if (!rehash)
-				win_error();
-#endif
 #ifndef STATIC_LINKING
 			Unload_all_testing_modules();
 #endif
@@ -1877,10 +1842,6 @@ int	init_conf(char *rootconf, int rehash)
 		if (config_run() < 0)
 		{
 			config_error("Bad case of config errors. Server will now die. This really shouldn't happen");
-#ifdef _WIN32
-			if (!rehash)
-				win_error();
-#endif
 			abort();
 		}
 		charsys_finish();
@@ -1906,10 +1867,6 @@ int	init_conf(char *rootconf, int rehash)
 		config_free(conf);
 		conf = NULL;
 		free_iConf(&tempiConf);
-#ifdef _WIN32
-		if (!rehash)
-			win_error();
-#endif
 		return -1;
 	}
 	config_free(conf);
@@ -1980,13 +1937,6 @@ int	load_conf(char *filename, const char *original_path)
 			counter ++;
 			continue;
 		}
-#ifdef _WIN32
-		if (!stricmp(filename, inc->file))
-		{
-			counter ++;
-			continue;
-		}
-#endif
 #ifdef USE_LIBCURL
 		if (inc->url && !strcmp(original_path, inc->url))
 		{
@@ -3142,10 +3092,6 @@ int	_conf_include(ConfigFile *conf, ConfigEntry *ce)
 #ifdef GLOBH
 	glob_t files;
 	int i;
-#elif defined(_WIN32)
-	HANDLE hFind;
-	WIN32_FIND_DATA FindData;
-	char cPath[MAX_PATH], *cSlash = NULL, *path;
 #endif
 	if (!ce->ce_vardata)
 	{
@@ -3158,7 +3104,7 @@ int	_conf_include(ConfigFile *conf, ConfigEntry *ce)
 	if (url_is_valid(ce->ce_vardata))
 		return remote_include(ce);
 #endif
-#if !defined(_WIN32) && !defined(_AMIGA) && !defined(OSXTIGER) && DEFAULT_PERMISSIONS != 0
+#if !defined(OSXTIGER) && DEFAULT_PERMISSIONS != 0
 	chmod(ce->ce_vardata, DEFAULT_PERMISSIONS);
 #endif
 #ifdef GLOBH
@@ -3184,65 +3130,6 @@ int	_conf_include(ConfigFile *conf, ConfigEntry *ce)
 		}
 	}
 	globfree(&files);
-#elif defined(_WIN32)
-	bzero(cPath,MAX_PATH);
-	if (strchr(ce->ce_vardata, '/') || strchr(ce->ce_vardata, '\\')) {
-		strlcpy(cPath,ce->ce_vardata,MAX_PATH);
-		cSlash=cPath+strlen(cPath);
-		while(*cSlash != '\\' && *cSlash != '/' && cSlash > cPath)
-			cSlash--; 
-		*(cSlash+1)=0;
-	}
-	if ( (hFind = FindFirstFile(ce->ce_vardata, &FindData)) == INVALID_HANDLE_VALUE )
-	{
-		config_status("%s:%i: include %s: invalid file given",
-			ce->ce_fileptr->cf_filename, ce->ce_varlinenum,
-			ce->ce_vardata);
-		return -1;
-	}
-	if (cPath) {
-		path = MyMalloc(strlen(cPath) + strlen(FindData.cFileName)+1);
-		strcpy(path, cPath);
-		strcat(path, FindData.cFileName);
-
-		add_include(path, ce->ce_fileptr->cf_filename, ce->ce_varlinenum);
-		ret = load_conf(path, path);
-		free(path);
-
-	}
-	else
-	{
-		add_include(FindData.cFileName, ce->ce_fileptr->cf_filename, ce->ce_varlinenum);
-		ret = load_conf(FindData.cFileName, FindData.cFileName);
-	}
-	if (ret < 0)
-	{
-		FindClose(hFind);
-		return ret;
-	}
-
-	ret = 0;
-	while (FindNextFile(hFind, &FindData) != 0) {
-		if (cPath) {
-			path = MyMalloc(strlen(cPath) + strlen(FindData.cFileName)+1);
-			strcpy(path,cPath);
-			strcat(path,FindData.cFileName);
-
-			add_include(path, ce->ce_fileptr->cf_filename, ce->ce_varlinenum);
-			ret = load_conf(path, path);
-			free(path);
-			if (ret < 0)
-				break;
-		}
-		else
-		{
-			add_include(FindData.cFileName, ce->ce_fileptr->cf_filename, ce->ce_varlinenum);
-			ret = load_conf(FindData.cFileName, FindData.cFileName);
-		}
-	}
-	FindClose(hFind);
-	if (ret < 0)
-		return ret;
 #else
 	add_include(ce->ce_vardata, ce->ce_fileptr->cf_filename, ce->ce_varlinenum);
 	ret = load_conf(ce->ce_vardata, ce->ce_vardata);

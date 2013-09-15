@@ -25,14 +25,7 @@
 #define MAXHOOKTYPES	100
 #define MAXCALLBACKS	30
 #define MAXEFUNCTIONS	60
-#if defined(_WIN32)
- #define MOD_EXTENSION "dll"
- #define DLLFUNC	_declspec(dllexport)
- #define irc_dlopen(x,y) LoadLibrary(x)
- #define irc_dlclose FreeLibrary
- #define irc_dlsym(x,y,z) z = (void *)GetProcAddress(x,y)
- #define irc_dlerror our_dlerror
-#elif defined(HPUX)
+#ifdef HPUX
  #define MOD_EXTENSION "so"
  #define irc_dlopen(x,y) shl_load(x,y,0L)
  #define irc_dlsym(x,y,z) shl_findsym(x,y,z)
@@ -42,7 +35,7 @@
  #define MOD_EXTENSION "so"
  #define irc_dlopen dlopen
  #define irc_dlclose dlclose
- #if defined(UNDERSCORE)
+ #ifdef UNDERSCORE
   #define irc_dlsym(x,y,z) z = obsd_dlsym(x,y)
  #else
   #define irc_dlsym(x,y,z) z = dlsym(x,y)
@@ -421,9 +414,7 @@ struct _Module
 {
 	struct _Module *prev, *next;
 	ModuleHeader    *header; /* The module's header */
-#ifdef _WIN32
-	HMODULE dll;		/* Return value of LoadLibrary */
-#elif defined(HPUX)
+#ifdef HPUX
 	shl_t	dll;
 #else
 	void	*dll;		/* Return value of dlopen */

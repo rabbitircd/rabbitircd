@@ -197,11 +197,7 @@ extern void reset_help();
 extern MODVAR char *debugmode, *configfile, *sbrk0;
 extern char *getfield(char *);
 extern void get_sockhost(aClient *, char *);
-#ifndef _WIN32
 extern char *strerror(int);
-#else
-extern MODFUNC char *sock_strerror(int);
-#endif
 extern int dgets(int, char *, int);
 extern char *inetntoa(char *);
 
@@ -212,11 +208,7 @@ extern int snprintf (char *str, size_t count, const char *fmt, ...);
 extern int vsnprintf (char *str, size_t count, const char *fmt, va_list arg);
 #endif
 
-#ifdef _WIN32
-extern MODVAR int debuglevel;
-#else
 extern int debuglevel, errno, h_errno;
-#endif
 extern MODVAR int OpenFiles;  /* number of files currently open */
 extern MODVAR int debuglevel, portnum, debugtty, maxusersperchannel;
 extern MODVAR int readcalls, udpfd, resfd;
@@ -494,8 +486,7 @@ int crule_eval(char *);
 void crule_free(char **);
 
 /*
- * Close all local socket connections, invalidate client fd's
- * WIN32 cleanup winsock lib
+ * Close all local socket connections, invalidate client file descriptors
  */
 extern void close_connections(void);
 
@@ -579,11 +570,6 @@ extern char *channel_modef_string(ChanFloodProt *);
 extern void chmode_str(struct ChMode, char *, char *, size_t, size_t);
 extern char *get_cptr_status(aClient *);
 extern char *get_snostr(long);
-#ifdef _WIN32
-extern void InitDebug(void);
-extern int InitwIRCD(int argc, char **);
-extern void SocketLoop(void *);
-#endif
 #ifdef STATIC_LINKING
 extern int l_commands_Init(ModuleInfo *);
 extern int l_commands_Test(ModuleInfo *);

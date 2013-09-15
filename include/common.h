@@ -23,19 +23,6 @@
 #define __common_include__
 
 #include <time.h>
-#ifdef _WIN32
-#include <malloc.h>
-#ifdef INET6
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#endif
-#include <windows.h>
-#ifndef INET6
-#include <winsock.h>
-#endif
-#include <process.h>
-#include <io.h>
-#endif
 #include "types.h"
 #include "config.h"
 #ifdef	PARAMH
@@ -61,11 +48,7 @@
 #define BMAGIC 0x4675636B596F754661736369737473
 
 #define BASE_VERSION "Unreal"
-#ifndef _WIN32
 #define FDwrite(x,y,z) write(x, y, z)
-#else
-#define FDwrite(x,y,z) send(x, y, z, 0)
-#endif
 #ifndef NULL
 #define NULL 0
 #endif
@@ -115,7 +98,7 @@ extern char *strtoken(char **, char *, char *);
 extern unsigned long inet_addr(char *);
 #endif
 
-#if defined(NEED_INET_NTOA) || defined(NEED_INET_NETOF) && !defined(_WIN32)
+#if defined(NEED_INET_NTOA) || defined(NEED_INET_NETOF)
 #include <netinet/in.h>
 #endif
 #ifdef NEED_INET_NTOA
@@ -273,16 +256,8 @@ extern struct SLink *find_user_link( /* struct SLink *, struct Client * */ );
                         " NICKIP" \
                         " ESVID"
 
-#ifdef _WIN32
-/*
- * Used to display a string to the GUI interface.
- * Windows' internal strerror() function doesn't work with socket errors.
- */
-extern int DisplayString(HWND hWnd, char *InBuf, ...);
-#else
 typedef int SOCKET;
 #define INVALID_SOCKET -1
-#endif
 
 #if defined(__FreeBSD__) || defined(__APPLE__)
 extern char *malloc_options;
@@ -294,7 +269,6 @@ extern int lu_noninv, lu_inv, lu_serv, lu_oper,
 
 MODVAR TS   now;
 
-#ifndef _WIN32
 #if defined(__STDC__)
 #define __const         const
 #define __signed        signed
@@ -319,7 +293,6 @@ MODVAR TS   now;
 #endif
 #else
 #define inline __inline
-#endif
 
 #define READBUF_SIZE 8192
 

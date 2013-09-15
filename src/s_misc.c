@@ -1,4 +1,3 @@
-
 /*
  *   Unreal Internet Relay Chat Daemon, src/s_misc.c
  *   Copyright (C) 1990 Jarkko Oikarinen and
@@ -22,9 +21,7 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef _WIN32
 #include <sys/time.h>
-#endif
 #include "struct.h"
 #include "common.h"
 #include "sys.h"
@@ -32,8 +29,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <assert.h>
-#if !defined(ULTRIX) && !defined(SGI) && \
-    !defined(__convex__) && !defined(_WIN32)
+#if !defined(ULTRIX) && !defined(SGI) && !defined(__convex__)
 # include <sys/param.h>
 #endif
 #if defined(PCS) || defined(AIX) || defined(SVR3)
@@ -41,9 +37,6 @@
 #endif
 #ifdef HPUX
 #include <unistd.h>
-#endif
-#ifdef _WIN32
-# include <io.h>
 #endif
 #include "h.h"
 #include "proto.h"
@@ -127,7 +120,6 @@ char *date(time_t clock)
 	bcopy((char *)gm, (char *)&gmbuf, sizeof(gmbuf));
 	gm = &gmbuf;
 	lt = localtime(&clock);
-#ifndef _WIN32
 	if (lt->tm_yday == gm->tm_yday)
 		minswest = (gm->tm_hour - lt->tm_hour) * 60 +
 		    (gm->tm_min - lt->tm_min);
@@ -135,9 +127,6 @@ char *date(time_t clock)
 		minswest = (gm->tm_hour - (lt->tm_hour + 24)) * 60;
 	else
 		minswest = ((gm->tm_hour + 24) - lt->tm_hour) * 60;
-#else
-	minswest = (_timezone / 60);
-#endif
 	plus = (minswest > 0) ? '-' : '+';
 	if (minswest < 0)
 		minswest = -minswest;

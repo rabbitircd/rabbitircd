@@ -28,22 +28,15 @@
 #include "version.h"
 
 #if !defined(UNREAL_VERSION_TIME)
- #error "YOU MUST RUN ./Config WHENEVER YOU ARE UPGRADING UNREAL!!!!"
+ #error "You must ./Config when upgrading, as the parameters have changed."
 #endif
 
 #include <time.h>
-#ifdef _WIN32
-#include <sys/timeb.h>
-#endif
 #include <sys/stat.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef _WIN32
-#include <io.h>
-#else
 #include <sys/socket.h>
-#endif
 #include <fcntl.h>
 #include "h.h"
 #include "inet.h"
@@ -241,13 +234,7 @@ int succesfully_sent = 0;
 			if (FD_ISSET(s[i], &r))
 			{
 				n = recv(s[i], buf, sizeof(buf), 0);
-#ifndef _WIN32
 				if ((n < 0) && (errno != EINPROGRESS))
-#else
-				if ((n < 0) &&
-				    (WSAGetLastError() != WSAEINPROGRESS) &&
-				    (WSAGetLastError() != WSAEWOULDBLOCK))
-#endif
 				{
 					/* Some kind of error.. uh ok... */
 					continue;

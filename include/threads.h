@@ -31,7 +31,6 @@
 #else
 #define TDebug(x) ircd_log(LOG_ERROR, "%s:%i: %s", __FILE__, __LINE__, #x)
 #endif
-#if !defined(_WIN32) || defined(USE_PTHREADS)
 #include <pthread.h>
 typedef pthread_t THREAD;
 typedef pthread_mutex_t MUTEX;
@@ -49,25 +48,6 @@ typedef pthread_mutex_t MUTEX;
 #define IRCTerminateThread(thread, value) pthread_cancel(&thread)
 #define IRCThreadSelf() pthread_self()
 #define IRCThreadEqual(thread1, thread2) pthread_equal(thread1,thread2)
-#else
-typedef HANDLE THREAD;
-typedef HANDLE MUTEX;
-typedef unsigned (__stdcall *PTHREAD_START) (void *);
-#define IRCCreateThreadEx(thread, start, arg, id) thread = (THREAD)_beginthreadex(NULL, 0, (PTHREAD_START)start, arg, 0, id)
-#define IRCCreateThread(thread, start, arg) thread = _beginthread((void *)start, 0, arg)
-#define IRCMutexLock(mutex) WaitForSingleObject(mutex, INFINITE)
-#define IRCMutexTryLock(mutex) WaitForSingleObject(mutex, 0)
-#define IRCMutexUnlock(mutex) ReleaseMutex(mutex)
-#define IRCCreateMutex(mutex) mutex = CreateMutex(NULL, FALSE, NULL)
-#define IRCMutexDestroy(mutex) CloseHandle(mutex)
-#define IRCJoinThread(thread,pdwRc) { WaitForSingleObject((HANDLE)thread, INFINITE); GetExitCodeThread((HANDLE)thread, pdwRc); CloseHandle((HANDLE)thread); }
-#define IRCExitThreadEx(value) _endthreadex((unsigned int)value)
-#define IRCExitThread(value) _endthread()
-#define IRCTerminateThread(thread, value) TerminateThread((HANDLE)thread, value)
-#define IRCThreadSelf() GetCurrentThread()
-#define IRCThreadEqual(thread1, thread2) thread1 == thread2 ? 1 : 0
-#define IRCDetachThread(value) ;
-#endif
 
 #endif
 

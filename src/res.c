@@ -32,16 +32,10 @@
 #endif
 
 #include <time.h>
-#ifdef _WIN32
-#include <sys/timeb.h>
-#endif
 #include <sys/stat.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef _WIN32
-#include <io.h>
-#endif
 #include "inet.h"
 #include <fcntl.h>
 #include "h.h"
@@ -158,13 +152,11 @@ int optmask;
 	options.flags = ARES_FLAG_NOALIASES|ARES_FLAG_IGNTC;
 	options.sock_state_cb = unrealdns_sock_state_cb;
 	optmask = ARES_OPT_TIMEOUT|ARES_OPT_TRIES|ARES_OPT_FLAGS|ARES_OPT_SOCK_STATE_CB;
-#ifndef _WIN32
 	/* on *NIX don't use the hosts file, since it causes countless useless reads.
 	 * on Windows we use it for now, this could be changed in the future.
 	 */
 	options.lookups = "b";
 	optmask |= ARES_OPT_LOOKUPS;
-#endif
 	n = ares_init_options(&resolver_channel, &options, optmask);
 	if (n != ARES_SUCCESS)
 	{
@@ -178,17 +170,9 @@ int optmask;
 		{
 			/* FATAL */
 			config_error("resolver: ares_init_options() failed with error code %d [%s]", n, ares_strerror(n));
-#ifdef _WIN32
-			win_error();
-#endif
 			exit(-7);
 		}
-		ircd_log(LOG_ERROR, "[warning] Unable to get DNS server from %s. Using the one from set::dns::nameserver (%s) instead",
-#ifdef _WIN32
-			"registry",
-#else
-			"resolv.conf",
-#endif
+		ircd_log(LOG_ERROR, "[warning] Unable to get DNS server from resolv.conf. Using the one from set::dns::nameserver (%s) instead",
 			NAME_SERVER);
 		MyFree(options.servers);
 	}

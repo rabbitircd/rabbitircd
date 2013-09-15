@@ -26,15 +26,11 @@ static char sccsid[] = "@(#)s_auth.c	1.18 4/18/94 (C) 1992 Darren Reed";
 #include "sys.h"
 #include "numeric.h"
 #include "version.h"
-#ifndef _WIN32
 #include <sys/socket.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
 #if defined(__hpux)
 # include "inet.h"
-#endif
-#else
-#include <io.h>
 #endif
 #include <fcntl.h>
 #include "sock.h"		/* If FD_ZERO isn't define up to this point,  */

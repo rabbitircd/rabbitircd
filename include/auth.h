@@ -49,12 +49,3 @@ typedef	struct {
 #endif
 #endif
 #endif
-
-#ifdef _WIN32
-#ifndef AUTHENABLE_SHA1
-#define AUTHENABLE_SHA1
-#endif
-#endif
-
-
-

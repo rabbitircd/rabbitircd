@@ -39,24 +39,16 @@ static char sccsid[] =
 Computing Center and Jarkko Oikarinen";
 #endif
 
-#ifdef _WIN32
-#include <WinSock2.h>
-#endif
-
 #include "struct.h"
 #include "common.h"
 #include "sys.h"
 #include "res.h"
 #include "numeric.h"
 #include "version.h"
-#ifndef _WIN32
 #include <sys/socket.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/resource.h>
-#else
-#include <io.h>
-#endif
 #if defined(_SOLARIS)
 #include <sys/filio.h>
 #endif
@@ -88,11 +80,7 @@ static unsigned char minus_one[] =
 #define IN6ADDRSZ sizeof(struct IN_ADDR)
 #endif
 
-#ifndef _WIN32
 #define SET_ERRNO(x) errno = x
-#else
-#define SET_ERRNO(x) WSASetLastError(x)
-#endif /* _WIN32 */
 
 extern char backupbuf[8192];
 int      OpenFiles = 0;    /* GLOBAL - number of files currently open */
@@ -166,10 +154,6 @@ void close_connections(void)
 	close_listeners();
 
 	OpenFiles = 0;
-
-#ifdef _WIN32
-	WSACleanup();
-#endif
 }
 
 /*
@@ -259,11 +243,7 @@ void report_error(char *text, aClient *cptr)
 
 void report_baderror(char *text, aClient *cptr)
 {
-#ifndef _WIN32
 	int  errtmp = errno;	/* debug may change 'errno' */
-#else
-	int  errtmp = WSAGetLastError();	/* debug may change 'errno' */
-#endif
 	char *host;
 	int  err, len = sizeof(err);
 
@@ -413,7 +393,7 @@ int  inetport(ConfigItem_listen *listener, char *name, int port)
 				ipname, port);
 			strlcat(backupbuf, " - %s:%s", sizeof backupbuf);
 			report_baderror(backupbuf, NULL);
-#if !defined(_WIN32) && defined(INET6)
+#ifdef INET6
 			/* Check if ipv4-over-ipv6 (::ffff:a.b.c.d, RFC2553
 			 * section 3.7) is disabled, like at newer FreeBSD's. -- Syzop
 			 */
@@ -564,7 +544,6 @@ void init_sys(void)
 	}
 }
 #endif
-#ifndef _WIN32
 #ifdef BACKEND_SELECT
 	if (MAXCONNECTIONS > FD_SETSIZE)
 	{
@@ -572,7 +551,6 @@ void init_sys(void)
 		fprintf(stderr, "You might need to recompile the IRCd, or if you're running Linux, read the release notes\n");
 		exit(-1);
 	}
-#endif
 #endif
 	/* Startup message
 	   pid = getpid();
@@ -591,12 +569,11 @@ char logbuf[BUFSIZ];
 # if defined(HPUX)
 (void)setvbuf(stderr, NULL, _IOLBF, 0);
 # else
-#  if !defined(_SOLARIS) && !defined(_WIN32)
+#  ifndef _SOLARIS
 (void)setlinebuf(stderr);
 #  endif
 # endif
 #endif
-#ifndef _WIN32
 #ifdef HAVE_SYSLOG
 closelog(); /* temporary close syslog, as we mass close() fd's below... */
 #endif
@@ -617,11 +594,9 @@ if (!(bootopt & BOOT_DEBUG))
 
 if ((bootopt & BOOT_CONSOLE) || isatty(0))
 {
-#ifndef _AMIGA
 /*		if (fork())
 			exit(0);
 */
-#endif
 #ifdef TIOCNOTTY
 	if ((fd = open("/dev/tty", O_RDWR)) >= 0)
 	{
@@ -644,19 +619,6 @@ if ((bootopt & BOOT_CONSOLE) || isatty(0))
 #endif
 }
 init_dgram:
-#else
-#ifndef NOCLOSEFD
-	close(fileno(stdin));
-	close(fileno(stdout));
-	if (!(bootopt & BOOT_DEBUG))
-	close(fileno(stderr));
-#endif
-#ifdef HAVE_SYSLOG
-openlog("ircd", LOG_PID | LOG_NDELAY, LOG_DAEMON); /* reopened now */
-#endif
-	memset(local, 0, sizeof(aClient*) * MAXCONNECTIONS);
-
-#endif /*_WIN32*/
 
 #ifndef CHROOTDIR
 	init_resolver(1);
@@ -704,7 +666,7 @@ static int check_init(aClient *cptr, char *sockn, size_t size)
 	}
 
 	/* If descriptor is a tty, special checking... */
-#if defined(DEBUGMODE) && !defined(_WIN32)
+#ifdef DEBUGMODE
 	if (isatty(cptr->fd))
 #else
 	if (0)
@@ -1000,7 +962,7 @@ void set_sock_opts(int fd, aClient *cptr)
 		report_error("setsockopt(SO_DEBUG) %s:%s", cptr);
 #endif /* _SOLARIS */
 #endif
-#if defined(SO_USELOOPBACK) && !defined(_WIN32)
+#ifdef SO_USELOOPBACK
 	opt = 1;
 	if (setsockopt(fd, SOL_SOCKET, SO_USELOOPBACK, (OPT_TYPE *)&opt,
 	    sizeof(opt)) < 0)
@@ -1025,7 +987,7 @@ void set_sock_opts(int fd, aClient *cptr)
 	    sizeof(opt)) < 0)
 		report_error("setsockopt(SO_SNDBUF) %s:%s", cptr);
 #endif
-#if defined(IP_OPTIONS) && defined(IPPROTO_IP) && !defined(_WIN32) && !defined(INET6)
+#if defined(IP_OPTIONS) && defined(IPPROTO_IP) && !defined(INET6)
 	{
 		char *s = readbuf, *t = readbuf + sizeof(readbuf) / 2;
 
@@ -1054,11 +1016,7 @@ void set_sock_opts(int fd, aClient *cptr)
 
 int  get_sockerr(aClient *cptr)
 {
-#ifndef _WIN32
 	int  errtmp = errno, err = 0, len = sizeof(err);
-#else
-	int  errtmp = WSAGetLastError(), err = 0, len = sizeof(err);
-#endif
 #ifdef	SO_ERROR
 	if (cptr->fd >= 0)
 		if (!getsockopt(cptr->fd, SOL_SOCKET, SO_ERROR,
@@ -1078,17 +1036,9 @@ int  get_sockerr(aClient *cptr)
 int set_blocking(int fd)
 {
    int flags;
-#ifdef _WIN32
-   int nonb;
-#endif
 
-#ifndef _WIN32
     if ((flags = fcntl(fd, F_GETFL, 0)) < 0
         || fcntl(fd, F_SETFL, flags & ~O_NONBLOCK) < 0)
-#else
-    nonb = 0;
-    if (ioctlsocket(fd, FIONBIO, &nonb) < 0)
-#endif
        return 0;
     else
         return 1;
@@ -1131,7 +1081,6 @@ void set_non_blocking(int fd, aClient *cptr)
 		
 	}
 #else
-# if !defined(_WIN32)
 	if ((res = fcntl(fd, F_GETFL, 0)) == -1)
 	{
 		if (cptr)
@@ -1146,16 +1095,6 @@ void set_non_blocking(int fd, aClient *cptr)
 			report_error("fcntl(fd, F_SETL, nonb) failed for %s:%s", cptr);
 		}
 	}
-# else
-	nonb = 1;
-	if (ioctlsocket(fd, FIONBIO, &nonb) < 0)
-	{
-		if (cptr)
-		{
-			report_error("ioctlsocket(fd,FIONBIO) failed for %s:%s", cptr);
-		}
-	}
-# endif
 #endif
 	return;
 }

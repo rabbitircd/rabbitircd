@@ -29,16 +29,10 @@
 #include "channel.h"
 #include "version.h"
 #include <time.h>
-#ifdef _WIN32
-#include <sys/timeb.h>
-#endif
 #include <sys/stat.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef _WIN32
-#include <io.h>
-#endif
 #include <fcntl.h>
 #include "h.h"
 
@@ -166,20 +160,11 @@ struct {
 #ifdef USE_SSL
 	char egd[32];			/* from EGD */
 #endif
-#ifndef _WIN32
 	struct timeval nowt;	/* time */
 	char rnd[32];			/* /dev/urandom */
-#else
-	MEMORYSTATUS mstat;		/* memory status */
-	struct _timeb nowt;		/* time */
-#endif
 } rdat;
 
-#ifndef _WIN32
 int fd;
-#else
-MEMORYSTATUS mstat;
-#endif
 
 	arc4_init();
 
@@ -193,7 +178,6 @@ MEMORYSTATUS mstat;
 #endif
 
 	/* Grab OS specific "random" data */
-#ifndef _WIN32
 	gettimeofday(&rdat.nowt, NULL);
 	fd = open("/dev/urandom", O_RDONLY);
 	if (fd) {
@@ -202,10 +186,6 @@ MEMORYSTATUS mstat;
 		close(fd);
 	}
 	/* TODO: more!?? */
-#else
-	_ftime(&rdat.nowt);
-	GlobalMemoryStatus (&rdat.mstat);
-#endif	
 
 	arc4_addrandom(&rdat, sizeof(rdat));
 

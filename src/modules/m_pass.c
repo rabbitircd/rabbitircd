@@ -32,19 +32,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef _WIN32
-#include <io.h>
-#else
 #include <sys/socket.h>
-#endif
 #include "inet.h"
 #include <fcntl.h>
 #include "h.h"
 #ifdef STRIPBADWORDS
 #include "badwords.h"
-#endif
-#ifdef _WIN32
-#include "version.h"
 #endif
 
 DLLFUNC int m_pass(aClient *cptr, aClient *sptr, int parc, char *parv[]);

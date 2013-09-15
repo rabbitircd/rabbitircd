@@ -29,9 +29,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>
-#ifdef _WIN32
-#include <io.h>
-#endif
 #include <fcntl.h>
 
 /* new FD management code, based on mowgli.eventloop from atheme, hammered into Unreal by
@@ -63,11 +60,7 @@ int fd_open(int fd, const char *desc)
 	return fde->fd;
 }
 
-#ifndef _WIN32
 # define OPEN_MODES	S_IRUSR|S_IWUSR
-#else
-# define OPEN_MODES	S_IREAD|S_IWRITE
-#endif
 
 int fd_fileopen(const char *path, unsigned int flags)
 {

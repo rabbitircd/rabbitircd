@@ -77,7 +77,6 @@
  * Kind of ugly, but it gets the job done.  You can also fiddle with
  * this to determine what backend is used.
  */
-#ifndef _WIN32
 # ifdef HAVE_EPOLL
 #  define BACKEND_EPOLL
 # else
@@ -91,16 +90,9 @@
 #   endif
 #  endif
 # endif
-#else
-# define BACKEND_SELECT
-#endif
 
-/* Define the ircd module suffix, should be .so on UNIX, and .dll on Windows. */
-#ifndef _WIN32
+/* Define the ircd module suffix, should be .so */
 # define MODULE_SUFFIX	".so"
-#else
-# define MODULE_SUFFIX	".dll"
-#endif
 
 /*
  * Defining this will allow all ircops to see people in +s channels
@@ -477,9 +469,7 @@
  * it goes into a loop that it will still stall completely... forever..).
  * This is kinda experimental, and requires getrusage.
  */
-#ifndef _WIN32
 #define SPAMFILTER_DETECTSLOW
-#endif
 
 /* ------------------------- END CONFIGURATION SECTION -------------------- */
 #define MOTD MPATH
@@ -522,13 +512,8 @@
 #endif
 
 #ifdef DEBUGMODE
-#ifndef _WIN32
 		extern void debug(int, char *, ...);
 #define Debug(x) debug x
-#else
-		extern void debug(int, char *, ...);
-#define Debug(x) debug x
-#endif
 #define LOGFILE LPATH
 #else
 #define Debug(x) ;
@@ -614,12 +599,6 @@ error You stuffed up config.h signals
  */
 #if defined(SOL20) || defined(SOL25) || defined(SOL26) || defined(SOL27)
 #define _SOLARIS
-#endif
-/*
- * Cleaup for WIN32 platform.
- */
-#ifdef _WIN32
-# undef FORCE_CORE
 #endif
 #ifdef NEED_BCMP
 #define bcmp memcmp

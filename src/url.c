@@ -31,10 +31,8 @@
 extern char *SSLKeyPasswd;
 #endif
 
-#ifndef _WIN32
 extern uid_t irc_uid;
 extern gid_t irc_gid;
-#endif
 
 CURLM *multihandle;
 

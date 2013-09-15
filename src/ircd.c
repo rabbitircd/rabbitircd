@@ -35,21 +35,14 @@ Computing Center and Jarkko Oikarinen";
 #include <signal.h>
 #include <fcntl.h>
 #include <sys/types.h>
-#ifndef _WIN32
 #include <sys/file.h>
 #include <pwd.h>
 #include <grp.h>
 #include <sys/time.h>
-#else
-#include <io.h>
-#include <direct.h>
-#endif
 #ifdef HPUX
 #define _KERNEL			/* HPUX has the world's worst headers... */
 #endif
-#ifndef _WIN32
 #include <sys/resource.h>
-#endif
 #ifdef HPUX
 #undef _KERNEL
 #endif
@@ -67,9 +60,6 @@ Computing Center and Jarkko Oikarinen";
 #endif
 #include "version.h"
 #include "proto.h"
-#ifdef _WIN32
-extern BOOL IsService;
-#endif
 #ifdef USE_LIBCURL
 #include <curl/curl.h>
 #endif
@@ -81,19 +71,15 @@ char *malloc_options = "h" MALLOC_FLAGS_EXTRA;
 #endif
 time_t TSoffset = 0;
 
-#ifndef _WIN32
 extern char unreallogo[];
-#endif
 int  SVSNOOP = 0;
 extern MODVAR char *buildid;
 time_t timeofday = 0;
 int  tainted = 0;
 LoopStruct loop;
 MODVAR MemoryInfo StatsZ;
-#ifndef _WIN32
 uid_t irc_uid = 0;
 gid_t irc_gid = 0; 
-#endif
 
 int  R_do_dns, R_fin_dns, R_fin_dnsc, R_fail_dns, R_do_id, R_fin_id, R_fail_id;
 
@@ -104,11 +90,6 @@ ircstats IRCstats;
 aClient me;			/* That's me */
 MODVAR char *me_hash;
 extern char backupbuf[8192];
-#ifdef _WIN32
-extern void CleanUpSegv(int sig);
-extern SERVICE_STATUS_HANDLE IRCDStatusHandle;
-extern SERVICE_STATUS IRCDStatus;
-#endif
 
 unsigned char conf_debuglevel = 0;
 
@@ -144,11 +125,7 @@ extern void init_glines(void);
 extern void tkl_init(void);
 
 MODVAR TS   last_garbage_collect = 0;
-#ifndef _WIN32
 MODVAR char **myargv;
-#else
-LPCSTR cmdLine;
-#endif
 int  portnum = -1;		/* Server port number, listening this */
 char *configfile = CONFIGFILE;	/* Server configuration file */
 int  debuglevel = 10;		/* Server debug level */
@@ -166,7 +143,7 @@ MODVAR TS   lastlucheck = 0;
 #endif
 
 MODVAR TS   NOW;
-#if	defined(PROFIL) && !defined(_WIN32)
+#ifdef PROFIL
 extern etext();
 
 VOIDSIG s_monitor(void)
@@ -193,34 +170,11 @@ VOIDSIG s_monitor(void)
 
 VOIDSIG s_die()
 {
-#ifdef _WIN32
-	aClient *cptr;
-	if (!IsService)
-	{
-		unload_all_modules();
-
-		list_for_each_entry(cptr, &lclient_list, lclient_node)
-			(void) send_queued(cptr);
-
-		exit(-1);
-	}
-	else {
-		SERVICE_STATUS status;
-		SC_HANDLE hSCManager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
-		SC_HANDLE hService = OpenService(hSCManager, "UnrealIRCd", SERVICE_STOP); 
-		ControlService(hService, SERVICE_CONTROL_STOP, &status);
-	}
-#else
 	unload_all_modules();
 	exit(-1);
-#endif
 }
 
-#ifndef _WIN32
 static VOIDSIG s_rehash()
-#else
-VOIDSIG s_rehash()
-#endif
 {
 #ifdef	POSIX_SIGNALS
 	struct sigaction act;
@@ -233,9 +187,7 @@ VOIDSIG s_rehash()
 	(void)sigaddset(&act.sa_mask, SIGHUP);
 	(void)sigaction(SIGHUP, &act, NULL);
 #else
-# ifndef _WIN32
 	(void)signal(SIGHUP, s_rehash);	/* sysV -argv */
-# endif
 #endif
 }
 
@@ -262,7 +214,6 @@ VOIDSIG s_restart()
 }
 
 
-#ifndef _WIN32
 VOIDSIG dummy()
 {
 #ifndef HAVE_RELIABLE_SIGNALS
@@ -294,8 +245,6 @@ VOIDSIG dummy()
 #endif
 }
 
-#endif				/* _WIN32 */
-
 
 void server_reboot(char *mesg)
 {
@@ -314,7 +263,6 @@ void server_reboot(char *mesg)
 #ifdef HAVE_SYSLOG
 	(void)closelog();
 #endif
-#ifndef _WIN32
 	for (i = 3; i < MAXCONNECTIONS; i++)
 		(void)close(i);
 	if (!(bootopt & (BOOT_TTY | BOOT_DEBUG)))
@@ -322,41 +270,8 @@ void server_reboot(char *mesg)
 	(void)close(1);
 	(void)close(0);
 	(void)execv(MYNAME, myargv);
-#else
-	close_connections();
-	if (!IsService)
-	{
-		CleanUp();
-		WinExec(cmdLine, SW_SHOWDEFAULT);
-	}
-#endif
-#ifndef _WIN32
 	Debug((DEBUG_FATAL, "Couldn't restart server: %s", strerror(errno)));
-#else
-	Debug((DEBUG_FATAL, "Couldn't restart server: %s",
-	    strerror(GetLastError())));
-#endif
 	unload_all_modules();
-#ifdef _WIN32
-	if (IsService)
-	{
-		SERVICE_STATUS status;
-		PROCESS_INFORMATION pi;
-		STARTUPINFO si;
-		char fname[MAX_PATH];
-		bzero(&status, sizeof(status));
-		bzero(&si, sizeof(si));
-		IRCDStatus.dwCurrentState = SERVICE_STOP_PENDING;
-		SetServiceStatus(IRCDStatusHandle, &IRCDStatus);
-		GetModuleFileName(GetModuleHandle(NULL), fname, MAX_PATH);
-		CreateProcess(fname, "restartsvc", NULL, NULL, FALSE, 
-			0, NULL, NULL, &si, &pi);
-		IRCDStatus.dwCurrentState = SERVICE_STOPPED;
-		SetServiceStatus(IRCDStatusHandle, &IRCDStatus);
-		ExitProcess(0);
-	}
-	else
-#endif
 	exit(-1);
 }
 
@@ -693,7 +608,6 @@ EVENT(check_pings)
 */
 static int bad_command(const char *argv0)
 {
-#ifndef _WIN32
 	if (!argv0)
 		argv0 = "ircd";
 
@@ -716,13 +630,6 @@ static int bad_command(const char *argv0)
 	     "\n",
 	     argv0, CONFIGFILE);
 	(void)printf("Server not started\n\n");
-#else
-	if (!IsService) {
-		MessageBox(NULL,
-		    "Usage: wircd [-h servername] [-p portnumber] [-x loglevel]\n",
-		    "UnrealIRCD/32", MB_OK);
-	}
-#endif
 	return (-1);
 }
 
@@ -738,11 +645,7 @@ char buf[1024];
 	va_start(va, fmt);
 	vsnprintf(buf, sizeof(buf), fmt, va);
 	va_end(va);
-#ifndef _WIN32
 	fprintf(stderr, "[!!!] %s\n", buf);
-#else
-	win_log("[!!!] %s", buf);
-#endif	
 }
 
 /** Ugly version checker that ensures ssl/curl runtime libraries match the
@@ -793,17 +696,10 @@ int error = 0;
 
 	if (error)
 	{
-#ifndef _WIN32
 		version_check_logerror("Header<->library mismatches can make UnrealIRCd *CRASH*! "
 		                "Make sure you don't have multiple versions of openssl installed (eg: "
 		                "one in /usr and one in /usr/local). And, if you recently upgraded them, "
 		                "be sure to recompile Unreal.");
-#else
-		version_check_logerror("Header<->library mismatches can make UnrealIRCd *CRASH*! "
-		                "This should never happen with official Windows builds... unless "
-		                "you overwrote any .dll files with newer/older ones or something.");
-		win_error();
-#endif
 		tainted = 1;
 	}
 }
@@ -892,7 +788,6 @@ struct ThrottlingBucket z = { NULL, NULL, {0}, 0, 0};
 }
 
 
-#ifndef _WIN32
 static void generate_cloakkeys()
 {
 	/* Generate 3 cloak keys */
@@ -944,7 +839,6 @@ static void generate_cloakkeys()
 			keyNum--;
 	}
 }
-#endif
 
 /* MY tdiff... because 'double' sucks.
  * This should work until 2038, and very likely after that as well
@@ -952,22 +846,13 @@ static void generate_cloakkeys()
  */
 #define mytdiff(a, b)   ((long)a - (long)b)
 
-#ifndef _WIN32
 int main(int argc, char *argv[])
-#else
-int InitwIRCD(int argc, char *argv[])
-#endif
 {
-#ifdef _WIN32
-	WORD wVersionRequested = MAKEWORD(1, 1);
-	WSADATA wsaData;
-#else
 	uid_t uid, euid;
 	gid_t gid, egid;
 	TS   delay = 0;
 	struct passwd *pw;
 	struct group *gr;
-#endif
 #ifdef HAVE_PSTAT
 	union pstun pstats;
 #endif
@@ -985,11 +870,6 @@ int InitwIRCD(int argc, char *argv[])
 
 	SetupEvents();
 
-#ifdef _WIN32
-	CreateMutex(NULL, FALSE, "UnrealMutex");
-	SetErrorMode(SEM_FAILCRITICALERRORS);
-#endif
-#if !defined(_WIN32) && !defined(_AMIGA)
 	sbrk0 = (char *)sbrk((size_t)0);
 	uid = getuid();
 	euid = geteuid();
@@ -1015,7 +895,6 @@ int InitwIRCD(int argc, char *argv[])
 	(void)moncontrol(1);
 	(void)signal(SIGUSR1, s_monitor);
 # endif
-#endif
 #if defined(IRC_USER) && defined(IRC_GROUP)
 	if ((int)getuid() == 0) {
 
@@ -1088,16 +967,8 @@ int InitwIRCD(int argc, char *argv[])
 		exit(5);
 	}
 #endif	 /*CHROOTDIR*/
-#ifndef _WIN32
 	myargv = argv;
-#else
-	cmdLine = GetCommandLine();
-#endif
-#ifndef _WIN32
 	(void)umask(077);	/* better safe than sorry --SRB */
-#else
-	WSAStartup(wVersionRequested, &wsaData);
-#endif
 	bzero((char *)&me, sizeof(me));
 	bzero(&StatsZ, sizeof(StatsZ));
 	setup_signals();
@@ -1140,7 +1011,6 @@ int InitwIRCD(int argc, char *argv[])
 				p = "";
 		}
 		switch (flag) {
-#ifndef _WIN32
 		  case 'a':
 			  bootopt |= BOOT_AUTODIE;
 			  break;
@@ -1153,15 +1023,11 @@ int InitwIRCD(int argc, char *argv[])
 		  case 'd':
 			  if (setuid((uid_t) uid) == -1)
 			      printf("WARNING: Could not drop privileges: %s\n", strerror(errno));
-#else
-		  case 'd':
-#endif
 			  dpath = p;
 			  break;
 		  case 'F':
 			  bootopt |= BOOT_NOFORK;
 			  break;
-#ifndef _WIN32
 		  case 'f':
 #ifndef CMDLINE_CONFIG
 		      if ((uid == euid) && (gid == egid))
@@ -1185,8 +1051,6 @@ int InitwIRCD(int argc, char *argv[])
 			  }
 			  strlcpy(me.name, p, sizeof(me.name));
 			  break;
-#endif
-#ifndef _WIN32
 		  case 'P':{
 			  short type;
 			  char *result;
@@ -1211,9 +1075,8 @@ int InitwIRCD(int argc, char *argv[])
 			  }
 			  printf("Encrypted password is: %s\n", result);
 			  exit(0);
+                          break;
 		  }
-#endif
-
 		  case 'p':
 			  if ((portarg = atoi(p)) > 0)
 				  portnum = portarg;
@@ -1237,7 +1100,6 @@ int InitwIRCD(int argc, char *argv[])
 			      (long)CLIENT_REMOTE_SIZE);
 			  exit(0);
 			  break;
-#ifndef _WIN32
 		  case 't':
 			  if (setuid((uid_t) uid) == -1)
 			      printf("WARNING: Could not drop privileges: %s\n", strerror(errno));
@@ -1246,52 +1108,29 @@ int InitwIRCD(int argc, char *argv[])
 			  break;
 		  case 'v':
 			  (void)printf("%s build %s\n", version, buildid);
-#else
-		  case 'v':
-			  if (!IsService) {
-				  MessageBox(NULL, version,
-				      "UnrealIRCD/Win32 version", MB_OK);
-			  }
-#endif
 			  exit(0);
 		  case 'C':
 			  config_verbose = atoi(p);
 			  break;
 		  case 'x':
 #ifdef	DEBUGMODE
-# ifndef _WIN32
 			  if (setuid((uid_t) uid) == -1)
 			      printf("WARNING: Could not drop privileges: %s\n", strerror(errno));
-# endif
 			  debuglevel = atoi(p);
 			  debugmode = *p ? p : "0";
 			  bootopt |= BOOT_DEBUG;
-			  break;
 #else
-# ifndef _WIN32
 			  (void)fprintf(stderr,
 			      "%s: DEBUGMODE must be defined for -x y\n",
 			      myargv[0]);
-# else
-			  if (!IsService) {
-				  MessageBox(NULL,
-				      "DEBUGMODE must be defined for -x option",
-				      "UnrealIRCD/32", MB_OK);
-			  }
-# endif
 			  exit(0);
 #endif
-#ifndef _WIN32
+			  break;
 		  case 'k':
 			  generate_cloakkeys();
 			  exit(0);
-#endif
 		  default:
-#ifndef _WIN32
 			  return bad_command(myargv[0]);
-#else
-			  return bad_command(NULL);
-#endif
 			  break;
 		}
 	}
@@ -1300,30 +1139,15 @@ int InitwIRCD(int argc, char *argv[])
 
 #ifndef	CHROOTDIR
 	if (chdir(dpath)) {
-# ifndef _WIN32
 		perror("chdir");
 		fprintf(stderr, "ERROR: Unable to change to directory '%s'\n", dpath);
-# else
-		if (!IsService) {
-			MessageBox(NULL, strerror(GetLastError()),
-			    "UnrealIRCD/32: chdir()", MB_OK);
-		}
-# endif
 		exit(-1);
 	}
 #endif
-#ifndef _WIN32
 	mkdir("tmp", S_IRUSR|S_IWUSR|S_IXUSR); /* Create the tmp dir, if it doesn't exist */
- #if defined(USE_LIBCURL) && defined(REMOTEINC_SPECIALCACHE)
+#if defined(USE_LIBCURL) && defined(REMOTEINC_SPECIALCACHE)
  	mkdir("cache", S_IRUSR|S_IWUSR|S_IXUSR); /* Create the cache dir, if using curl and it doesn't exist */
- #endif
-#else
-	mkdir("tmp");
- #if defined(USE_LIBCURL) && defined(REMOTEINC_SPECIALCACHE)
- 	mkdir("cache");
- #endif
 #endif
-#ifndef _WIN32
 	/*
 	 * didn't set debuglevel 
 	 */
@@ -1335,16 +1159,9 @@ int InitwIRCD(int argc, char *argv[])
 		    "you specified -t without -x. use -x <n>\n");
 		exit(-1);
 	}
-#endif
 
-	/* HACK! This ifndef should be removed when the restart-on-w32-brings-up-dialog bug
-	 * is fixed. This is just an ugly "ignore the invalid parameter" thing ;). -- Syzop
-	 */
-#ifndef _WIN32
 	if (argc > 0)
 		return bad_command(myargv[0]);	/* This should exit out */
-#endif
-#ifndef _WIN32
 	fprintf(stderr, "%s", unreallogo);
 	fprintf(stderr, "                           v%s\n", VERSIONONLY);
 	fprintf(stderr, "                     using %s\n", tre_version());
@@ -1355,7 +1172,6 @@ int InitwIRCD(int argc, char *argv[])
 	fprintf(stderr, "                     using %s\n", curl_version());
 #endif
 	fprintf(stderr, "\n");
-#endif
 	clear_client_hash_table();
 	clear_channel_hash_table();
 	clear_watch_hash_table();
@@ -1367,7 +1183,7 @@ int InitwIRCD(int argc, char *argv[])
 	DeleteTempModules();
 	booted = FALSE;
 /* Hack to stop people from being able to read the config file */
-#if !defined(_WIN32) && !defined(_AMIGA) && !defined(OSXTIGER) && DEFAULT_PERMISSIONS != 0
+#if !defined(OSXTIGER) && DEFAULT_PERMISSIONS != 0
 	chmod(CPATH, DEFAULT_PERMISSIONS);
 #endif
 	init_dynconf();
@@ -1410,17 +1226,13 @@ int InitwIRCD(int argc, char *argv[])
 	}
 
 #ifdef USE_SSL
-#ifndef _WIN32
 	fprintf(stderr, "* Initializing SSL.\n");
-#endif
 	init_ssl();
 #endif
-#ifndef _WIN32
 	fprintf(stderr,
 	    "* Dynamic configuration initialized .. booting IRCd.\n");
 	fprintf(stderr,
 	    "---------------------------------------------------------------------\n");
-#endif
 	open_debugfile();
 	if (portnum < 0)
 		portnum = PORTNUM;
@@ -1465,7 +1277,7 @@ int InitwIRCD(int argc, char *argv[])
 	(void)add_to_client_hash_table(me.name, &me);
 	(void)add_to_id_hash_table(me.id, &me);
 	list_add(&me.client_node, &global_server_list);
-#if !defined(_AMIGA) && !defined(_WIN32) && !defined(NO_FORKING)
+#ifndef NO_FORKING
 	if (!(bootopt & BOOT_NOFORK))
 		if (fork())
 			exit(0);
@@ -1485,7 +1297,7 @@ int InitwIRCD(int argc, char *argv[])
 	R_fin_id = strlen(REPORT_FIN_ID);
 	R_fail_id = strlen(REPORT_FAIL_ID);
 
-#if !defined(IRC_USER) && !defined(_WIN32)
+#if !defined(IRC_USER)
 	if ((uid != euid) && !euid) {
 		(void)fprintf(stderr,
 		    "ERROR: do not run ircd setuid root. Make it setuid a normal user.\n");
@@ -1551,26 +1363,7 @@ int InitwIRCD(int argc, char *argv[])
 	l_commands_Load(0);
 #endif
 
-#ifdef _WIN32
-	return 1;
-}
-
-
-void SocketLoop(void *dummy)
-{
-	TS   delay = 0;
-	static TS lastglinecheck = 0;
-	TS   last_tune;
-	
-	
-	while (1)
-#else
-	/*
-	 * Forever drunk .. forever drunk ..
-	 * * (Sorry Alphaville.)
-	 */
 	for (;;)
-#endif
 	{
 
 #define NEGATIVE_SHIFT_WARN	-15
@@ -1710,7 +1503,6 @@ static void open_debugfile(void)
 
 		(void)strlcpy(cptr->sockhost, me.sockhost,
 		    sizeof cptr->sockhost);
-# ifndef _WIN32
 		(void)printf("isatty = %d ttyname = %#x\n",
 		    isatty(2), (u_int)ttyname(2));
 		if (!(bootopt & BOOT_TTY)) {	/* leave debugging output on fd 2 */
@@ -1726,7 +1518,6 @@ static void open_debugfile(void)
 		} else if (isatty(2) && ttyname(2))
 			strlcpy(cptr->name, ttyname(2), sizeof(cptr->name));
 		else
-# endif
 			strlcpy(cptr->name, "FD2-Pipe", sizeof(cptr->name));
 		Debug((DEBUG_FATAL,
 		    "Debug: File <%s> Level: %d at %s", cptr->name,
@@ -1737,7 +1528,6 @@ static void open_debugfile(void)
 
 static void setup_signals()
 {
-#ifndef _WIN32
 #ifdef	POSIX_SIGNALS
 	struct sigaction act;
 	act.sa_handler = SIG_IGN;
@@ -1786,8 +1576,5 @@ static void setup_signals()
 	 * ** should change that default to interrupting calls.
 	 */
 	(void)siginterrupt(SIGALRM, 1);
-#endif
-#else
-	(void)signal(SIGSEGV, CleanUpSegv);
 #endif
 }

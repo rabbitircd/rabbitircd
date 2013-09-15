@@ -26,13 +26,6 @@
 #include "proto.h"
 #include "sys.h"
 #include <string.h>
-#ifdef _WIN32
-#include <windows.h>
-
-#define IDC_PASS                        1166
-extern HINSTANCE hInst;
-extern HWND hwIRCDWnd;
-#endif
 
 #define SAFE_SSL_READ 1
 #define SAFE_SSL_WRITE 2
@@ -54,31 +47,6 @@ typedef struct {
 } StreamIO;
 
 #define CHK_SSL(err) if ((err)==-1) { ERR_print_errors_fp(stderr); }
-#ifdef _WIN32
-LRESULT SSLPassDLG(HWND hDlg, UINT Message, WPARAM wParam, LPARAM lParam) {
-	static StreamIO *stream;
-	switch (Message) {
-		case WM_INITDIALOG:
-			stream = (StreamIO*)lParam;
-			return TRUE;
-		case WM_COMMAND:
-			if (LOWORD(wParam) == IDCANCEL) {
-				*stream->buffer = NULL;
-				EndDialog(hDlg, IDCANCEL);
-			}
-			else if (LOWORD(wParam) == IDOK) {
-				GetDlgItemText(hDlg, IDC_PASS, *stream->buffer, *stream->size);
-				EndDialog(hDlg, IDOK);
-			}
-			return FALSE;
-		case WM_CLOSE:
-			*stream->buffer = NULL;
-			EndDialog(hDlg, IDCANCEL);
-		default:
-			return FALSE;
-	}
-}
-#endif				
 
 /**
  * Retrieve a static string for the given SSL error.
@@ -129,24 +97,12 @@ int  ssl_pem_passwd_cb(char *buf, int size, int rwflag, void *password)
 	char *pass;
 	static int before = 0;
 	static char beforebuf[1024];
-#ifdef _WIN32
-	StreamIO stream;
-	char passbuf[512];	
-	int passsize = 512;
-#endif
 	if (before)
 	{
 		strlcpy(buf, (char *)beforebuf, size);
 		return (strlen(buf));
 	}
-#ifndef _WIN32
 	pass = getpass("Password for SSL private key: ");
-#else
-	pass = passbuf;
-	stream.buffer = &pass;
-	stream.size = &passsize;
-	DialogBoxParam(hInst, "SSLPass", hwIRCDWnd, (DLGPROC)SSLPassDLG, (LPARAM)&stream); 
-#endif
 	if (pass)
 	{
 		strlcpy(buf, (char *)pass, size);
