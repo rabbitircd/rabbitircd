@@ -10,7 +10,7 @@ dnl Unreal.nfo
 dnl .CHANGES.NEW
 dnl src/version.c.SH
 
-AC_INIT([unrealircd], [3.4-dev], [http://bugs.unrealircd.org/], [], [http://unrealircd.org/])
+AC_INIT([rabbitircd], [0.1], [http://github.com/rabbitircd/rabbitircd/], [], [http://rabbitircd.net/])
 AC_CONFIG_SRCDIR([src/ircd.c])
 AC_CONFIG_HEADER([include/setup.h])
 AC_CONFIG_AUX_DIR([autoconf])
@@ -23,11 +23,11 @@ fi
 
 dnl Calculate the versions. Perhaps the use of expr is a little too extravagant
 # Generation version number (e.g.: 3 for Unreal3*)
-UNREAL_VERSION_GENERATION=["3"]
+UNREAL_VERSION_GENERATION=["0"]
 AC_DEFINE_UNQUOTED([UNREAL_VERSION_GENERATION], [$UNREAL_VERSION_GENERATION], [Generation version number (e.g.: 3 for Unreal3*)])
 
 # Major version number (e.g.: 2 for Unreal3.2*)
-UNREAL_VERSION_MAJOR=["4"]
+UNREAL_VERSION_MAJOR=["1"]
 AC_DEFINE_UNQUOTED([UNREAL_VERSION_MAJOR], [$UNREAL_VERSION_MAJOR], [Major version number (e.g.: 2 for Unreal3.2*)])
 
 # Minor version number (e.g.: 1 for Unreal3.2.1)
@@ -675,9 +675,9 @@ CHECK_LIBCURL
 
 AC_CONFIG_FILES([Makefile
 	src/modules/Makefile
-	unreal
+	rabbitircd
 	ircdcron/ircdchk
 	ircdcron/ircd.cron])
 AC_OUTPUT
-chmod 0700 unreal
+chmod 0700 rabbitircd
 chmod 0700 ircdcron/ircdchk

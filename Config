@@ -110,8 +110,6 @@ while [ -z "$TEST" ] ; do
 done
 if [ "$GENCERTIFICATE" = 1 ]; then
 	make pem
-	cat .SICI
-	read cc
 else
 echo "Ok, not generating SSL certificate. Make sure that the certificate and key"
 echo "are installed as server.crt.pem and server.key.pem prior to starting the IRCd."
@@ -409,21 +407,6 @@ fi
 if [ -n "$CLEAN" ] ; then
 	rm -f config.cache
 fi
-
-clear
-
-    if [ -f ".CHANGES.NEW" -a -z "$NOINTRO" ] ; then
-        more .CHANGES.NEW
-        echo $n "[Enter to continue]"
-        read cc
-        clear
-    fi
-    if [ -f ".RELEASE.NOTES" -a -z "$NOINTRO" ] ; then
-        more .RELEASE.NOTES
-        echo $n "[Enter to continue]"
-        read cc
-        clear
-    fi
 
 TEST="$DPATH"
 echo ""
