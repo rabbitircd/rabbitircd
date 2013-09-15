@@ -410,21 +410,6 @@ if [ -n "$CLEAN" ] ; then
 	rm -f config.cache
 fi
 
-clear
-
-    if [ -f ".CHANGES.NEW" -a -z "$NOINTRO" ] ; then
-        more .CHANGES.NEW
-        echo $n "[Enter to continue]"
-        read cc
-        clear
-    fi
-    if [ -f ".RELEASE.NOTES" -a -z "$NOINTRO" ] ; then
-        more .RELEASE.NOTES
-        echo $n "[Enter to continue]"
-        read cc
-        clear
-    fi
-
 TEST="$DPATH"
 echo ""
 echo "What directory are all the server configuration files in?"
