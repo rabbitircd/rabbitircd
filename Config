@@ -858,20 +858,7 @@ RUN_CONFIGURE
 cd "$UNREALCWD"
 cat << __EOF__
 
- _______________________________________________________________________
-|                                                                       |
-|                    UnrealIRCd Compile-Time Config                     |
-|_______________________________________________________________________|
-|_______________________________________________________________________|
-|                                                                       |
-| Now all you have to do is type 'make' and let it compile. When that's |
-| done, you will receive other instructions on what to do next.         |
-|                                                                       |
-|_______________________________________________________________________|
-|_______________________________________________________________________|
-|                        - The UnrealIRCd Team -                        |
-|                                                                       |
-| * Syzop     syzop@unrealircd.com                                      |
-|_______________________________________________________________________|
+Configured!  Now, just type make install, and you're done.
+
 __EOF__
 
