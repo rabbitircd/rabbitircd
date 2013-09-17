@@ -40,7 +40,6 @@ extern gid_t irc_gid;
 #include <string.h>
 #include <utime.h>
 extern int errno;		/* ...seems that errno.h doesn't define this everywhere */
-#endif
 
 extern void outofmemory();
 

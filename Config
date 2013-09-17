@@ -333,12 +333,12 @@ UNREALCWD="`pwd`"
 DPATH="`pwd`"
 SPATH="`pwd`/src/ircd"
 DEFPERM="0600"
-CRYPTOIRCD=""
+CRYPTOIRCD="1"
 SSLDIR=""
 NICKNAMEHISTORYLENGTH="2000"
 MAXSENDQLENGTH="3000000"
 MAXCONNECTIONS="1024"
-INET6=""
+INET6="1"
 REMOTEINC=""
 CURLDIR=""
 PREFIXAQ="1"
@@ -858,20 +858,7 @@ RUN_CONFIGURE
 cd "$UNREALCWD"
 cat << __EOF__
 
- _______________________________________________________________________
-|                                                                       |
-|                    UnrealIRCd Compile-Time Config                     |
-|_______________________________________________________________________|
-|_______________________________________________________________________|
-|                                                                       |
-| Now all you have to do is type 'make' and let it compile. When that's |
-| done, you will receive other instructions on what to do next.         |
-|                                                                       |
-|_______________________________________________________________________|
-|_______________________________________________________________________|
-|                        - The UnrealIRCd Team -                        |
-|                                                                       |
-| * Syzop     syzop@unrealircd.com                                      |
-|_______________________________________________________________________|
+Configured!  Now, just type make install, and you're done.
+
 __EOF__
 
