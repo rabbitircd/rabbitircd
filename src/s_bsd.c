@@ -97,10 +97,6 @@ extern char *version;
 extern ircstats IRCstats;
 MODVAR TS last_allinuse = 0;
 
-#ifdef USE_LIBCURL
-extern void url_do_transfers_async(void);
-#endif
-
 /*
  * Try and find the correct name to use with getrlimit() for setting the max.
  * number of files allowed to be open by this process.

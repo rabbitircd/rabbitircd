@@ -40,10 +40,6 @@ static char sccsid[] =
 #include "h.h"
 #include "proto.h"
 #include <string.h>
-#ifdef USE_LIBCURL
-#include "url.h"
-#include <curl/curl.h>
-#endif
 /* for uname(), is POSIX so should be OK... */
 #include <sys/utsname.h>
 extern VOIDSIG s_die();
@@ -64,9 +60,6 @@ aMotdFile smotd;
 
 void read_motd(const char *filename, aMotdFile *motd);
 void do_read_motd(const char *filename, aMotdFile *themotd);
-#ifdef USE_LIBCURL
-void read_motd_asynch_downloaded(const char *url, const char *filename, const char *errorbuf, int cached, aMotdDownload *motd_download);
-#endif
 
 extern aMotdLine *Find_file(char *, short);
 
@@ -184,10 +177,6 @@ CMD_FUNC(m_version)
 #ifdef USE_SSL
 		if (IsAnOper(sptr))
 			sendto_one(sptr, ":%s NOTICE %s :%s", me.name, sptr->name, OPENSSL_VERSION_TEXT);
-#endif
-#ifdef USE_LIBCURL
-		if (IsAnOper(sptr))
-			sendto_one(sptr, ":%s NOTICE %s :%s", me.name, sptr->name, curl_version());
 #endif
 		if (MyClient(sptr))
 normal:
@@ -946,119 +935,12 @@ int short_motd(aClient *sptr)
  */
 void read_motd(const char *filename, aMotdFile *themotd)
 {
-#ifdef USE_LIBCURL
-	time_t modtime;
-	aMotdDownload *motd_download;
-#endif
-
 	/* TODO: if themotd points to a tld's motd,
 	   could a rehash disrupt this pointer?*/
-#ifdef USE_LIBCURL
-	if(themotd->motd_download)
-	{
-		themotd->motd_download->themotd = NULL;
-		/*
-		 * It is not our job to free() motd_download, the
-		 * read_motd_asynch_downloaded() function will do that
-		 * when it sees that ->themod == NULL.
-		 */
-		themotd->motd_download = NULL;
-	}
-
-	/* if filename is NULL, do_read_motd will catch it */
-	if(filename && url_is_valid(filename))
-	{
-		/* prepare our payload for read_motd_asynch_downloaded() */
-		motd_download = MyMallocEx(sizeof(aMotdDownload));
-		if(!motd_download)
-			outofmemory();
-		motd_download->themotd = themotd;
-		themotd->motd_download = motd_download;
-
-#ifdef REMOTEINC_SPECIALCACHE
-		modtime = unreal_getfilemodtime(unreal_mkcache(filename));
-#else
-		modtime = 0;
-#endif
-
-		download_file_async(filename, modtime, (vFP)read_motd_asynch_downloaded, motd_download);
-		return;
-	}
-#endif /* USE_LIBCURL */
-
 	do_read_motd(filename, themotd);
 
 	return;
 }
-
-#ifdef USE_LIBCURL
-/**
-   Callback for download_file_async() called from read_motd()
-   below.
-   @param url the URL curl groked or NULL if the MOTD is stored locally.
-   @param filename the path to the local copy of the MOTD or NULL if either cached=1 or there's an error.
-   @param errorbuf NULL or an errorstring if there was an error while downloading the MOTD.
-   @param cached 0 if the URL was downloaded freshly or 1 if the last download was canceled and the local copy should be used.
- */
-void read_motd_asynch_downloaded(const char *url, const char *filename, const char *errorbuf, int cached, aMotdDownload *motd_download)
-{
-	aMotdFile *themotd;
-
-	themotd = motd_download->themotd;
-	/*
-	  check if the download was soft-canceled. See struct.h's docs on
-	  struct MotdDownload for details.
-	*/
-	if(!themotd)
-	{
-		MyFree(motd_download);
-		return;
-	}
-
-	/* errors -- check for specialcached version if applicable */
-	if(!cached && !filename)
-	{
-#ifdef REMOTEINC_SPECIALCACHE
-		if(has_cached_version(url))
-		{
-			config_warn("Error downloading MOTD file from \"%s\": %s -- using cached version instead.", url, errorbuf);
-			filename = unreal_mkcache(url);
-		} else {
-#endif
-			config_error("Error downloading MOTD file from \"%s\": %s", url, errorbuf);
-
-			/* remove reference to this chunk of memory about to be freed. */
-			motd_download->themotd->motd_download = NULL;
-			MyFree(motd_download);
-			return;
-#ifdef REMOTEINC_SPECIALCACHE
-		}
-#endif
-	}
-
-#ifdef REMOTEINC_SPECIALCACHE
-	/*
-	 * We need to move our newly downloaded file to its cache file
-	 * if it isn't there already.
-	 */
-	if(!cached)
-	{
-		/* create specialcached version for later */
-		unreal_copyfileex(filename, unreal_mkcache(url), 1);
-	} else {
-		/*
-		 * The file is cached. Thus we must look for it at the
-		 * cache location where we placed it earlier.
-		 */
-		filename = unreal_mkcache(url);
-	}
-#endif
-
-	do_read_motd(filename, themotd);
-	MyFree(motd_download);
-}
-#endif /* USE_LIBCURL */
-
 
 /**
    Does the actual reading of the MOTD. To be called only by
@@ -1141,11 +1023,6 @@ void free_motd(aMotdFile *themotd)
 
 	themotd->lines = NULL;
 	memset(&themotd->last_modified, '\0', sizeof(struct tm));
-
-#ifdef USE_LIBCURL
-	/* see struct.h for more information about motd_download */
-	themotd->motd_download = NULL;
-#endif
 }
 
 

@@ -60,8 +60,6 @@ Computing Center and Jarkko Oikarinen";
 #endif
 #include "version.h"
 #include "proto.h"
-#ifdef USE_LIBCURL
-#include <curl/curl.h>
 #endif
 ID_Copyright
     ("(C) 1988 University of Oulu, Computing Center and Jarkko Oikarinen");
@@ -92,10 +90,6 @@ MODVAR char *me_hash;
 extern char backupbuf[8192];
 
 unsigned char conf_debuglevel = 0;
-
-#ifdef USE_LIBCURL
-extern void url_init(void);
-#endif
 
 time_t highesttimeofday=0, oldtimeofday=0, lasthighwarn=0;
 
@@ -666,33 +660,6 @@ int error = 0;
 		error=1;
 	}
 #endif
-#ifdef USE_LIBCURL
-	/* Perhaps someone should tell them to do this a bit more easy ;)
-	 * problem is runtime output is like: 'libcurl/7.11.1 c-ares/1.2.0'
-	 * while header output is like: '7.11.1'.
-	 */
-	{
-		char buf[128], *p;
-		
-		runtime = curl_version();
-		compiledfor = LIBCURL_VERSION;
-		if (!strncmp(runtime, "libcurl/", 8))
-		{
-			strlcpy(buf, runtime+8, sizeof(buf));
-			p = strchr(buf, ' ');
-			if (p)
-			{
-				*p = '\0';
-				if (strcmp(compiledfor, buf))
-				{
-					version_check_logerror("Curl version mismatch: compiled for '%s', library is '%s'",
-						compiledfor, buf);
-					error = 1;
-				}
-			}
-		}
-	}
-#endif
 
 	if (error)
 	{
@@ -980,9 +947,6 @@ int main(int argc, char *argv[])
 	mp_pool_init();
 	dbuf_init();
 
-#ifdef USE_LIBCURL
-	url_init();
-#endif
 	tkl_init();
 	umode_init();
 	extcmode_init();
@@ -1145,8 +1109,6 @@ int main(int argc, char *argv[])
 	}
 #endif
 	mkdir("tmp", S_IRUSR|S_IWUSR|S_IXUSR); /* Create the tmp dir, if it doesn't exist */
-#if defined(USE_LIBCURL) && defined(REMOTEINC_SPECIALCACHE)
- 	mkdir("cache", S_IRUSR|S_IWUSR|S_IXUSR); /* Create the cache dir, if using curl and it doesn't exist */
 #endif
 	/*
 	 * didn't set debuglevel 
@@ -1167,9 +1129,6 @@ int main(int argc, char *argv[])
 	fprintf(stderr, "                     using %s\n", tre_version());
 #ifdef USE_SSL
 	fprintf(stderr, "                     using %s\n", SSLeay_version(SSLEAY_VERSION));
-#endif
-#ifdef USE_LIBCURL
-	fprintf(stderr, "                     using %s\n", curl_version());
 #endif
 	fprintf(stderr, "\n");
 	clear_client_hash_table();

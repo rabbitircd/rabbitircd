@@ -671,8 +671,6 @@ dnl use pkg-config for system c-ares:
 PKG_CHECK_MODULES([CARES], libcares >= 1.6.0)
 ])
 
-CHECK_LIBCURL
-
 AC_CONFIG_FILES([Makefile
 	src/modules/Makefile
 	rabbitircd

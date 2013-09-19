@@ -137,9 +137,6 @@ typedef struct ListOptions LOpts;
 typedef struct FloodOpt aFloodOpt;
 typedef struct Motd aMotdFile; /* represents a whole MOTD, including remote MOTD support info */
 typedef struct MotdItem aMotdLine; /* one line of a MOTD stored as a linked list */
-#ifdef USE_LIBCURL
-typedef struct MotdDownload aMotdDownload; /* used to coordinate download of a remote MOTD */
-#endif
 
 typedef struct trecord aTrecord;
 typedef struct Command aCommand;
@@ -674,44 +671,10 @@ struct FloodOpt {
 	TS   firstmsg;
 };
 
-#ifdef USE_LIBCURL
-struct Motd;
-struct MotdDownload
-{
-	struct Motd *themotd;
-};
-#endif /* USE_LIBCURL */
-
 struct Motd 
 {
 	struct MotdItem *lines;
 	struct tm last_modified; /* store the last modification time */
-
-#ifdef USE_LIBCURL
-	/*
-	  This pointer is used to communicate with an asynchronous MOTD
-	  download. The problem is that a download may take 10 seconds or
-	  more to complete and, in that time, the IRCd could be rehashed.
-	  This would mean that TLD blocks are reallocated and thus the
-	  aMotd structs would be free()d in the meantime.
-
-	  To prevent such a situation from leading to a segfault, we
-	  introduce this remote control pointer. It works like this:
-	  1. read_motd() is called with a URL. A new MotdDownload is
-	     allocated and the pointer is placed here. This pointer is
-	     also passed to the asynchrnous download handler.
-	  2.a. The download is completed and read_motd_asynch_downloaded()
-	       is called with the same pointer. From this function, this pointer
-	       if free()d. No other code may free() the pointer. Not even free_motd().
-	    OR
-	  2.b. The user rehashes the IRCd before the download is completed.
-	       free_motd() is called, which sets motd_download->themotd to NULL
-	       to signal to read_motd_asynch_downloaded() that it should ignore
-	       the download. read_motd_asynch_downloaded() is eventually called
-	       and frees motd_download.
-	 */
-	struct MotdDownload *motd_download;
-#endif /* USE_LIBCURL */
 };
 
 struct MotdItem {
@@ -1400,10 +1363,6 @@ struct _configitem_include {
 	ConfigItem *prev, *next;
 	ConfigFlag_ban flag;
 	char *file;
-#ifdef USE_LIBCURL
-	char *url;
-	char *errorbuf;
-#endif
 	char *included_from;
 	int included_from_line;
 };
