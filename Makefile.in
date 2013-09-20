@@ -94,9 +94,6 @@ IRCDMODE = 711
 #
 IRCDDIR=@IRCDDIR@
 
-
-URL=@URL@
-
 # [CHANGEME]
 # If you get a link-time error dealing with strtoul, comment out
 # this line.
@@ -133,8 +130,7 @@ MAKEARGS =	'CFLAGS=${CFLAGS}' 'CC=${CC}' 'IRCDLIBS=${IRCDLIBS}' \
 		'RM=${RM}' 'CP=${CP}' 'TOUCH=${TOUCH}' \
 		'SHELL=${SHELL}' 'STRTOUL=${STRTOUL}' \
 		'CRYPTOLIB=${CRYPTOLIB}' \
-		'CRYPTOINCLUDES=${CRYPTOINCLUDES}' \
-		'URL=${URL}'
+		'CRYPTOINCLUDES=${CRYPTOINCLUDES}'
 
 custommodule:
 	@if test -z "${MODULEFILE}"; then echo "Please set MODULEFILE when calling \`\`make custommodule''. For example, \`\`make custommodule MODULEFILE=callerid''." >&2; exit 1; fi
