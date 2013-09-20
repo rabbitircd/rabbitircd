@@ -67,19 +67,10 @@ XCFLAGS=@TRE_CFLAGS@ @CARES_CFLAGS@ @CFLAGS@
 # Solaris 2
 #IRCDLIBS=-lsocket -lnsl -lresolv -L/usr/ucblib -R/usr/ucblib -lgen
 #
-# ESIX
-#CFLAGS=-O -I$(INCLUDEDIR) -I/usr/ucbinclude
-#IRCDLIBS=-L/usr/ucblib -L/usr/lib -lsocket -lucb -lns -lnsl
-#
 # LDFLAGS - flags to send the loader (ld). SunOS users may want to add
 # -Bstatic here.
 #
 #LDFLAGS=-Bstatic
-#
-#Dell SVR4
-#CC=gcc
-#CFLAGS= -I$(INCLUDEDIR) -O2
-#IRCDLIBS=-lsocket -lnsl -lucb
 
 # [CHANGEME]
 # IRCDMODE is the mode you want the binary to be.

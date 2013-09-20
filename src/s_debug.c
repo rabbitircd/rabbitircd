@@ -55,9 +55,6 @@ MODVAR char serveropts[] = {
 #endif
 	/* NOSPOOF is always compiled in now. --nenolod */
 	'n',
-#ifdef	VALLOC
-	'V',
-#endif
 #ifdef	USE_SYSLOG
 	'Y',
 #endif
@@ -93,7 +90,7 @@ char *extraflags = NULL;
 #ifdef HPUX
 #include <fcntl.h>
 #endif
-#if !defined(ULTRIX) && !defined(SGI) && !defined(__convex__)
+#if !defined(SGI)
 # include <sys/param.h>
 #endif
 #ifdef HPUX
@@ -112,9 +109,6 @@ char *extraflags = NULL;
 #  ifdef TIMES_2
 #   include <sys/times.h>
 #  endif
-#endif
-#ifdef PCS
-# include <time.h>
 #endif
 #ifdef HPUX
 #include <unistd.h>

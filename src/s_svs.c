@@ -28,7 +28,7 @@
 #ifdef __hpux
 #include "inet.h"
 #endif
-#if defined(PCS) || defined(AIX) || defined(SVR3)
+#if defined(AIX)
 #include <time.h>
 #endif
 #include <string.h>

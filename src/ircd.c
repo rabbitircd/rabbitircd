@@ -1526,12 +1526,4 @@ static void setup_signals()
 	(void)signal(SIGTERM, s_die);
 	(void)signal(SIGINT, s_restart);
 #endif
-#ifdef RESTARTING_SYSTEMCALLS
-	/*
-	 * ** At least on Apollo sr10.1 it seems continuing system calls
-	 * ** after signal is the default. The following 'siginterrupt'
-	 * ** should change that default to interrupting calls.
-	 */
-	(void)siginterrupt(SIGALRM, 1);
-#endif
 }
