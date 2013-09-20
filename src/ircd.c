@@ -944,7 +944,6 @@ int main(int argc, char *argv[])
 	umode_init();
 	extcmode_init();
 	extban_init();
-	init_random(); /* needs to be done very early!! */
 	clear_scache_hash_table();
 #ifdef FORCE_CORE
 	corelim.rlim_cur = corelim.rlim_max = RLIM_INFINITY;

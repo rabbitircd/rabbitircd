@@ -1,183 +1,47 @@
-/************************************************************************
- *   IRC - Internet Relay Chat, random.c
- *   (C) 2004-2010 Bram Matthys (Syzop) and the UnrealIRCd Team
+/*
+ * RabbitIRCD, a modern refactored IRCd.
+ * Copyright (c) 2013 William Pitcock <kaniini@dereferenced.org>.
  *
- *   See file AUTHORS in IRC package for additional names of
- *   the programmers. 
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- *   This program is free software; you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 1, or (at your option)
- *   any later version.
- *
- *   This program is distributed in the hope that it will be useful,
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public License
- *   along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *
+ * This software is provided 'as is' and without any warranty, express or
+ * implied. In no event shall the authors be liable for any damages arising
+ * from the use of this software.
  */
 
 #include "struct.h"
 #include "common.h"
 #include "sys.h"
-#include "numeric.h"
-#include "msg.h"
-#include "channel.h"
 #include "version.h"
-#include <time.h>
-#include <sys/stat.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <fcntl.h>
 #include "h.h"
 
-/*
- * Based on Arc4 random number generator for FreeBSD/OpenBSD.
- * Copyright 1996 David Mazieres <dm@lcs.mit.edu>.
- *
- * Modification and redistribution in source and binary forms is
- * permitted provided that due credit is given to the author and the
- * OpenBSD project (for instance by leaving this copyright notice
- * intact).
- *
- * This code is derived from section 17.1 of Applied Cryptography, second edition.
- *
- * *BSD code modified by Syzop to suit our needs (unreal'ized, windows, etc)
- */
+#include <openssl/rand.h>
 
-struct arc4_stream {
-	u_char i;
-	u_char j;
-	u_char s[256];
-};
-
-static struct arc4_stream rs;
-
-static void arc4_init(void)
+u_char getrandom8(void)
 {
-int n;
+	u_char buf;
 
-	for (n = 0; n < 256; n++)
-		rs.s[n] = n;
-	rs.i = 0;
-	rs.j = 0;
+	RAND_pseudo_bytes((unsigned char *) &buf, sizeof buf);
+
+	return buf;
 }
 
-static inline void arc4_doaddrandom(u_char *dat, int datlen)
+u_int16_t getrandom16(void)
 {
-int n;
-u_char si;
-#ifdef DEBUGMODE
-int i;
-char outbuf[512], *p = outbuf;
-	*p = '\0';
-	for (i=0; i < datlen; i++)
-	{
-		sprintf(p, "%.2X/", dat[i]);
-		p += 3;
-		if (p > outbuf + 500)
-		{
-			strcpy(p, "....");
-			break;
-		}
-	}
-	if (strlen(outbuf) > 0)
-		outbuf[strlen(outbuf)-1] = '\0';
-	Debug((DEBUG_DEBUG, "arc4_addrandom() called, datlen=%d, data dump: %s", datlen, outbuf));
-#endif
+	u_int16_t buf;
 
-	rs.i--;
-	for (n = 0; n < 256; n++) {
-		rs.i = (rs.i + 1);
-		si = rs.s[rs.i];
-		rs.j = (rs.j + si + dat[n % datlen]);
-		rs.s[rs.i] = rs.s[rs.j];
-		rs.s[rs.j] = si;
-	}
+	RAND_pseudo_bytes((unsigned char *) &buf, sizeof buf);
+
+	return buf;
 }
 
-static inline void arc4_addrandom(void *dat, int datlen)
+u_int32_t getrandom32(void)
 {
-	arc4_doaddrandom((unsigned char *)dat, datlen);
-	return;
-}
+	u_int32_t buf;
 
+	RAND_pseudo_bytes((unsigned char *) &buf, sizeof buf);
 
-u_char getrandom8()
-{
-u_char si, sj;
-
-	rs.i = (rs.i + 1);
-	si = rs.s[rs.i];
-	rs.j = (rs.j + si);
-	sj = rs.s[rs.j];
-	rs.s[rs.i] = sj;
-	rs.s[rs.j] = si;
-	return (rs.s[(si + sj) & 0xff]);
-}
-
-u_int16_t getrandom16()
-{
-u_int16_t val;
-	val = getrandom8(rs) << 8;
-	val |= getrandom8(rs);
-	return val;
-}
-
-u_int32_t getrandom32()
-{
-u_int32_t val;
-
-	val = getrandom8(rs) << 24;
-	val |= getrandom8(rs) << 16;
-	val |= getrandom8(rs) << 8;
-	val |= getrandom8(rs);
-	return val;
-}
-
-/*
- * init_random, written by Syzop.
- * This function tries to initialize the arc4 random number generator securely.
- */
-void init_random()
-{
-struct {
-#ifdef USE_SSL
-	char egd[32];			/* from EGD */
-#endif
-	struct timeval nowt;	/* time */
-	char rnd[32];			/* /dev/urandom */
-} rdat;
-
-int fd;
-
-	arc4_init();
-
-	/* Grab non-OS specific "random" data */
-#ifdef USE_SSL
- #if OPENSSL_VERSION_NUMBER >= 0x000907000
-	if (EGD_PATH) {
-		RAND_query_egd_bytes(EGD_PATH, rdat.egd, sizeof(rdat.egd));
-	}
- #endif
-#endif
-
-	/* Grab OS specific "random" data */
-	gettimeofday(&rdat.nowt, NULL);
-	fd = open("/dev/urandom", O_RDONLY);
-	if (fd) {
-		read(fd, &rdat.rnd, sizeof(rdat.rnd));
-		Debug((DEBUG_INFO, "init_random: read from /dev/urandom returned %d", n));
-		close(fd);
-	}
-	/* TODO: more!?? */
-
-	arc4_addrandom(&rdat, sizeof(rdat));
-
-	/* NOTE: addtional entropy is added by add_entropy_* function(s) */
+	return buf;
 }
