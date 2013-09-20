@@ -680,7 +680,7 @@ int stats_traffic(aClient *sptr, char *para)
 	int  i;
 	struct stats *sp;
 	struct stats tmp;
-	time_t now = time(NULL);
+	time_t now = TStime();
 
 	sp = &tmp;
 	bcopy((char *)ircstp, (char *)sp, sizeof(*sp));
@@ -1381,7 +1381,7 @@ int stats_uptime(aClient *sptr, char *para)
 {
 	time_t tmpnow;
 
-	tmpnow = time(NULL) - me.since;
+	tmpnow = TStime() - me.since;
 	sendto_one(sptr, rpl_str(RPL_STATSUPTIME), me.name, sptr->name,
 	    tmpnow / 86400, (tmpnow / 3600) % 24, (tmpnow / 60) % 60,
 	    tmpnow % 60);
@@ -1500,7 +1500,7 @@ int stats_linkinfoint(aClient *sptr, char *para, int all)
 
 #ifdef DEBUGMODE
 		ircsnprintf(pbuf, sizeof(pbuf), "%ld :%ld", (long)acptr->cputime,
-		      (long)(acptr->user && MyConnect(acptr)) ? time(NULL) - acptr->last : 0);
+		      (long)(acptr->user && MyConnect(acptr)) ? TStime() - acptr->last : 0);
 #endif
 		if (IsOper(sptr))
 		{
@@ -1514,10 +1514,10 @@ int stats_linkinfoint(aClient *sptr, char *para, int all)
 				(int)acptr->sendM, (int)acptr->sendK,
 				(int)acptr->receiveM,
 				(int)acptr->receiveK,
-			 	time(NULL) - acptr->firsttime,
+			 	TStime() - acptr->firsttime,
 #ifndef DEBUGMODE
 				(acptr->user && MyConnect(acptr)) ?
-				time(NULL) - acptr->last : 0);
+				TStime() - acptr->last : 0);
 #else
 				pbuf);
 #endif
@@ -1538,10 +1538,10 @@ int stats_linkinfoint(aClient *sptr, char *para, int all)
 				(int)acptr->sendM, (int)acptr->sendK,
 				(int)acptr->receiveM,
 				(int)acptr->receiveK,
-				time(NULL) - acptr->firsttime,
+				TStime() - acptr->firsttime,
 #ifndef DEBUGMODE
 				(acptr->user && MyConnect(acptr)) ?
-				time(NULL) - acptr->last : 0);
+				TStime() - acptr->last : 0);
 #else
 				pbuf);
 #endif

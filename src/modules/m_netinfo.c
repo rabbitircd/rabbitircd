@@ -126,7 +126,7 @@ DLLFUNC CMD_FUNC(m_netinfo)
 		    lmax, cptr->name);
 	}
 
-	xx = time(NULL);
+	xx = TStime();
 	if ((xx - endsync) < 0)
 	{
 		char *emsg = "";
@@ -143,12 +143,12 @@ DLLFUNC CMD_FUNC(m_netinfo)
 	}
 	sendto_realops
 	    ("Link %s -> %s is now synced [secs: %li recv: %ld.%hu sent: %ld.%hu]",
-	    cptr->name, me.name, (time(NULL) - endsync), sptr->receiveK,
+	    cptr->name, me.name, (TStime() - endsync), sptr->receiveK,
 	    sptr->receiveB, sptr->sendK, sptr->sendB);
 
 	sendto_server(&me, 0, 0,
 	    ":%s SMO o :\2(sync)\2 Link %s -> %s is now synced [secs: %li recv: %ld.%hu sent: %ld.%hu]",
-	    me.name, cptr->name, me.name, (time(NULL) - endsync), sptr->receiveK,
+	    me.name, cptr->name, me.name, (TStime() - endsync), sptr->receiveK,
 	    sptr->receiveB, sptr->sendK, sptr->sendB);
 
 	if (!(strcmp(ircnetwork, parv[8]) == 0))

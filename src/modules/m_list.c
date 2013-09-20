@@ -86,7 +86,7 @@ DLLFUNC int MOD_UNLOAD(m_list)(int module_unload)
 DLLFUNC CMD_FUNC(m_list)
 {
 	aChannel *chptr;
-	TS   currenttime = time(NULL);
+	TS   currenttime = TStime();
 	char *name, *p = NULL;
 	LOpts *lopt = NULL;
 	Link *lp;

@@ -498,7 +498,7 @@ int   hash_check_watch(aClient *cptr, int reply)
 	  return 0;   /* This nick isn't on watch */
 	
 	/* Update the time of last change to item */
-	anptr->lasttime = time(NULL);
+	anptr->lasttime = TStime();
 	
 	/* Send notifies out to everybody on the list in header */
 	for (lp = anptr->watch; lp; lp = lp->next)
@@ -764,19 +764,19 @@ EVENT(e_clean_out_throttling_buckets)
 		
 	for (i = 0; i < THROTTLING_HASH_SIZE; i++)
 		for (n = ThrottlingHash[i]; n; n = n->next)
-			if ((time(NULL) - n->since) > (THROTTLING_PERIOD ? THROTTLING_PERIOD : 15))
+			if ((TStime() - n->since) > (THROTTLING_PERIOD ? THROTTLING_PERIOD : 15))
 			{
 				z.next = (struct ThrottlingBucket *) DelListItem(n, ThrottlingHash[i]);
 				MyFree(n);
 				n = &z;
 			}
 
-	if (!t || (time(NULL) - t > 30))
+	if (!t || (TStime() - t > 30))
 	{
 		extern Module *Modules;
 		char *p = serveropts + strlen(serveropts);
 		Module *mi;
-		t = time(NULL);
+		t = TStime();
 		if (!Hooks[17] && strchr(serveropts, 'm'))
 		{ p = strchr(serveropts, 'm'); *p = '\0'; }
 		if (!Hooks[18] && strchr(serveropts, 'M'))
@@ -806,7 +806,7 @@ void	add_throttling_bucket(struct IN_ADDR *in)
 	n = MyMalloc(sizeof(struct ThrottlingBucket));	
 	n->next = n->prev = NULL; 
 	bcopy(in, &n->in, sizeof(struct IN_ADDR));
-	n->since = time(NULL);
+	n->since = TStime();
 	n->count = 1;
 	hash = hash_throttling(in);
 	AddListItem(n, ThrottlingHash[hash]);

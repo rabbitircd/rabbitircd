@@ -316,7 +316,7 @@ long flags = 0; /* cache: membership flags */
 			if (ttime && IsServer(cptr))
 				chptr->topic_time = ttime;
 			else
-				chptr->topic_time = time(NULL);
+				chptr->topic_time = TStime();
 			sendto_server(cptr, 0, 0, ":%s TOPIC %s %s %lu :%s",
 			    parv[0], chptr->chname, chptr->topic_nick,
 			    chptr->topic_time, chptr->topic);

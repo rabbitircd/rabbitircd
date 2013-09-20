@@ -438,7 +438,7 @@ int  parse(aClient *cptr, char *buffer, char *bufend)
 		return (do_numeric(numeric, cptr, from, i, para));
 	cmptr->count++;
 	if (IsRegisteredUser(cptr) && (cmptr->flags & M_RESETIDLE))
-		cptr->last = time(NULL);
+		cptr->last = TStime();
 
 #ifndef DEBUGMODE
 	if (cmptr->flags & M_ALIAS)

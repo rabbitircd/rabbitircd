@@ -5938,7 +5938,7 @@ int _conf_spamfilter(ConfigFile *conf, ConfigEntry *ce)
 	}
 	nl->type = TKL_SPAMF;
 	nl->expire_at = 0;
-	nl->set_at = time(NULL);
+	nl->set_at = TStime();
 
 	strlcpy(nl->usermask, spamfilter_target_inttostring(target), sizeof(nl->usermask));
 	nl->subtype = target;

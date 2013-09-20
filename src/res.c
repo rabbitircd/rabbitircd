@@ -563,7 +563,7 @@ struct IN_ADDR addr;
 	/* Create record */
 	c = MyMallocEx(sizeof(DNSCache));
 	c->name = strdup(name);
-	c->expires = time(NULL) + DNSCACHE_TTL;
+	c->expires = TStime() + DNSCACHE_TTL;
 	memcpy(&c->addr, &addr, sizeof(addr));
 	
 	/* Add to hash table */
@@ -655,11 +655,11 @@ DNSCache *c, *next;
 	for (c = cache_list; c; c = next)
 	{
 		next = c->next;
-		if (c->expires < time(NULL))
+		if (c->expires < TStime())
 		{
 #if 0
 			sendto_realops(sptr, "[Syzop/DNS] Expire: %s [%s] (%ld < %ld)",
-				c->name, Inet_ia2p(&c->addr), c->expires, time(NULL));
+				c->name, Inet_ia2p(&c->addr), c->expires, TStime());
 #endif
 			unrealdns_removecacherecord(c);
 		}

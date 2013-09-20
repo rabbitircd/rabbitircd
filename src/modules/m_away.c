@@ -143,7 +143,7 @@ int n, wasaway = 0;
                 if (strcmp(away, parv[1]) == 0)
                         return 0;
 
-	sptr->user->lastaway = time(NULL);
+	sptr->user->lastaway = TStime();
 	
         sendto_server(cptr, 0, 0, ":%s AWAY :%s", parv[0], awy2);
 

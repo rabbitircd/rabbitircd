@@ -151,7 +151,7 @@ DLLFUNC CMD_FUNC(m_trace)
 
 	/* report all direct connections */
 
-	now = time(NULL);
+	now = TStime();
 	list_for_each_entry(acptr, &lclient_list, lclient_node)
 	{
 		char *name;

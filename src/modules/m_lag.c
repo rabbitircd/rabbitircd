@@ -105,7 +105,7 @@ DLLFUNC int m_lag(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	}
 
 	sendto_one(sptr, ":%s NOTICE %s :Lag reply -- %s %s %li",
-	    me.name, sptr->name, me.name, parv[1], time(NULL));
+	    me.name, sptr->name, me.name, parv[1], TStime());
 
 	return 0;
 }

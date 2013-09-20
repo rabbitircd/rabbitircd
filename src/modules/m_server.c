@@ -798,7 +798,7 @@ int	m_server_synch(aClient *cptr, ConfigItem_link *aconf)
 	dcc_sync(cptr);
 
 	sendto_one(cptr, "NETINFO %i %li %i %s 0 0 0 :%s",
-	    IRCstats.global_max, time(NULL), UnrealProtocol,
+	    IRCstats.global_max, TStime(), UnrealProtocol,
 	    CLOAK_KEYCRC,
 	    ircnetwork);
 

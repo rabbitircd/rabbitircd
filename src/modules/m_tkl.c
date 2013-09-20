@@ -670,13 +670,13 @@ DLLFUNC int  m_tkl_line(aClient *cptr, aClient *sptr, int parc, char *parv[], ch
 		if (secs == 0)
 		{
 			if (DEFAULT_BANTIME && (parc <= 3))
-				ircsnprintf(mo, sizeof(mo), "%li", DEFAULT_BANTIME + time(NULL));
+				ircsnprintf(mo, sizeof(mo), "%li", DEFAULT_BANTIME + TStime());
 			else
 				ircsnprintf(mo, sizeof(mo), "%li", secs); /* "0" */
 		}
 		else
-			ircsnprintf(mo, sizeof(mo), "%li", secs + time(NULL));
-		ircsnprintf(mo2, sizeof(mo2), "%li", time(NULL));
+			ircsnprintf(mo, sizeof(mo), "%li", secs + TStime());
+		ircsnprintf(mo2, sizeof(mo2), "%li", TStime());
 		tkllayer[6] = mo;
 		tkllayer[7] = mo2;
 		if (parc > 3) {
@@ -838,7 +838,7 @@ int n;
 	
 	if (whattodo == 0)
 	{
-		ircsnprintf(mo2, sizeof(mo2), "%li", time(NULL));
+		ircsnprintf(mo2, sizeof(mo2), "%li", TStime());
 		tkllayer[7] = mo2;
 	}
 	
@@ -1091,7 +1091,7 @@ aTKline *_tkl_expire(aTKline * tmp)
 
 	whattype[0] = 0;
 
-	if ((tmp->expire_at == 0) || (tmp->expire_at > time(NULL)))
+	if ((tmp->expire_at == 0) || (tmp->expire_at > TStime()))
 	{
 		sendto_ops
 		    ("tkl_expire(): expire for not-yet-expired tkline %s@%s",
@@ -1125,21 +1125,21 @@ aTKline *_tkl_expire(aTKline * tmp)
 		sendto_snomask(SNO_TKL,
 		    "*** Expiring %s (%s@%s) made by %s (Reason: %s) set %li seconds ago",
 		    whattype, tmp->usermask, tmp->hostmask, tmp->setby, tmp->reason,
-		    time(NULL) - tmp->set_at);
+		    TStime() - tmp->set_at);
 		ircd_log
 		    (LOG_TKL, "Expiring %s (%s@%s) made by %s (Reason: %s) set %li seconds ago",
 		    whattype, tmp->usermask, tmp->hostmask, tmp->setby, tmp->reason,
-		    time(NULL) - tmp->set_at);
+		    TStime() - tmp->set_at);
 	}
 	else if (!(*tmp->usermask == 'H')) /* Q:line but not a hold */
 	{
 		sendto_snomask(SNO_TKL,
 			"*** Expiring %s (%s) made by %s (Reason: %s) set %li seconds ago",
 			whattype, tmp->hostmask, tmp->setby, tmp->reason, 
-			time(NULL) - tmp->set_at);
+			TStime() - tmp->set_at);
 		ircd_log
 			(LOG_TKL, "Expiring %s (%s) made by %s (Reason: %s) set %li seconds ago",
-			whattype, tmp->hostmask, tmp->setby, tmp->reason, time(NULL) - tmp->set_at);
+			whattype, tmp->hostmask, tmp->setby, tmp->reason, TStime() - tmp->set_at);
 	}
 	if (tmp->type & TKL_SHUN)
 		tkl_check_local_remove_shun(tmp);
@@ -1154,7 +1154,7 @@ EVENT(_tkl_check_expire)
 	TS   nowtime;
 	int index;
 	
-	nowtime = time(NULL);
+	nowtime = TStime();
 
 	for (index = 0; index < TKLISTLEN; index++)
 		for (gp = tklines[index]; gp; gp = next)
@@ -1190,7 +1190,7 @@ int  _find_tkline_match(aClient *cptr, int xx)
 	if (IsServer(cptr) || IsMe(cptr))
 		return -1;
 
-	nowtime = time(NULL);
+	nowtime = TStime();
 	chost = cptr->sockhost;
 	cname = cptr->user ? cptr->user->username : "unknown";
 	cip = GetIP(cptr);
@@ -1318,7 +1318,7 @@ int  _find_shun(aClient *cptr)
 	if (IsAdmin(cptr))
 		return 1;
 
-	nowtime = time(NULL);
+	nowtime = TStime();
 	chost = cptr->sockhost;
 	cname = cptr->user ? cptr->user->username : "unknown";
 	cip = GetIP(cptr);
@@ -1550,7 +1550,7 @@ int  _find_tkline_match_zap_ex(aClient *cptr, aTKline **rettk)
 	if (IsServer(cptr) || IsMe(cptr))
 		return -1;
 
-	nowtime = time(NULL);
+	nowtime = TStime();
 	cip = GetIP(cptr);
 
 	for (lp = tklines[tkl_hash('z')]; lp; lp = lp->next)
@@ -1686,7 +1686,7 @@ void _tkl_stats(aClient *cptr, int type, char *para)
 	if (!BadPtr(para))
 		parse_tkl_para(para, &tklflags);
 	tkl_check_expire(NULL);
-	curtime = time(NULL);
+	curtime = TStime();
 	for (index = 0; index < TKLISTLEN; index++)
 	 for (tk = tklines[index]; tk; tk = tk->next)
 	 {
@@ -2370,8 +2370,8 @@ int _place_host_ban(aClient *sptr, int action, char *reason, long duration)
 			if (!duration)
 				strlcpy(mo, "0", sizeof(mo)); /* perm */
 			else
-				ircsnprintf(mo, sizeof(mo), "%li", duration + time(NULL));
-			ircsnprintf(mo2, sizeof(mo2), "%li", time(NULL));
+				ircsnprintf(mo, sizeof(mo), "%li", duration + TStime());
+			ircsnprintf(mo2, sizeof(mo2), "%li", TStime());
 			tkllayer[6] = mo;
 			tkllayer[7] = mo2;
 			tkllayer[8] = reason;

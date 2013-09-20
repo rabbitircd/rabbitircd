@@ -651,7 +651,7 @@ int  exit_client(aClient *cptr, aClient *sptr, aClient *from, char *comment)
 				free_str_list(sptr->user->lopt->nolist);
 				MyFree(sptr->user->lopt);
 			}
-			on_for = time(NULL) - sptr->firsttime;
+			on_for = TStime() - sptr->firsttime;
 			if (IsHidden(sptr))
 				ircd_log(LOG_CLIENT, "Disconnect - (%ld:%ld:%ld) %s!%s@%s [VHOST %s]",
 					on_for / 3600, (on_for % 3600) / 60, on_for % 60,

@@ -395,7 +395,7 @@ int add_listmode(Ban **list, aClient *cptr, aChannel *chptr, char *banid)
 	(void)strlcpy(ban->banstr, banid, strlen(banid)+1);
 	ban->who = (char *)MyMalloc(strlen(cptr->name) + 1);
 	(void)strlcpy(ban->who, cptr->name, strlen(cptr->name)+1);
-	ban->when = time(NULL);
+	ban->when = TStime();
 	*list = ban;
 	return 0;
 }
@@ -1252,7 +1252,7 @@ aChannel *get_channel(aClient *cptr, char *chname, int flag)
 		chptr->topic_nick = NULL;
 		chptr->prevch = NULL;
 		chptr->nextch = channel;
-		chptr->creationtime = MyClient(cptr) ? time(NULL) : (TS)0;
+		chptr->creationtime = MyClient(cptr) ? TStime() : (TS)0;
 		channel = chptr;
 		(void)add_to_channel_hash_table(chname, chptr);
 		IRCstats.channels++;
@@ -1443,12 +1443,12 @@ int  check_for_chan_flood(aClient *cptr, aClient *sptr, aChannel *chptr)
 	 * if nummsg > mode.msgs then kick/ban
 	 */
 	Debug((DEBUG_ERROR, "Checking for flood +f: firstmsg=%d (%ds ago), new nmsgs: %d, limit is: %d:%d",
-		lp2->flood.firstmsg, time(NULL) - lp2->flood.firstmsg, lp2->flood.nmsg + 1,
+		lp2->flood.firstmsg, TStime() - lp2->flood.firstmsg, lp2->flood.nmsg + 1,
 		c_limit, t_limit));
-	if ((time(NULL) - lp2->flood.firstmsg) >= t_limit)
+	if ((TStime() - lp2->flood.firstmsg) >= t_limit)
 	{
 		/* reset */
-		lp2->flood.firstmsg = time(NULL);
+		lp2->flood.firstmsg = TStime();
 		lp2->flood.nmsg = 1;
 		return 0; /* forget about it.. */
 	}
@@ -1683,7 +1683,7 @@ RemoveFld *e = removefld_list;
 time_t now;
 long mode;
 
-	now = time(NULL);
+	now = TStime();
 	
 	while(e)
 	{
@@ -1737,19 +1737,19 @@ int do_chanflood(ChanFloodProt *chp, int what)
 
 	if (!chp || !chp->l[what]) /* no +f or not restricted */
 		return 0;
-	if (time(NULL) - chp->t[what] >= chp->per)
+	if (TStime() - chp->t[what] >= chp->per)
 	{
-		chp->t[what] = time(NULL);
+		chp->t[what] = TStime();
 		chp->c[what] = 1;
 	} else
 	{
 		chp->c[what]++;
 		if ((chp->c[what] > chp->l[what]) &&
-		    (time(NULL) - chp->t[what] < chp->per))
+		    (TStime() - chp->t[what] < chp->per))
 		{
 			/* reset it too (makes it easier for chanops to handle the situation) */
 			/*
-			 *XXchp->t[what] = time(NULL);
+			 *XXchp->t[what] = TStime();
 			 *XXchp->c[what] = 1;
 			 * 
 			 * BAD.. there are some situations where we might 'miss' a flood
@@ -1800,7 +1800,7 @@ char m;
 		chptr->mode.mode |= modeflag;
 		if (chptr->mode.floodprot->r[what]) /* Add remove-chanmode timer... */
 		{
-			chanfloodtimer_add(chptr, m, modeflag, time(NULL) + ((long)chptr->mode.floodprot->r[what] * 60) - 5);
+			chanfloodtimer_add(chptr, m, modeflag, TStime() + ((long)chptr->mode.floodprot->r[what] * 60) - 5);
 			/* (since the chanflood timer event is called every 10s, we do -5 here so the accurancy will
 			 *  be -5..+5, without it it would be 0..+10.)
 			 */
