@@ -1672,11 +1672,7 @@ struct liststruct {
 #define	MyClient(x)			(MyConnect(x) && IsClient(x))
 #define	MyOper(x)			(MyConnect(x) && IsAnOper(x))
 
-#ifdef CLEAN_COMPILE
-#define TStime() (time(NULL) + TSoffset)
-#else
-#define TStime() (timeofday == 0 ? (timeofday = time(NULL) + TSoffset) : timeofday)
-#endif
+#define TStime() (timeofday)
 
 /* Lifted somewhat from Undernet code --Rak */
 

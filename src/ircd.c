@@ -66,7 +66,6 @@ ID_Notes("2.48 3/9/94");
 #ifdef __FreeBSD__
 char *malloc_options = "h" MALLOC_FLAGS_EXTRA;
 #endif
-time_t TSoffset = 0;
 
 extern char unreallogo[];
 int  SVSNOOP = 0;
@@ -669,8 +668,6 @@ int error = 0;
 		tainted = 1;
 	}
 }
-
-extern time_t TSoffset;
 
 extern MODVAR Event *events;
 extern struct MODVAR ThrottlingBucket *ThrottlingHash[THROTTLING_HASH_SIZE+1];
@@ -1316,7 +1313,7 @@ int main(int argc, char *argv[])
 #define NEGATIVE_SHIFT_WARN	-15
 #define POSITIVE_SHIFT_WARN	20
 
-		timeofday = time(NULL) + TSoffset;
+		timeofday = time(NULL);
 		if (oldtimeofday == 0)
 			oldtimeofday = timeofday; /* pretend everything is ok the first time.. */
 		if (mytdiff(timeofday, oldtimeofday) < NEGATIVE_SHIFT_WARN) {
@@ -1401,7 +1398,7 @@ int main(int argc, char *argv[])
 			delay = MIN(delay, TIMESEC);
 
 		fd_select(delay * 1000);
-		timeofday = time(NULL) + TSoffset;
+		timeofday = time(NULL);
 
 		/*
 		 * Debug((DEBUG_DEBUG, "Got message(s)")); 
