@@ -528,7 +528,7 @@ typedef unsigned int u_int32_t;	/* XXX Hope this works! */
 #define OFLAG_GNOTICE	0x00008000	/* Oper can send global notices */
 #define OFLAG_ADMIN	0x00010000	/* Admin */
 #define OFLAG_ADDLINE	0x00020000	/* Oper can use /addline */
-#define OFLAG_TSCTL	0x00040000	/* Oper can use /tsctl */
+//#define OFLAG_TSCTL	0x00040000	//UNUSED - was OFLAG_TSCTL oper can tsctl
 #define OFLAG_ZLINE	0x00080000	/* Oper can use /zline and /unzline */
 #define OFLAG_NETADMIN	0x00200000	/* netadmin gets +N */
 #define OFLAG_COADMIN	0x00800000	/* co admin gets +C */
@@ -556,7 +556,6 @@ typedef unsigned int u_int32_t;	/* XXX Hope this works! */
 #define OPCanZline(x)   ((x)->oflag & OFLAG_ZLINE)
 #define OPCanRehash(x)	((x)->oflag & OFLAG_REHASH)
 #define OPCanDie(x)	((x)->oflag & OFLAG_DIE)
-#define OPCanTSCtl(x)	((x)->oflag & OFLAG_TSCTL)
 #define OPCanRestart(x)	((x)->oflag & OFLAG_RESTART)
 #define OPCanHelpOp(x)	((x)->oflag & OFLAG_HELPOP)
 #define OPCanGlobOps(x)	((x)->oflag & OFLAG_GLOBOP)
@@ -583,7 +582,6 @@ typedef unsigned int u_int32_t;	/* XXX Hope this works! */
 
 #define OPSetRehash(x)	((x)->oflag |= OFLAG_REHASH)
 #define OPSetDie(x)	((x)->oflag |= OFLAG_DIE)
-#define OPSetTSCtl(x)	((x)->oflag |= OFLAG_TSCTL)
 #define OPSetRestart(x)	((x)->oflag |= OFLAG_RESTART)
 #define OPSetHelpOp(x)	((x)->oflag |= OFLAG_HELPOP)
 #define OPSetGlobOps(x)	((x)->oflag |= OFLAG_GLOBOP)
@@ -605,7 +603,6 @@ typedef unsigned int u_int32_t;	/* XXX Hope this works! */
 #define OPSetWhois(x)   ((x)->oflag |= OFLAG_WHOIS)
 #define OPClearRehash(x)	((x)->oflag &= ~OFLAG_REHASH)
 #define OPClearDie(x)		((x)->oflag &= ~OFLAG_DIE)
-#define OPClearTSCtl(x)		((x)->oflag &= ~OFLAG_TSCTL)
 #define OPClearRestart(x)	((x)->oflag &= ~OFLAG_RESTART)
 #define OPClearHelpOp(x)	((x)->oflag &= ~OFLAG_HELPOP)
 #define OPClearGlobOps(x)	((x)->oflag &= ~OFLAG_GLOBOP)

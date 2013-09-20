@@ -1328,7 +1328,7 @@ int main(int argc, char *argv[])
 			sendto_realops("WARNING: Time running backwards! Clock set back ~%ld seconds (%ld -> %ld)",
 				tdiff, oldtimeofday, timeofday);
 			sendto_realops("Incorrect time for IRC servers is a serious problem. "
-			               "Time being set backwards (either by TSCTL or by resetting the clock) is "
+			               "Time being set backwards (by resetting the clock) is "
 			               "even more serious and can cause clients to freeze, channels to be "
 			               "taken over, and other issues.");
 			sendto_realops("Please be sure your clock is always synchronized before "
@@ -1346,7 +1346,7 @@ int main(int argc, char *argv[])
 			sendto_realops("WARNING: Time jumped ~%ld seconds ahead! (%ld -> %ld)",
 			        tdiff, oldtimeofday, timeofday);
 			sendto_realops("Incorrect time for IRC servers is a serious problem. "
-			               "Time being adjusted (either by TSCTL or by resetting the clock) "
+			               "Time being adjusted (by resetting the clock) "
 			               "more than a few seconds forward/backward can lead to serious issues.");
 			sendto_realops("Please be sure your clock is always synchronized before "
 			               "the IRCd is started.");

@@ -133,7 +133,6 @@
 #define MSG_SVSMOTD	"SVSMOTD"
 #define MSG_SMO 	"SMO"
 #define MSG_OPERMOTD 	"OPERMOTD"
-#define MSG_TSCTL 	"TSCTL"
 #define MSG_SVSJOIN 	"SVSJOIN"
 #define MSG_SAJOIN 	"SAJOIN"
 #define MSG_SVSPART 	"SVSPART"

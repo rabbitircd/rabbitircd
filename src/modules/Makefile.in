@@ -40,7 +40,7 @@ R_MODULES= \
 	 m_adminchat.so m_chgname.so m_guest.so m_kill.so \
 	 m_lag.so m_message.so m_nachat.so m_oper.so m_pingpong.so \
 	 m_quit.so m_rping.so m_sendumode.so m_sqline.so \
-	 m_tsctl.so m_unkline.so m_unsqline.so m_unzline.so m_whois.so \
+	 m_unkline.so m_unsqline.so m_unzline.so m_whois.so \
 	 m_tkl.so m_vhost.so m_cycle.so m_svsjoin.so m_svspart.so \
 	 m_svswatch.so m_svssilence.so m_sendsno.so m_svssno.so \
 	 m_sajoin.so m_sapart.so m_samode.so m_kick.so m_topic.so \
@@ -66,7 +66,7 @@ COMMANDS=m_sethost.o m_chghost.o m_chgident.o m_setname.o m_setident.o \
 	 m_adminchat.o m_chgname.o m_guest.o m_kill.o \
 	 m_lag.o m_message.o m_nachat.o m_oper.o m_pingpong.o \
 	 m_quit.o m_rping.o m_sendumode.o m_sqline.o \
-	 m_tsctl.o m_unkline.o m_unsqline.o m_unzline.o m_whois.o \
+	 m_unkline.o m_unsqline.o m_unzline.o m_whois.o \
 	 m_tkl.o m_vhost.o m_cycle.o m_svsjoin.o m_svspart.o \
 	 m_svslusers.o m_svswatch.o m_svssilence.o m_sendsno.o \
 	 m_svssno.o m_sajoin.o m_sapart.o m_samode.o m_kick.o m_topic.o \
@@ -151,10 +151,6 @@ m_sendumode.so: m_sendumode.c $(INCLUDES)
 m_sqline.so: m_sqline.c $(INCLUDES)
 	$(CC) $(CFLAGS) $(MODULEFLAGS) -DDYNAMIC_LINKING \
 		-o m_sqline.so m_sqline.c
-
-m_tsctl.so: m_tsctl.c $(INCLUDES)
-	$(CC) $(CFLAGS) $(MODULEFLAGS) -DDYNAMIC_LINKING \
-		-o m_tsctl.so m_tsctl.c
 
 m_unkline.so: m_unkline.c $(INCLUDES)
 	$(CC) $(CFLAGS) $(MODULEFLAGS) -DDYNAMIC_LINKING \
