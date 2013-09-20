@@ -316,19 +316,19 @@ int  check_for_target_limit(aClient *sptr, void *target, const char *name)
 			return 0;
 		}
 
-	if (TStime() < sptr->nexttarget)
+	if (time(NULL) < sptr->nexttarget)
 	{
 		sptr->since += TARGET_DELAY; /* lag them up */
 		sptr->nexttarget += TARGET_DELAY;
 		sendto_one(sptr, err_str(ERR_TARGETTOOFAST), me.name, sptr->name,
-			name, sptr->nexttarget - TStime());
+			name, sptr->nexttarget - time(NULL));
 
 		return 1;
 	}
 
-	if (TStime() > sptr->nexttarget + TARGET_DELAY*MAXTARGETS)
+	if (time(NULL) > sptr->nexttarget + TARGET_DELAY*MAXTARGETS)
 	{
-		sptr->nexttarget = TStime() - TARGET_DELAY*MAXTARGETS;
+		sptr->nexttarget = time(NULL) - TARGET_DELAY*MAXTARGETS;
 	}
 
 	sptr->nexttarget += TARGET_DELAY;

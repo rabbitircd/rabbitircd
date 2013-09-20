@@ -289,7 +289,7 @@ static int last_log_file_warning = 0;
 	va_start(ap, format);
 	ircvsnprintf(buf, sizeof(buf), format, ap);
 	va_end(ap);
-	snprintf(timebuf, sizeof(timebuf), "[%s] - ", myctime(TStime()));
+	snprintf(timebuf, sizeof(timebuf), "[%s] - ", myctime(time(NULL)));
 	RunHook3(HOOKTYPE_LOG, flags, timebuf, buf);
 	strlcat(buf, "\n", sizeof(buf));
 
@@ -320,10 +320,10 @@ static int last_log_file_warning = 0;
 					{
 						config_status("WARNING: Unable to write to '%s': %s", logs->file, strerror(ERRNO));
 					} else {
-						if (last_log_file_warning + 300 < TStime())
+						if (last_log_file_warning + 300 < time(NULL))
 						{
 							config_status("WARNING: Unable to write to '%s': %s. This warning will not re-appear for at least 5 minutes.", logs->file, strerror(ERRNO));
-							last_log_file_warning = TStime();
+							last_log_file_warning = time(NULL);
 						}
 					}
 					write_failure = 1;
@@ -344,10 +344,10 @@ static int last_log_file_warning = 0;
 				{
 					config_status("WARNING: Unable to write to '%s': %s", logs->file, strerror(ERRNO));
 				} else {
-					if (last_log_file_warning + 300 < TStime())
+					if (last_log_file_warning + 300 < time(NULL))
 					{
 						config_status("WARNING: Unable to write to '%s': %s. This warning will not re-appear for at least 5 minutes.", logs->file, strerror(ERRNO));
-						last_log_file_warning = TStime();
+						last_log_file_warning = time(NULL);
 					}
 				}
 				write_failure = 1;

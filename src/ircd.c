@@ -336,11 +336,11 @@ EVENT(try_connections)
 		 * ** a bit fuzzy... -- msa >;) ]
 		 */
 
-		if ((aconf->hold > TStime()))
+		if ((aconf->hold > time(NULL)))
 			continue;
 
 		confrq = cltmp->connfreq;
-		aconf->hold = TStime() + confrq;
+		aconf->hold = time(NULL) + confrq;
 		/*
 		 * ** Found a CONNECT config with port specified, scan clients
 		 * ** and see if this server is already connected?
@@ -471,7 +471,7 @@ EVENT(check_unknowns)
 
 	list_for_each_entry_safe(cptr, cptr2, &unknown_list, lclient_node)
 	{
-		if (cptr->firsttime && ((TStime() - cptr->firsttime) > CONNECTTIMEOUT))
+		if (cptr->firsttime && ((time(NULL) - cptr->firsttime) > CONNECTTIMEOUT))
 			(void)exit_client(cptr, cptr, &me, "Registration Timeout");
 	}
 }
@@ -488,7 +488,7 @@ EVENT(check_pings)
 	char banbuf[1024];
 	char scratch[64];
 	int  ping = 0;
-	TS   currenttime = TStime();
+	TS   currenttime = time(NULL);
 
 	list_for_each_entry_safe(cptr, cptr2, &lclient_list, lclient_node)
 	{
@@ -571,7 +571,7 @@ EVENT(check_pings)
 						currenttime, cptr->since, ping));
 #endif
 				(void)ircsnprintf(scratch, sizeof(scratch), "Ping timeout: %ld seconds",
-					(long) (TStime() - cptr->lasttime));
+					(long) (time(NULL) - cptr->lasttime));
 				exit_client(cptr, cptr, &me, scratch);
 				continue;
 				
@@ -587,7 +587,7 @@ EVENT(check_pings)
 				/*
 				 * not nice but does the job 
 				 */
-				cptr->lasttime = TStime() - ping;
+				cptr->lasttime = time(NULL) - ping;
 				sendto_one(cptr, "PING :%s", me.name);
 			}
 		}
@@ -689,39 +689,39 @@ struct ThrottlingBucket z = { NULL, NULL, {0}, 0, 0};
 
 	list_for_each_entry(acptr, &lclient_list, lclient_node)
 	{
-		if (acptr->since > TStime())
+		if (acptr->since > time(NULL))
 		{
 			Debug((DEBUG_DEBUG, "fix_timers(): %s: acptr->since %ld -> %ld",
-				acptr->name, acptr->since, TStime()));
-			acptr->since = TStime();
+				acptr->name, acptr->since, time(NULL)));
+			acptr->since = time(NULL);
 		}
-		if (acptr->lasttime > TStime())
+		if (acptr->lasttime > time(NULL))
 		{
 			Debug((DEBUG_DEBUG, "fix_timers(): %s: acptr->lasttime %ld -> %ld",
-				acptr->name, acptr->lasttime, TStime()));
-			acptr->lasttime = TStime();
+				acptr->name, acptr->lasttime, time(NULL)));
+			acptr->lasttime = time(NULL);
 		}
-		if (acptr->last > TStime())
+		if (acptr->last > time(NULL))
 		{
 			Debug((DEBUG_DEBUG, "fix_timers(): %s: acptr->last %ld -> %ld",
-				acptr->name, acptr->last, TStime()));
-			acptr->last = TStime();
+				acptr->name, acptr->last, time(NULL)));
+			acptr->last = time(NULL);
 		}
 
 		/* users */
 		if (MyClient(acptr))
 		{
-			if (acptr->nextnick > TStime())
+			if (acptr->nextnick > time(NULL))
 			{
 				Debug((DEBUG_DEBUG, "fix_timers(): %s: acptr->nextnick %ld -> %ld",
-					acptr->name, acptr->nextnick, TStime()));
-				acptr->nextnick = TStime();
+					acptr->name, acptr->nextnick, time(NULL)));
+				acptr->nextnick = time(NULL);
 			}
-			if (acptr->nexttarget > TStime())
+			if (acptr->nexttarget > time(NULL))
 			{
 				Debug((DEBUG_DEBUG, "fix_timers(): %s: acptr->nexttarget %ld -> %ld",
-					acptr->name, acptr->nexttarget, TStime()));
-				acptr->nexttarget = TStime();
+					acptr->name, acptr->nexttarget, time(NULL)));
+				acptr->nexttarget = time(NULL);
 			}
 			
 		}
@@ -730,11 +730,11 @@ struct ThrottlingBucket z = { NULL, NULL, {0}, 0, 0};
 	/* Reset all event timers */
 	for (e = events; e; e = e->next)
 	{
-		if (e->last > TStime())
+		if (e->last > time(NULL))
 		{
 			Debug((DEBUG_DEBUG, "fix_timers(): %s: e->last %ld -> %ld",
-				e->name, e->last, TStime()-1));
-			e->last = TStime()-1;
+				e->name, e->last, time(NULL)-1));
+			e->last = time(NULL)-1;
 		}
 	}
 
@@ -1015,7 +1015,7 @@ int main(int argc, char *argv[])
 		  case 'P':{
 			  short type;
 			  char *result;
-			  srandom(TStime());
+			  srandom(time(NULL));
 			  if ((type = Auth_FindType(p)) == -1) {
 				  printf("No such auth type %s\n", p);
 				  exit(0);
@@ -1228,7 +1228,7 @@ int main(int argc, char *argv[])
 	me_hash = find_or_add(me.name);
 	me.serv->up = me_hash;
 	timeofday = time(NULL);
-	me.lasttime = me.since = me.firsttime = TStime();
+	me.lasttime = me.since = me.firsttime = time(NULL);
 	(void)add_to_client_hash_table(me.name, &me);
 	(void)add_to_id_hash_table(me.id, &me);
 	list_add(&me.client_node, &global_server_list);
@@ -1316,7 +1316,7 @@ int main(int argc, char *argv[])
 #define NEGATIVE_SHIFT_WARN	-15
 #define POSITIVE_SHIFT_WARN	20
 
-		timeofday = time(NULL) + TSoffset;
+		timeofday = time(NULL);
 		if (oldtimeofday == 0)
 			oldtimeofday = timeofday; /* pretend everything is ok the first time.. */
 		if (mytdiff(timeofday, oldtimeofday) < NEGATIVE_SHIFT_WARN) {
@@ -1401,7 +1401,7 @@ int main(int argc, char *argv[])
 			delay = MIN(delay, TIMESEC);
 
 		fd_select(delay * 1000);
-		timeofday = time(NULL) + TSoffset;
+		timeofday = time(NULL);
 
 		/*
 		 * Debug((DEBUG_DEBUG, "Got message(s)")); 

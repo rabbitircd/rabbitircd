@@ -291,10 +291,10 @@ static void listener_accept(int fd, int revents, void *data)
 	if ((++OpenFiles >= MAXCLIENTS) || (fd >= MAXCLIENTS))
 	{
 		ircstp->is_ref++;
-		if (last_allinuse < TStime() - 15)
+		if (last_allinuse < time(NULL) - 15)
 		{
 			sendto_realops("All connections in use. ([@%s/%u])", cptr->ip, cptr->port);
-			last_allinuse = TStime();
+			last_allinuse = time(NULL);
 		}
 
 		(void)send(cli_fd, "ERROR :All connections in use\r\n", 31, 0);
@@ -832,7 +832,7 @@ void close_connection(aClient *cptr)
 		ircstp->is_sbr += cptr->receiveB;
 		ircstp->is_sks += cptr->sendK;
 		ircstp->is_skr += cptr->receiveK;
-		ircstp->is_sti += TStime() - cptr->firsttime;
+		ircstp->is_sti += time(NULL) - cptr->firsttime;
 		if (ircstp->is_sbs > 1023)
 		{
 			ircstp->is_sks += (ircstp->is_sbs >> 10);
@@ -851,7 +851,7 @@ void close_connection(aClient *cptr)
 		ircstp->is_cbr += cptr->receiveB;
 		ircstp->is_cks += cptr->sendK;
 		ircstp->is_ckr += cptr->receiveK;
-		ircstp->is_cti += TStime() - cptr->firsttime;
+		ircstp->is_cti += time(NULL) - cptr->firsttime;
 		if (ircstp->is_cbs > 1023)
 		{
 			ircstp->is_cks += (ircstp->is_cbs >> 10);
@@ -890,7 +890,7 @@ void close_connection(aClient *cptr)
 		 * a rehash in between, the status has been changed to
 		 * CONF_ILLEGAL). But only do this if it was a "good" link.
 		 */
-		aconf->hold = TStime();
+		aconf->hold = time(NULL);
 		aconf->hold += (aconf->hold - cptr->since > HANGONGOODLINK) ?
 		    HANGONRETRYDELAY : aconf->class->connfreq;
 	}
@@ -1311,7 +1311,7 @@ static int parse_client_queued(aClient *cptr)
 	int dolen = 0;
 	int allow_read;
 	int done;
-	time_t now = TStime();
+	time_t now = time(NULL);
 	char buf[BUFSIZE];
 
 	while (DBufLength(&cptr->recvQ) &&
@@ -1333,7 +1333,7 @@ void read_packet(int fd, int revents, void *data)
 {
 	aClient *cptr = data;
 	int length = 0;
-	time_t now = TStime();
+	time_t now = time(NULL);
 	Hook *h;
 
 	SET_ERRNO(0);

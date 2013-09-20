@@ -225,7 +225,7 @@ int num=0, t=0;
 	/* Ok... now the actual check:
 	 * if ([timer valid] && [one more join would exceed num])
 	 */
-	if (((TStime() - e->firstjoin) < t) && (e->numjoins == num))
+	if (((time(NULL) - e->firstjoin) < t) && (e->numjoins == num))
 		return 1; /* Throttled */
 
 	return 0;
@@ -260,15 +260,15 @@ int num=0, t=0;
 	{
 		/* Allocate one */
 		e = cmodej_addentry(cptr, chptr);
-		e->firstjoin = TStime();
+		e->firstjoin = time(NULL);
 		e->numjoins = 1;
 	} else
-	if ((TStime() - e->firstjoin) < t) /* still valid? */
+	if ((time(NULL) - e->firstjoin) < t) /* still valid? */
 	{
 		e->numjoins++;
 	} else {
 		/* reset :p */
-		e->firstjoin = TStime();
+		e->firstjoin = time(NULL);
 		e->numjoins = 1;
 	}
 }
@@ -343,7 +343,7 @@ DLLFUNC void _join_channel(aChannel *chptr, aClient *cptr, aClient *sptr, int fl
 		 */
 		if (chptr->creationtime == 0)
 		{
-			chptr->creationtime = TStime();
+			chptr->creationtime = time(NULL);
 			sendto_server(cptr, 0, 0, ":%s MODE %s + %lu",
 			    me.name, chptr->chname, chptr->creationtime);
 		}

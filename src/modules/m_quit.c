@@ -110,7 +110,7 @@ DLLFUNC int  m_quit(aClient *cptr, aClient *sptr, int parc, char *parv[])
 			ocomment = parv[0];
 		
 		if (!IsAnOper(sptr) && ANTI_SPAM_QUIT_MSG_TIME)
-			if (sptr->firsttime+ANTI_SPAM_QUIT_MSG_TIME > TStime())
+			if (sptr->firsttime+ANTI_SPAM_QUIT_MSG_TIME > time(NULL))
 				ocomment = parv[0];
 
 		/* Strip color codes if any channel is +S, use nick as reason if +c. */

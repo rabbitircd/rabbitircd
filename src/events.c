@@ -73,7 +73,7 @@ Event	*EventAddEx(Module *module, char *name, long every, long howmany,
 	newevent->event = event;
 	newevent->data = data;
 	/* We don't want a quick execution */
-	newevent->last = TStime();
+	newevent->last = time(NULL);
 	newevent->owner = module;
 	AddListItem(newevent,events);
 	if (module) {
@@ -162,9 +162,9 @@ inline void	DoEvents(void)
 	{
 		if (eventptr->howmany == -1)
 			goto freeit;
-		if ((eventptr->every == 0) || ((TStime() - eventptr->last) >= eventptr->every))
+		if ((eventptr->every == 0) || ((time(NULL) - eventptr->last) >= eventptr->every))
 		{
-			eventptr->last = TStime();
+			eventptr->last = time(NULL);
 			(*eventptr->event)(eventptr->data);
 			if (eventptr->howmany > 0)
 			{
@@ -184,7 +184,7 @@ freeit:
 void	EventStatus(aClient *sptr)
 {
 	Event *eventptr;
-	time_t now = TStime();
+	time_t now = time(NULL);
 	
 	if (!events)
 	{

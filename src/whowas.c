@@ -64,7 +64,7 @@ void add_history(aClient *cptr, int online)
 		del_whowas_from_list(&WHOWASHASH[new->hashv], new);
 	}
 	new->hashv = hash_whowas_name(cptr->name);
-	new->logoff = TStime();
+	new->logoff = time(NULL);
 	new->umodes = cptr->umodes;
 	AllocCpy(new->name, cptr->name);
 	AllocCpy(new->username, cptr->user->username);
@@ -114,7 +114,7 @@ aClient *get_history(char *nick, time_t timelimit)
 	aWhowas *temp;
 	int  blah;
 
-	timelimit = TStime() - timelimit;
+	timelimit = time(NULL) - timelimit;
 	blah = hash_whowas_name(nick);
 	temp = WHOWASHASH[blah];
 	for (; temp; temp = temp->next)

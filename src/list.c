@@ -157,7 +157,7 @@ aClient *make_client(aClient *from, aClient *servr)
 		INIT_LIST_HEAD(&cptr->special_node);
 
 		cptr->since = cptr->lasttime =
-		    cptr->lastnick = cptr->firsttime = TStime();
+		    cptr->lastnick = cptr->firsttime = time(NULL);
 		cptr->class = NULL;
 		cptr->passwd = NULL;
 		cptr->sockhost[0] = '\0';
@@ -699,7 +699,7 @@ int freed=0;
 		{
 			e_next = e->next_c;
 			
-			if (e->firstjoin + t < TStime())
+			if (e->firstjoin + t < time(NULL))
 			{
 				cmodej_delentry(e);
 #ifdef DEBUGMODE

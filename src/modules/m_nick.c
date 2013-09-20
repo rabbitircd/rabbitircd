@@ -338,13 +338,13 @@ DLLFUNC CMD_FUNC(m_uid)
 		if (parc > 3)
 			sptr->lastnick = atol(parv[3]);
 		else		/* Little bit better, as long as not all upgraded */
-			sptr->lastnick = TStime();
+			sptr->lastnick = time(NULL);
 		if (sptr->lastnick < 0)
 		{
 			sendto_realops
-			    ("Negative timestamp recieved from %s, resetting to TStime (%s)",
+			    ("Negative timestamp recieved from %s, resetting to time(NULL) (%s)",
 			    cptr->name, backupbuf);
-			sptr->lastnick = TStime();
+			sptr->lastnick = time(NULL);
 		}
 	}
 
@@ -419,11 +419,11 @@ DLLFUNC CMD_FUNC(m_nick)
 	if (MyConnect(sptr) && sptr->user && !IsAnOper(sptr))
 	{
 		if ((sptr->user->flood.nick_c >= NICK_COUNT) && 
-		    (TStime() - sptr->user->flood.nick_t < NICK_PERIOD))
+		    (time(NULL) - sptr->user->flood.nick_t < NICK_PERIOD))
 		{
 			/* Throttle... */
 			sendto_one(sptr, err_str(ERR_NCHANGETOOFAST), me.name, sptr->name, nick,
-				(int)(NICK_PERIOD - (TStime() - sptr->user->flood.nick_t)));
+				(int)(NICK_PERIOD - (time(NULL) - sptr->user->flood.nick_t)));
 			return 0;
 		}
 	}
@@ -881,13 +881,13 @@ DLLFUNC CMD_FUNC(m_nick)
 		if (parc > 3)
 			sptr->lastnick = atol(parv[3]);
 		else		/* Little bit better, as long as not all upgraded */
-			sptr->lastnick = TStime();
+			sptr->lastnick = time(NULL);
 		if (sptr->lastnick < 0)
 		{
 			sendto_realops
-			    ("Negative timestamp recieved from %s, resetting to TStime (%s)",
+			    ("Negative timestamp recieved from %s, resetting to time(NULL) (%s)",
 			    cptr->name, backupbuf);
-			sptr->lastnick = TStime();
+			sptr->lastnick = time(NULL);
 		}
 		newusr = 1;
 	}
@@ -932,9 +932,9 @@ DLLFUNC CMD_FUNC(m_nick)
 				}
 			}
 
-			if (TStime() - sptr->user->flood.nick_t >= NICK_PERIOD)
+			if (time(NULL) - sptr->user->flood.nick_t >= NICK_PERIOD)
 			{
-				sptr->user->flood.nick_t = TStime();
+				sptr->user->flood.nick_t = time(NULL);
 				sptr->user->flood.nick_c = 1;
 			} else
 				sptr->user->flood.nick_c++;
@@ -960,11 +960,11 @@ DLLFUNC CMD_FUNC(m_nick)
 		    (!MyClient(sptr) && parc > 2
 		    && atol(parv[2]) < sptr->lastnick))
 			sptr->lastnick = (MyClient(sptr)
-			    || parc < 3) ? TStime() : atol(parv[2]);
+			    || parc < 3) ? time(NULL) : atol(parv[2]);
 		if (sptr->lastnick < 0)
 		{
 			sendto_realops("Negative timestamp (%s)", backupbuf);
-			sptr->lastnick = TStime();
+			sptr->lastnick = time(NULL);
 		}
 		add_history(sptr, 1);
 		sendto_common_channels(sptr, ":%s NICK :%s", parv[0], nick);
@@ -1035,7 +1035,7 @@ DLLFUNC CMD_FUNC(m_nick)
 				sendto_one(sptr, ":IRC!IRC@%s PRIVMSG %s :\1VERSION\1",
 					me.name, nick);
 
-			sptr->lastnick = TStime();	/* Always local client */
+			sptr->lastnick = time(NULL);	/* Always local client */
 			if (register_user(cptr, sptr, nick,
 			    sptr->user->username, NULL, NULL, NULL) == FLUSH_BUFFER)
 				return FLUSH_BUFFER;
@@ -1147,7 +1147,7 @@ int _register_user(aClient *cptr, aClient *sptr, char *nick, char *username, cha
 	};
 	aTKline *savetkl = NULL;
 	ConfigItem_tld *tlds;
-	cptr->last = TStime();
+	cptr->last = time(NULL);
 	parv[0] = sptr->name;
 	parv[1] = parv[2] = NULL;
 	nick = sptr->name; /* <- The data is always the same, but the pointer is sometimes not,
