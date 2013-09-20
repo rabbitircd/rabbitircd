@@ -21,7 +21,7 @@
 
 CC = danger will robinson
 
-OBJS=timesynch.o res.o s_bsd.o auth.o aln.o channel.o cloak.o crule.o dbuf.o \
+OBJS=res.o s_bsd.o auth.o aln.o channel.o cloak.o crule.o dbuf.o \
 	events.o fdlist.o hash.o help.o ircd.o ircsprintf.o list.o \
 	match.o modules.o packet.o parse.o s_auth.o mempool.o \
 	s_conf.o s_debug.o s_dispatch.o s_err.o s_extra.o s_kline.o \
@@ -176,9 +176,6 @@ list.o: list.c $(INCLUDES)
 
 res.o: res.c $(INCLUDES) ../include/res.h
 	$(CC) $(CFLAGS) -c res.c
-
-timesynch.o: timesynch.c $(INCLUDES)
-	$(CC) $(CFLAGS) -c timesynch.c
 
 cloak.o: cloak.c $(INCLUDES)
 	$(CC) $(CFLAGS) -c cloak.c

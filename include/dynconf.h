@@ -143,9 +143,6 @@ struct zConfiguration {
 	long spamfilter_detectslow_fatal;
 	int maxbans;
 	int maxbanlength;
-	int timesynch_enabled;
-	int timesynch_timeout;
-	char *timesynch_server;
 	int pingpong_warning;
 	int watch_away_notification;
 	int uhnames;
@@ -262,10 +259,6 @@ extern MODVAR aConfiguration iConf;
 
 #define MAXBANS		iConf.maxbans
 #define MAXBANLENGTH	iConf.maxbanlength
-
-#define TIMESYNCH	iConf.timesynch_enabled
-#define TIMESYNCH_TIMEOUT	iConf.timesynch_timeout
-#define TIMESYNCH_SERVER	iConf.timesynch_server
 
 #define PINGPONG_WARNING	iConf.pingpong_warning
 
