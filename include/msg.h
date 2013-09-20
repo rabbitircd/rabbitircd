@@ -108,7 +108,6 @@
 #define MSG_RULES       "RULES"	/* RULES */
 #define MSG_MAP         "MAP"	/* MAP */
 #define MSG_SVS2MODE    "SVS2MODE"	/* SVS2MODE */
-#define MSG_DALINFO     "DALINFO"	/* dalinfo */
 #define MSG_ADMINCHAT   "ADCHAT"	/* Admin chat */
 #define MSG_MKPASSWD	"MKPASSWD"	/* MKPASSWD */
 #define MSG_ADDLINE     "ADDLINE"	/* ADDLINE */
@@ -176,7 +175,6 @@ extern int m_error();
 extern int m_dns();
 extern int m_info(), m_summon();
 extern int m_users(), m_version();
-extern int m_dalinfo();
 extern int m_credits();
 extern int m_license();
 extern int m_module(), m_alias();

@@ -83,7 +83,6 @@ void	init_CommandHash(void)
 	add_Command(MSG_REHASH, m_rehash, MAXPARA);
 	add_Command(MSG_RESTART, m_restart, 2);
 	add_Command(MSG_DIE, m_die, MAXPARA);
-	add_Command(MSG_DALINFO, m_dalinfo, MAXPARA);
 	add_Command(MSG_CREDITS, m_credits, MAXPARA);
 	add_Command(MSG_LICENSE, m_license, MAXPARA);
 	add_Command(MSG_MODULE, m_module, MAXPARA);

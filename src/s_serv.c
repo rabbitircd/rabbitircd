@@ -305,33 +305,6 @@ CMD_FUNC(m_info)
 }
 
 /*
-** m_dalinfo
-**      parv[0] = sender prefix
-**      parv[1] = servername
-*/
-CMD_FUNC(m_dalinfo)
-{
-	char **text = dalinfotext;
-
-	if (hunt_server(cptr, sptr, ":%s DALINFO :%s", 1, parc, parv) == HUNTED_ISME)
-	{
-		while (*text)
-			sendto_one(sptr, rpl_str(RPL_INFO),
-			    me.name, parv[0], *text++);
-
-		sendto_one(sptr, rpl_str(RPL_INFO), me.name, parv[0], "");
-		sendto_one(sptr,
-		    ":%s %d %s :Birth Date: %s, compile # %s",
-		    me.name, RPL_INFO, parv[0], creation, generation);
-		sendto_one(sptr, ":%s %d %s :On-line since %s",
-		    me.name, RPL_INFO, parv[0], myctime(me.firsttime));
-		sendto_one(sptr, rpl_str(RPL_ENDOFINFO), me.name, parv[0]);
-	}
-
-	return 0;
-}
-
-/*
 ** m_license
 **      parv[0] = sender prefix
 **      parv[1] = servername
