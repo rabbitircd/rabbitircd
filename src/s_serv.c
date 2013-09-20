@@ -222,62 +222,32 @@ char buf[1024];
  * sends m_info into to sptr
 */
 
-char *unrealinfo[] =
+char *ircdinfo[] =
 {
-	"This release was brought to you by the following people:",
+	"RabbitIRCD --",
+	"Based on the original IRCd code by Jarkko Oikarinen",
+	"Copyright 1988, 1989, 1990, 1991 University of Oulu, Computing Center",
+	"Copyright 1999 - 2013 UnrealIRCd developers (see COPYRIGHT)",
+	"Copyright 2013 RabbitIRCD developers (see COPYRIGHT)",
 	"",
-	"Head coder:",
-	"* Syzop        <syzop@unrealircd.com>",
+	"RabbitIRCD began as a fork of UnrealIRCd 3.4 development with the intent of",
+	"creating and maintaining a codebase with modern, relevant goals related to the",
+	"next generation of IRC server deployments, and features the work of many",
+	"stakeholders.",
 	"",
-	"Coders:",
-	"* binki        <binki@unrealircd.com>",
+	"Visit us on IRC at: irc.weresource.org #ircd",
 	"",
-	"Contributors:",
-	"* nenolod, Adam, warg, Stealth, WolfSage, katsklaw, darkex,"
-	"  fspijkerman, fbi, Apocalypse",
-	"",
-	"RC Testers:",
-	"* <<TODO>>,",
-	"  and everyone else who downloaded the release candidates.",
-	"",
-	"Past UnrealIRCd3.2* coders/contributors:",
-	"* Stskeeps (ret. head coder / project leader)",
-	"* codemastr (ret. u3.2 head coder)",
-	"* aquanight, WolfSage, ..",
-	"* McSkaf, Zogg, NiQuiL, chasm, llthangel, nighthawk, ..",
 	NULL
 };
 
 void m_info_send(aClient *sptr)
 {
-char **text = unrealinfo;
-
-	sendto_one(sptr, ":%s %d %s :=-=-=-= %s =-=-=-=",
-	    me.name, RPL_INFO, sptr->name, IRCDTOTALVERSION);
+	char **text = ircdinfo;
 
 	while (*text)
-		sendto_one(sptr, ":%s %d %s :| %s", 
+		sendto_one(sptr, ":%s %d %s :%s",
 		    me.name, RPL_INFO, sptr->name, *text++);
 
-	sendto_one(sptr, ":%s %d %s :|", me.name, RPL_INFO, sptr->name);
-	sendto_one(sptr, ":%s %d %s :|", me.name, RPL_INFO, sptr->name);
-	sendto_one(sptr, ":%s %d %s :| Credits - Type /Credits",
-	    me.name, RPL_INFO, sptr->name);
-	sendto_one(sptr, ":%s %d %s :| DALnet Credits - Type /DalInfo",
-	    me.name, RPL_INFO, sptr->name);
-	sendto_one(sptr, ":%s %d %s :|", me.name, RPL_INFO, sptr->name);
-	sendto_one(sptr, ":%s %d %s :| This is an UnrealIRCd-style server",
-	    me.name, RPL_INFO, sptr->name);
-	sendto_one(sptr, ":%s %d %s :| If you find any bugs, please report them at:",
-	    me.name, RPL_INFO, sptr->name);
-	sendto_one(sptr, ":%s %d %s :|  http://bugs.unrealircd.org/",
-	    me.name, RPL_INFO, sptr->name);
-	sendto_one(sptr,
-	    ":%s %d %s :| UnrealIRCd Homepage: http://www.unrealircd.com",
-	    me.name, RPL_INFO, sptr->name);
-	sendto_one(sptr,
-	    ":%s %d %s :-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=", me.name,
-	    RPL_INFO, sptr->name);
 	sendto_one(sptr, ":%s %d %s :Birth Date: %s, compile # %s", me.name,
 	    RPL_INFO, sptr->name, creation, generation);
 	sendto_one(sptr, ":%s %d %s :On-line since %s", me.name, RPL_INFO,
