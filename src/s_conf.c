@@ -3069,7 +3069,6 @@ int	_conf_include(ConfigFile *conf, ConfigEntry *ce)
 		return -1;
 	}
 	chmod(ce->ce_vardata, DEFAULT_PERMISSIONS);
-#endif
 #ifdef GLOBH
 #if defined(__OpenBSD__) && defined(GLOB_LIMIT)
 	glob(ce->ce_vardata, GLOB_NOSORT|GLOB_NOCHECK|GLOB_LIMIT, NULL, &files);
