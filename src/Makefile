@@ -52,7 +52,7 @@ INCLUDES = ../include/auth.h ../include/badwords.h ../include/channel.h \
 	../include/numeric.h ../include/proto.h \
 	../include/resource.h ../include/setup.h ../include/sjoin.h \
 	../include/sock.h ../include/ssl.h ../include/struct.h ../include/sys.h \
-	../include/threads.h ../include/types.h ../include/url.h \
+	../include/threads.h ../include/types.h \
 	../include/version.h ../include/whowas.h
 
 all: build
@@ -257,9 +257,6 @@ api-command.o: api-command.c $(INCLUDES)
 
 api-isupport.o: api-isupport.c $(INCLUDES)
 	$(CC) $(CFLAGS) -c api-isupport.c
-
-url.o: url.c $(INCLUDES)
-	$(CC) $(CFLAGS) -c url.c
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 

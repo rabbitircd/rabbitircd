@@ -52,9 +52,6 @@ else
 ARG="$ARG--enable-ssl=$SSLDIR "
 fi
 fi
-if [ "$REMOTEINC" = "1" ] ; then
-ARG="$ARG--enable-libcurl=$CURLDIR "
-fi
 if [ "$INET6" = "1" ] ; then
 ARG="$ARG--enable-inet6 "
 fi
@@ -70,9 +67,6 @@ ARG="$ARG--with-fd-setsize=$MAXCONNECTIONS "
 ARG="$ARG--enable-dynamic-linking "
 ARG="$ARG $EXTRAPARA "
 CONF="./configure $ARG"
-if [ "x$INSTALLCURL" = "x1" ]; then
-	./curlinstall || exit 1
-fi
 echo $CONF
 $CONF || exit 1
 cd "$UNREALCWD"
@@ -339,8 +333,6 @@ NICKNAMEHISTORYLENGTH="2000"
 MAXSENDQLENGTH="3000000"
 MAXCONNECTIONS="1024"
 INET6="1"
-REMOTEINC=""
-CURLDIR=""
 PREFIXAQ="1"
 SHOWLISTMODES="1"
 TOPICNICKISNUH=""
@@ -538,179 +530,6 @@ while [ -z "$TEST" ] ; do
     esac
 done
 
-TEST=""
-while [ -z "$TEST" ] ; do
-    if [ "$REMOTEINC" = "1" ] ; then
-	TEST="Yes"
-    else
-	TEST="No"
-    fi
-    echo ""
-    echo "Do you want to enable remote includes?"
-    echo "This allows stuff like this in your configuration file:"
-    echo "include \"http://www.somesite.org/files/opers.conf\";"
-    echo $n "[$TEST] -> $c"
-	read cc
-    if [ -z "$cc" ] ; then
-	cc=$TEST
-    fi
-    case "$cc" in
-	[Yy]*)
-	    REMOTEINC="1"
-	    ;;
-	[Nn]*)
-	    REMOTEINC=""
-	    CURLDIR=""
-	    ;;
-	*)
-	    echo ""
-	    echo "You must enter either Yes or No"
-	    TEST=""
-	    ;;
-    esac
-done
-
-if [ "$REMOTEINC" = "1" ] ; then
-	if [ ! -d "$CURLDIR" ]; then
-		# Reset any previous CURLDIR if it doesn't exist (anymore)
-		CURLDIR=""
-	fi
-
-
-	INSTALLCURL="0"
-        if [ "x$CURLDIR" = "x" ]; then
-	        # There is no reason to support this:
-	        if [ -d "/usr/local/include/curl" ]; then
-		    CURLDIR="/usr/local"
-		fi
-	        # Zeroeth, let's act SANE
-	        if [ -d "/usr/include/curl" ]; then
-		    CURLDIR="/usr"
-		fi
-                # First, let's make shell admins happy...
-                if [ -d "/usr/share/unreal-curl" ]; then
-                        CURLDIR="/usr/share/unreal-curl"
-                fi
-
-                GOTASYNC=0
-                if [ "x$CURLDIR" != "x" ]; then
-                    # Check if it's of any use: a curl without async dns (cares) hangs the entire ircd..
-                    # normally this is done in ./configure but now we're forced to do it also here..
-                    if "$CURLDIR"/bin/curl-config --features | grep -q -e AsynchDNS; then
-                        GOTASYNC="1"
-                    fi
-                  if [ "$GOTASYNC" != "1" ]; then
-                          PREVCURLDIR="$CURLDIR"
-                          CURLDIR=""
-                  fi
-                fi
-                
-                # Second, use the local curl if it exists (overrides above)
-                if [ -d "$HOME/curl" ]; then
-                        CURLDIR="$HOME/curl"
-                        
-                        # Check if it's recent enough...
-                        # But first, check if curl-config can be trusted at all: it depends
-                        # on 'bc' for some reason and not all systems have that installed!
-                        echo "1+1"|bc 1>/dev/null 2>&1
-                        if [ "$?" = 0 ]; then
-                            "$CURLDIR"/bin/curl-config --checkfor 7.21.0
-                            if [ "$?" != 0 ]; then
-                                    echo ""
-                                    echo "Your self-compiled CURL library in $CURLDIR is slightly outdated."
-                                    echo "This probably means you had the library from a previous installation of UnrealIRCd."
-                                    echo "Because previous versions may be linked to a previous version to c-ares which"
-                                    echo "were not ABI compatible it is highly recommended to remove the version"
-                                    echo "and recompile it. We now have an automatic downloader and installer to compile"
-                                    echo "and install curl for you (in $CURLDIR). You can choose to do so in the question"
-                                    echo "after this one."
-                                    TEST=""
-                                    while [ -z "$TEST" ] ; do
-                                        TEST="Yes"
-                                        echo "Shall I rename $CURLDIR to $CURLDIR.old so it can be rebuild later on?"
-                                        echo $n "[$TEST] -> $c"
-                                        read cc
-                                        if [ -z "$cc" ] ; then
-                                            cc=$TEST
-                                        fi
-                                        case "$cc" in
-                                            [Yy]*)
-                                                rm -rf "$CURLDIR".old
-                                                mv "$CURLDIR" "$CURLDIR".old
-                                                CURLDIR=""
-                                                GOTASYNC=1
-                                                # wow the GOTASYNC=1 is hackish, but we need to prevent the error from later on
-                                                ;;
-                                            [Nn]*)
-                                                echo "Uh, ok... I hope you know what you are doing..."
-                                                echo ""
-                                                ;;
-                                            *)
-                                                echo ""
-                                                echo "You must enter either Yes or No"
-                                                TEST=""
-                                                ;;
-                                        esac
-                                    done
-                            fi
-                        fi
-                fi
-                
-                # Need to output it here, as the HOME check from above may cause this to be no longer relevant.
-                if [ "x$CURLDIR" = "x" -a "$GOTASYNC" != "1" ]; then
-                	echo "Curl library was found in $PREVCURLDIR, but it does not support Asynchronous DNS (not compiled with c-ares)"
-                	echo "so it's of no use to us."
-                fi
-                	
-        fi
-        if [ "x$CURLDIR" = "x" ]; then
-        	# Still empty?
-        	TEST=""
-                while [ -z "$TEST" ] ; do
-                    TEST="Yes"
-                    echo ""
-        	    echo "Do you want me to automatically download and install curl for you?"
-        	    echo "(will install in $HOME/curl)"
-                    echo $n "[$TEST] -> $c"
-                        read cc
-                    if [ -z "$cc" ] ; then
-                        cc=$TEST
-                    fi
-                    case "$cc" in
-                        [Yy]*)
-                            INSTALLCURL="1"
-                            CURLDIR="$HOME/curl"
-                            ;;
-                        [Nn]*)
-                            INSTALLCURL="0"
-                            ;;
-                        *)
-                            echo ""
-                            echo "You must enter either Yes or No"
-                            TEST=""
-                            ;;
-                    esac
-                done
-        fi
-
-	if [ "$INSTALLCURL" != "1" ]; then
-	  TEST=""
-          while [ -z "$TEST" ] ; do
-                  TEST="$CURLDIR"
-                  echo ""
-                  echo "Specify the directory you installed libcurl to"
-                  echo $n "[$TEST] -> $c"
-                  read cc
-                  if [ -z "$cc" ] ; then
-                      cc=$TEST
-                  else
-                      TEST=$cc
-                      CURLDIR=`eval echo $cc` # modified
-                  fi
-          done
-        fi
-fi
-
 
 TEST=""
 while [ -z "$TEST" ] ; do
@@ -841,8 +660,6 @@ NICKNAMEHISTORYLENGTH="$NICKNAMEHISTORYLENGTH"
 DEFPERM="$DEFPERM"
 CRYPTOIRCD="$CRYPTOIRCD"
 SSLDIR="$SSLDIR"
-REMOTEINC="$REMOTEINC"
-CURLDIR="$CURLDIR"
 SHOWLISTMODES="$SHOWLISTMODES"
 TOPICNICKISNUH="$TOPICNICKISNUH"
 SHUNNOTICES="$SHUNNOTICES"
