@@ -50,15 +50,11 @@ cat >version.c <<!SUB!THIS!
 
 #include "struct.h"
 #include "version.h"
-#include "license.h"
 
 char *generation = "$generation";
 char *creation = "$creation";
 #define IRCDTOTALVERSION BASE_VERSION PATCH1 PATCH2 PATCH3 PATCH4 PATCH5 PATCH6 PATCH7 PATCH8 PATCH9
 char *version = IRCDTOTALVERSION;
 char *buildid = "$id";
-/* moved to s_serv.c */
-char *infotext[] = 
-{ 0 };
 
 !SUB!THIS!

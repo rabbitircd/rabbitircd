@@ -304,28 +304,6 @@ CMD_FUNC(m_info)
 	return 0;
 }
 
-/*
-** m_license
-**      parv[0] = sender prefix
-**      parv[1] = servername
-*/
-CMD_FUNC(m_license)
-{
-	char **text = gnulicense;
-
-	if (hunt_server(cptr, sptr, ":%s LICENSE :%s", 1, parc, parv) == HUNTED_ISME)
-	{
-		while (*text)
-			sendto_one(sptr, rpl_str(RPL_INFO),
-			    me.name, parv[0], *text++);
-
-		sendto_one(sptr, rpl_str(RPL_INFO), me.name, parv[0], "");
-		sendto_one(sptr, rpl_str(RPL_ENDOFINFO), me.name, parv[0]);
-	}
-
-	return 0;
-}
-
 char *get_cptr_status(aClient *acptr)
 {
 	static char buf[10];

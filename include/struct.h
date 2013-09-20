@@ -1708,7 +1708,6 @@ struct liststruct {
 
 extern MODVAR char *version, *unrealinfo[];
 extern MODVAR char *generation, *creation;
-extern MODVAR char *gnulicense[];
 /* misc defines */
 
 #define	FLUSH_BUFFER	-2
