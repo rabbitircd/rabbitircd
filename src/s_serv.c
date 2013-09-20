@@ -526,16 +526,11 @@ EVENT(save_tunefile)
 void load_tunefile(void)
 {
 	FILE *tunefile;
-	char buf[1024];
-
 	tunefile = fopen(conf_files->tune_file, "r");
-	if (!tunefile)
-		return;
-
-	if (!fgets(buf, sizeof(buf), tunefile))
-	    fprintf(stderr, "Warning: error while reading the peak user count from the tunefile%s%s\n",
-		errno? ": ": "", errno? strerror(errno): "");
-	IRCstats.me_max = atol(buf);
+	if (!tunefile) return;
+        errno = 0;
+	if (fscanf(tunefile, "%d", &IRCstats.me_max) != 1)
+	    fprintf(stderr, "Warning: error while reading the peak user count from the tunefile%s%s\n", errno? ": ": "", errno? strerror(errno): "");
 	fclose(tunefile);
 }
 
