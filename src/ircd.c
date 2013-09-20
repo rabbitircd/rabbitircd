@@ -60,7 +60,6 @@ Computing Center and Jarkko Oikarinen";
 #endif
 #include "version.h"
 #include "proto.h"
-#endif
 ID_Copyright
     ("(C) 1988 University of Oulu, Computing Center and Jarkko Oikarinen");
 ID_Notes("2.48 3/9/94");
@@ -1109,7 +1108,6 @@ int main(int argc, char *argv[])
 	}
 #endif
 	mkdir("tmp", S_IRUSR|S_IWUSR|S_IXUSR); /* Create the tmp dir, if it doesn't exist */
-#endif
 	/*
 	 * didn't set debuglevel 
 	 */
