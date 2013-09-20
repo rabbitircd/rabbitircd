@@ -67,7 +67,6 @@ ID_Notes("2.48 3/9/94");
 char *malloc_options = "h" MALLOC_FLAGS_EXTRA;
 #endif
 
-extern char unreallogo[];
 int  SVSNOOP = 0;
 extern MODVAR char *buildid;
 time_t timeofday = 0;
@@ -1117,11 +1116,10 @@ int main(int argc, char *argv[])
 
 	if (argc > 0)
 		return bad_command(myargv[0]);	/* This should exit out */
-	fprintf(stderr, "%s", unreallogo);
-	fprintf(stderr, "                           v%s\n", VERSIONONLY);
-	fprintf(stderr, "                     using %s\n", tre_version());
+	fprintf(stderr, "rabbitircd %s is starting.\n", VERSIONONLY);
+	fprintf(stderr, "     using %s\n", tre_version());
 #ifdef USE_SSL
-	fprintf(stderr, "                     using %s\n", SSLeay_version(SSLEAY_VERSION));
+	fprintf(stderr, "     using %s\n", SSLeay_version(SSLEAY_VERSION));
 #endif
 	fprintf(stderr, "\n");
 	clear_client_hash_table();

@@ -1706,7 +1706,7 @@ struct liststruct {
 
 /* misc variable externs */
 
-extern MODVAR char *version, *infotext[], *unrealcredits[], *unrealinfo[];
+extern MODVAR char *version, *unrealinfo[];
 extern MODVAR char *generation, *creation;
 extern MODVAR char *gnulicense[];
 /* misc defines */

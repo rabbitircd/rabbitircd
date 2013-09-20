@@ -326,33 +326,6 @@ CMD_FUNC(m_license)
 	return 0;
 }
 
-/*
-** m_credits
-**      parv[0] = sender prefix
-**      parv[1] = servername
-*/
-CMD_FUNC(m_credits)
-{
-	char **text = unrealcredits;
-
-	if (hunt_server(cptr, sptr, ":%s CREDITS :%s", 1, parc, parv) == HUNTED_ISME)
-	{
-		while (*text)
-			sendto_one(sptr, rpl_str(RPL_INFO),
-			    me.name, parv[0], *text++);
-
-		sendto_one(sptr, rpl_str(RPL_INFO), me.name, parv[0], "");
-		sendto_one(sptr,
-		    ":%s %d %s :Birth Date: %s, compile # %s",
-		    me.name, RPL_INFO, parv[0], creation, generation);
-		sendto_one(sptr, ":%s %d %s :On-line since %s",
-		    me.name, RPL_INFO, parv[0], myctime(me.firsttime));
-		sendto_one(sptr, rpl_str(RPL_ENDOFINFO), me.name, parv[0]);
-	}
-
-	return 0;
-}
-
 char *get_cptr_status(aClient *acptr)
 {
 	static char buf[10];
