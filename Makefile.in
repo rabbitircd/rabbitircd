@@ -142,14 +142,6 @@ build: Makefile
 	@echo '| Compile is now complete.                         |'
 	@echo '| You should now read the documentation and learn  |'
 	@echo '| how to configure your IRCd.                      |'
-	@echo '|                                                  |'
-	@echo '| If you really like UnrealIRCd, and would like to |'
-	@echo '| make a donation, please read the Donation file in|'
-	@echo '| this archive. :)                                 |'
-	@echo '|                                                  |'
-	@echo '| Thanks for using Unreal IRCd! If you are in need |' 
-	@echo '| for any kind of help regarding the IRCd please   |'
-	@echo '| read the Unreal.nfo file.                        |' 
 	@echo '|__________________________________________________|'
 
 clean:

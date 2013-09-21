@@ -602,7 +602,7 @@ static int bad_command(const char *argv0)
 	(void)printf
 	    ("Usage: %s [-f <config>] [-h <servername>] [-p <port>] [-x <loglevel>] [-t] [-F]\n"
 	     "\n"
-	     "UnrealIRCd\n"
+	     "RabbitIRCd\n"
 	     " -f <config>     Load configuration from <config> instead of the default\n"
 	     "                 (%s).\n"
 	     " -h <servername> Override the me::name configuration setting with\n"
@@ -613,7 +613,7 @@ static int bad_command(const char *argv0)
 	     " -t              Dump information to stdout as if you were a linked-in\n"
 	     "                 server.\n"
 	     " -F              Don't fork() when starting up. Use this when running\n"
-	     "                 UnrealIRCd under gdb or when playing around with settings\n"
+	     "                 RabbitIRCd under gdb or when playing around with settings\n"
 	     "                 on a non-production setup.\n"
 	     "\n",
 	     argv0, CONFIGFILE);
@@ -657,10 +657,10 @@ int error = 0;
 
 	if (error)
 	{
-		version_check_logerror("Header<->library mismatches can make UnrealIRCd *CRASH*! "
+		version_check_logerror("Header<->library mismatches can make RabbitIRCd *CRASH*! "
 		                "Make sure you don't have multiple versions of openssl installed (eg: "
 		                "one in /usr and one in /usr/local). And, if you recently upgraded them, "
-		                "be sure to recompile Unreal.");
+		                "be sure to recompile the ircd.");
 		tainted = 1;
 	}
 }
