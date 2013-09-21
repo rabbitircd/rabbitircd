@@ -352,7 +352,7 @@ CLEAN=""
 ADVANCED=""
 while [ $# -ge 1 ] ; do
 	if [ $1 = "--help" ] ; then
-		echo "Config utility for UnrealIRCd"
+		echo "Config utility for RabbitIRCd"
 		echo "-----------------------------"
 		echo "Syntax: ./Config [options]"
 		echo "-nocache     Ignore settings saved in config.settings"
