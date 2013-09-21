@@ -28,7 +28,7 @@ OBJS=res.o s_bsd.o auth.o aln.o channel.o cloak.o crule.o dbuf.o \
 	s_misc.o s_numeric.o s_serv.o s_svs.o $(STRTOUL) socket.o \
 	ssl.o s_user.o charsys.o scache.o send.o support.o umodes.o \
 	version.o whowas.o cidr.o random.o extcmodes.o uid.o \
-	extbans.o api-isupport.o api-command.o
+	extbans.o api-isupport.o api-command.o patricia.o
 
 SRC=$(OBJS:%.o=%.c)
 
@@ -52,7 +52,7 @@ INCLUDES = ../include/auth.h ../include/badwords.h ../include/channel.h \
 	../include/resource.h ../include/setup.h ../include/sjoin.h \
 	../include/sock.h ../include/ssl.h ../include/struct.h ../include/sys.h \
 	../include/threads.h ../include/types.h \
-	../include/version.h ../include/whowas.h
+	../include/version.h ../include/whowas.h ../include/patricia.h
 
 all: build
 
