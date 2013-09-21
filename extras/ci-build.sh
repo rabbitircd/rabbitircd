@@ -13,6 +13,8 @@ bash autogen.sh || exit 1
 	--with-sendq=3000000 \
 	--with-permissions=0600 \
 	--with-fd-setsize=1024 \
+	--with-system-tre \
+	--with-system-cares \
 	--enable-dynamic-linking || exit 1
 make || exit 1
 
