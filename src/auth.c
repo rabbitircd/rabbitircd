@@ -62,9 +62,6 @@ struct auth_ops *auth_lookup_ops(const char *name)
 anAuthStruct MODVAR AuthTypes[] = {
 	{"plain",	AUTHTYPE_PLAINTEXT},
 	{"plaintext",   AUTHTYPE_PLAINTEXT},
-#ifdef AUTHENABLE_SHA1
-	{"sha1",	AUTHTYPE_SHA1},
-#endif
 #ifdef AUTHENABLE_RIPEMD160
 	{"ripemd160",	AUTHTYPE_RIPEMD160},
 	/* sure, this is ugly, but it's our fault. -- Syzop */
@@ -208,64 +205,6 @@ int max;
 	return 1;
 }
 
-#ifdef AUTHENABLE_SHA1
-static int authcheck_sha1(aClient *cptr, anAuthStruct *as, char *para)
-{
-char buf[512];
-int i, r;
-char *saltstr, *hashstr;
-
-	if (!para)
-		return -1;
-	r = parsepass(as->data, &saltstr, &hashstr);
-	if (r)
-	{
-		/* New method with salt: b64(SHA1(SHA1(<pass>)+salt)) */
-		char result1[MAXSALTLEN+20+1];
-		char result2[20];
-		char rsalt[MAXSALTLEN+1];
-		int rsaltlen;
-		SHA_CTX hash;
-		
-		/* First, decode the salt to something real... */
-		rsaltlen = b64_decode(saltstr, rsalt, sizeof(rsalt));
-		if (rsaltlen <= 0)
-			return -1;
-
-		/* Then hash the password (1st round)... */
-		SHA1_Init(&hash);
-		SHA1_Update(&hash, para, strlen(para));
-		SHA1_Final(result1, &hash);
-		/* Add salt to result */
-		memcpy(result1+20, rsalt, rsaltlen); /* b64_decode already made sure bounds are ok */
-
-		/* Then hash it all together again (2nd round)... */
-		SHA1_Init(&hash);
-		SHA1_Update(&hash, result1, rsaltlen+20);
-		SHA1_Final(result2, &hash);
-		/* Then base64 encode it all and we are done... */
-		if ((i = b64_encode(result2, sizeof(result2), buf, sizeof(buf))))
-		{
-			if (!strcmp(buf, hashstr))
-				return 2;
-			else
-				return -1;
-		} else
-			return -1;
-	} else {
-		/* OLD auth */
-		if ((i = b64_encode(SHA1(para, strlen(para), NULL), 20, buf, sizeof(buf))))
-		{
-			if (!strcmp(buf, as->data))
-				return 2;
-			else
-				return -1;
-		} else
-			return -1;
-	}
-}
-#endif /* AUTHENABLE_SHA1 */
-
 #ifdef AUTHENABLE_RIPEMD160
 static int authcheck_ripemd160(aClient *cptr, anAuthStruct *as, char *para)
 {
@@ -363,11 +302,6 @@ int	Auth_Check(aClient *cptr, anAuthStruct *as, char *para)
 		case AUTHTYPE_MD5:
 			return authcheck_md5(cptr, as, para);
 			break;
-#ifdef AUTHENABLE_SHA1
-		case AUTHTYPE_SHA1:
-			return authcheck_sha1(cptr, as, para);
-			break;
-#endif
 #ifdef AUTHENABLE_RIPEMD160
 		case AUTHTYPE_RIPEMD160:
 			return authcheck_ripemd160(cptr, as, para);
@@ -376,60 +310,6 @@ int	Auth_Check(aClient *cptr, anAuthStruct *as, char *para)
 #endif
 	return -1;
 }
-
-#ifdef AUTHENABLE_SHA1
-static char *mkpass_sha1(char *para)
-{
-static char buf[128];
-char result1[20+REALSALTLEN];
-char result2[20];
-char saltstr[REALSALTLEN]; /* b64 encoded printable string*/
-char saltraw[RAWSALTLEN];  /* raw binary */
-char xresult[64];
-SHA_CTX hash;
-int i;
-
-	if (!para) return NULL;
-
-	/* generate a random salt... */
-	for (i=0; i < RAWSALTLEN; i++)
-		saltraw[i] = getrandom8();
-
-	i = b64_encode(saltraw, RAWSALTLEN, saltstr, REALSALTLEN);
-	if (!i) return NULL;
-
-	/* b64(SHA1(SHA1(<pass>)+salt))
-	 *         ^^^^^^^^^^^
-	 *           step 1
-	 *     ^^^^^^^^^^^^^^^^^^^^^
-	 *     step 2
-	 * ^^^^^^^^^^^^^^^^^^^^^^^^^^
-	 * step 3
-	 */
-
-	/* STEP 1 */
-	SHA1_Init(&hash);
-	SHA1_Update(&hash, para, strlen(para));
-	SHA1_Final(result1, &hash);
-	/* STEP 2 */
-	/* add salt to result */
-	memcpy(result1+20, saltraw, RAWSALTLEN);
-	/* Then hash it all together */
-	SHA1_Init(&hash);
-	SHA1_Update(&hash, result1, RAWSALTLEN+20);
-	SHA1_Final(result2, &hash);
-	/* STEP 3 */
-	/* Then base64 encode it all together.. */
-	i = b64_encode(result2, sizeof(result2), xresult, sizeof(xresult));
-	if (!i) return NULL;
-
-	/* Good.. now create the whole string:
-	 * $<saltb64d>$<totalhashb64d>
-	 */
-	ircsnprintf(buf, sizeof(buf), "$%s$%s", saltstr, xresult);
-	return buf;
-}
-#endif /* AUTHENABLE_SHA1 */
 
 #ifdef AUTHENABLE_RIPEMD160
 static char *mkpass_ripemd160(char *para)
@@ -504,11 +384,6 @@ const char *Auth_Make(const char *type, char *para)
 		case AUTHTYPE_PLAINTEXT:
 			return (para);
 			break;
-
-#ifdef AUTHENABLE_SHA1
-		case AUTHTYPE_SHA1:
-			return mkpass_sha1(para);
-#endif
 
 #ifdef AUTHENABLE_RIPEMD160
 		case AUTHTYPE_RIPEMD160:
