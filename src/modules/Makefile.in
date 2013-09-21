@@ -57,6 +57,7 @@ R_MODULES= \
 	 m_sasl.so cap_invitenotify.so
 
 MODES	= chm_permanent.so
+AUTH	= auth_clientcert.so
 
 #note change of .c to .o
 COMMANDS=m_sethost.o m_chghost.o m_chgident.o m_setname.o m_setident.o \
@@ -82,7 +83,7 @@ COMMANDS=m_sethost.o m_chghost.o m_chgident.o m_setname.o m_setident.o \
 	 m_nopost.o m_issecure.o m_cap.o m_sasl.o
 
 
-MODULES=cloak.so $(R_MODULES) $(MODES)
+MODULES=cloak.so $(R_MODULES) $(MODES) $(AUTH)
 MODULEFLAGS=@MODULEFLAGS@
 CC=@CC@
 RM=@RM@
@@ -526,6 +527,14 @@ cap_invitenotify.so: cap_invitenotify.c $(INCLUDES)
 chm_permanent.so: chm_permanent.c $(INCLUDES)
 	$(CC) $(CFLAGS) $(MODULEFLAGS) -DDYNAMIC_LINKING \
 		-o chm_permanent.so chm_permanent.c
+
+#############################################################################
+# auth mechanisms
+#############################################################################
+
+auth_clientcert.so: auth_clientcert.c $(INCLUDES)
+	$(CC) $(CFLAGS) $(MODULEFLAGS) -DDYNAMIC_LINKING \
+		-o auth_clientcert.so auth_clientcert.c
 
 #############################################################################
 #             and now the remaining modules...

@@ -70,9 +70,6 @@ anAuthStruct MODVAR AuthTypes[] = {
 #ifdef AUTHENABLE_SHA1
 	{"sha1",	AUTHTYPE_SHA1},
 #endif
-#ifdef AUTHENABLE_SSL_CLIENTCERT
-	{"sslclientcert",   AUTHTYPE_SSL_CLIENTCERT},
-#endif
 #ifdef AUTHENABLE_RIPEMD160
 	{"ripemd160",	AUTHTYPE_RIPEMD160},
 	/* sure, this is ugly, but it's our fault. -- Syzop */
@@ -108,11 +105,6 @@ int		Auth_FindType(char *type)
 int		Auth_CheckError(ConfigEntry *ce)
 {
 	struct auth_ops *ops = NULL;
-
-#ifdef AUTHENABLE_SSL_CLIENTCERT
-	X509 *x509_filecert = NULL;
-	FILE *x509_f = NULL;
-#endif
 
 	if (!ce->ce_vardata)
 	{
@@ -156,25 +148,6 @@ int		Auth_CheckError(ConfigEntry *ce)
 							ce->ce_fileptr->cf_filename, ce->ce_varlinenum);
 						return -1;
 					}
-					break;
-#endif
-#ifdef AUTHENABLE_SSL_CLIENTCERT
-				case AUTHTYPE_SSL_CLIENTCERT:
-					if (!(x509_f = fopen(ce->ce_vardata, "r")))
-					{
-						config_error("%s:%i: authentication module failure: AUTHTYPE_SSL_CLIENTCERT: error opening file %s: %s",
-							ce->ce_fileptr->cf_filename, ce->ce_varlinenum, ce->ce_vardata, strerror(errno));
-						return -1;
-					}
-					x509_filecert = PEM_read_X509(x509_f, NULL, NULL, NULL);
-					fclose(x509_f);
-					if (!x509_filecert)
-					{
-						config_error("%s:%i: authentication module failure: AUTHTYPE_SSL_CLIENTCERT: PEM_read_X509 errored in file %s (format error?)",
-							ce->ce_fileptr->cf_filename, ce->ce_varlinenum, ce->ce_vardata);
-						return -1;
-					}
-					X509_free(x509_filecert);
 					break;
 #endif
 				default: ;
@@ -453,12 +426,8 @@ int	Auth_Check(aClient *cptr, anAuthStruct *as, char *para)
 	extern	char *crypt();
 #endif
 
-#if defined(AUTHENABLE_SSL_CLIENTCERT) || defined(AUTHENABLE_SSL_CLIENTCERTFP)
+#if defined(AUTHENABLE_SSL_CLIENTCERTFP)
 	X509 *x509_clientcert = NULL;
-#endif
-#ifdef AUTHENABLE_SSL_CLIENTCERT
-	X509 *x509_filecert = NULL;
-	FILE *x509_f = NULL;
 #endif
 #ifdef AUTHENABLE_SSL_CLIENTCERTFP
 	unsigned int n;
@@ -516,37 +485,6 @@ int	Auth_Check(aClient *cptr, anAuthStruct *as, char *para)
 #ifdef AUTHENABLE_RIPEMD160
 		case AUTHTYPE_RIPEMD160:
 			return authcheck_ripemd160(cptr, as, para);
-#endif
-#ifdef AUTHENABLE_SSL_CLIENTCERT
-		case AUTHTYPE_SSL_CLIENTCERT:
-			if (!para)
-				return -1;
-			if (!cptr->ssl)
-				return -1;
-			x509_clientcert = SSL_get_peer_certificate((SSL *)cptr->ssl);
-			if (!x509_clientcert)
-				return -1;
-			if (!(x509_f = fopen(as->data, "r")))
-			{
-				X509_free(x509_clientcert);
-				return -1;
-			}
-			x509_filecert = PEM_read_X509(x509_f, NULL, NULL, NULL);
-			fclose(x509_f);
-			if (!x509_filecert)
-			{
-				X509_free(x509_clientcert);
-				return -1;
-			}
-			if (X509_cmp(x509_filecert, x509_clientcert) != 0)
-			{
-				X509_free(x509_clientcert);
-				X509_free(x509_filecert);
-				break;
-			}
-			X509_free(x509_clientcert);
-			X509_free(x509_filecert);
-			return 2;	
 #endif
 #ifdef AUTHENABLE_SSL_CLIENTCERTFP
 		case AUTHTYPE_SSL_CLIENTCERTFP:

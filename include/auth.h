@@ -49,7 +49,7 @@ struct auth_data {
 
 struct auth_ops {
 	const char *name;
-	bool (*validate)(aClient *client, struct auth_data *auth, const char *param);
+	int (*validate)(aClient *client, struct auth_data *auth, const char *param);
 	const char *(*make_hash)(const char *param);
 	int (*config_handle)(ConfigEntry *ce);
 };
