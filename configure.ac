@@ -101,14 +101,6 @@ AC_MSG_WARN(Dynamic linking is not enabled because dlopen was not found)
 AC_DEFINE(STATIC_LINKING)
 ])])
 
-hold_cflags=$CFLAGS
-CFLAGS="$CFLAGS -Wl,-export-dynamic"
-AC_CACHE_CHECK(if we need the -Wl,-export-dynamic flag, ac_cv_export_dynamic, [
-AC_TRY_LINK(, [int i];, ac_cv_export_dynamic=yes, ac_cv_export_dynamic=no)])
-if test "$ac_cv_export_dynamic" = "no"; then
-CFLAGS=$hold_cflags
-fi
-
 AC_CACHE_CHECK(for compiler option to produce PIC,ac_cv_pic,[
 if test "$ac_cv_prog_gcc" = "yes"; then
 	ac_cv_pic="-fPIC -DPIC -shared"
@@ -507,8 +499,6 @@ AC_ARG_WITH(operoverride-verify, [AS_HELP_STRING([--with-operoverride-verify], [
 AC_ARG_WITH(disable-extendedban-stacking, [AS_HELP_STRING([--with-disable-extendedban-stacking], [Disable extended ban stacking])],
        [AS_IF([test $withval = "yes"],
        		[AC_DEFINE([DISABLE_STACKED_EXTBANS], [], [Define to disable extended ban stacking (~q:~c:\#chan, etc)])])])
-AC_ARG_WITH(system-tre, [AS_HELP_STRING([--with-system-tre], [Use the system tre package instead of bundled, discovered using pkg-config])], [], [with_system_tre=no])
-AC_ARG_WITH(system-cares, [AS_HELP_STRING([--with-system-cares], [Use the system c-ares (at least version 1.6.0) package instead of bundled c-ares, discovered using pkg-config])], [], [with_system_cares=no])
 CHECK_SSL
 AC_ARG_ENABLE(dynamic-linking, [AS_HELP_STRING([--disable-dynamic-linking], [Make the IRCd statically link with shared objects rather than dynamically (noone knows if disabling dynamic linking actually does anything or not)])],
 	[enable_dynamic_linking=$enableval], [enable_dynamic_linking="yes"])
@@ -557,118 +547,14 @@ dnl fail on certain solaris boxes. We might as
 dnl well set it here.
 export PATH_SEPARATOR
 
-AS_IF([test "x$with_system_tre" = "xno"],[
-dnl REMEMBER TO CHANGE WITH A NEW TRE RELEASE!
-tre_version="0.8.0"
-AC_MSG_RESULT(extracting TRE regex library)
-cur_dir=`pwd`
-cd extras
-dnl remove old tre directory to force a recompile...
-dnl and remove its installation prefix just to clean things up.
-rm -rf tre-$tre_version rege[]xp
-if test "x$ac_cv_path_GUNZIP" = "x" ; then
-	tar xfz tre.tar.gz
-else
-	cp tre.tar.gz tre.tar.gz.bak
-	gunzip -f tre.tar.gz
-	cp tre.tar.gz.bak tre.tar.gz
-	tar xf tre.tar
-fi
-AC_MSG_RESULT(configuring TRE regex library)
-cd tre-$tre_version
-./configure --disable-agrep --disable-shared --disable-system-abi --disable-wchar --disable-multibyte --prefix=$cur_dir/extras/regexp || exit 1
-AC_MSG_RESULT(compiling TRE regex library)
-$ac_cv_prog_MAKER || exit 1
-AC_MSG_RESULT(installing TRE regex library)
-$ac_cv_prog_MAKER install || exit 1
-TRE_CFLAGS="-I$cur_dir/extras/regexp/include"
-AC_SUBST(TRE_CFLAGS)
+IRCDLIBS="$IRCDLIBS -Wl,-export-dynamic "
 
-TRE_LIBS=
-dnl See c-ares's compilation section for more info on this hack.
-dnl ensure that we're linking against the bundled version of tre
-dnl (we only reach this code if linking against the bundled version is desired).
-AS_IF([test -n "$ac_cv_path_PKGCONFIG"],
-       [TRE_LIBS="`$ac_cv_path_PKGCONFIG --static --libs tre.pc | sed -e ['s,-L\([^ ]*regex[^ ]*lib\)\( .*\)-ltre,\1/libtre.a \2,']`"])
-dnl For when pkg-config isn't available -- or for when pkg-config
-dnl doesn't see the tre.pc file somehow... (#3982)
-AS_IF([test -z "$TRE_LIBS"],
-       [TRE_LIBS="../extras/regexp/lib/libtre.a"])
-AC_SUBST(TRE_LIBS)
-cd $cur_dir
-],[
-dnl use pkgconfig for tre:
-PKG_CHECK_MODULES([TRE], tre >= 0.7.5)
+PKG_CHECK_MODULES([TRE], [tre >= 0.7.5], [], [
+	AC_MSG_ERROR([TRE is required to build RabbitIRCD])
 ])
 
-AS_IF([test "x$with_system_cares" = "xno"],[
-dnl REMEMBER TO CHANGE WITH A NEW C-ARES RELEASE!
-dnl NOTE: when changing this here, ALSO change it in ./curlinstall
-dnl       and in the comment in this file around line 400!
-cares_version="1.9.1"
-AC_MSG_RESULT(extracting c-ares resolver library)
-cur_dir=`pwd`
-cd extras
-dnl remove old c-ares directory to force a recompile...
-rm -rf c-ares-$cares_version c-ares
-if test "x$ac_cv_path_GUNZIP" = "x" ; then
-	tar xfz c-ares.tar.gz
-else
-	cp c-ares.tar.gz c-ares.tar.gz.bak
-	gunzip -f c-ares.tar.gz
-	cp c-ares.tar.gz.bak c-ares.tar.gz
-	tar xf c-ares.tar
-fi
-AC_MSG_RESULT(configuring c-ares library)
-cd c-ares-$cares_version
-./configure --prefix=$cur_dir/extras/c-ares --disable-shared || exit 1
-AC_MSG_RESULT(compiling c-ares resolver library)
-$ac_cv_prog_MAKER || exit 1
-AC_MSG_RESULT(installing c-ares resolver library)
-$ac_cv_prog_MAKER install || exit 1
-CARES_CFLAGS="-I$cur_dir/extras/c-ares/include"
-AC_SUBST(CARES_CFLAGS)
-CARES_LIBS="-L../extras/c-ares/lib"
-
-dnl Set default library parameters for when pkg-config is not available
-dnl Ugly cd'ing out of extras/c-ares-xxx ;)
-dnl Note: must be a full path, not relative path.
-cd ../..
-CARESLIBSALT="`pwd`/extras/c-ares/lib/libcares.a"
-cd -
-case `uname -s` in
-	*FreeBSD*)
-		CARESLIBSALT="$CARESLIBSALT"
-		;;
-	*Linux*)
-		CARESLIBSALT="$CARESLIBSALT -lrt"
-		;;
-	*SunOS*)
-		CARESLIBSALT="$CARESLIBSALT -lrt"
-		;;
-esac
-
-dnl Use pkg-config for c-ares libraries, and if not available use defaults
-dnl from above. Also, if pkg-config returns an empty result (ex: on fbsd
-dnl or older versions it might be missing --static) then also use defaults.
-if test "x$ac_cv_path_PKGCONFIG" = "x" ; then
-	CARES_LIBS="$CARES_LIBS $CARESLIBSALT"
-else
-	CARES_LIBSPRE="$CARES_LIBS"
-	dnl the sed expression forces an absolute path to the .a file to be generated
-	dnl because this is what libtool would do. If this wasn't done and /usr/lib*/libcares.so
-	dnl exists, then unrealircd would still try to link against the system c-ares.
-	dnl The [] quotation is needed because the sed expression has [] in it.
-	[CARES_LIBS="$CARES_LIBS `$ac_cv_path_PKGCONFIG --static --libs libcares.pc | sed -e 's,-L\([^ ]\+lib\) -lcares,\1/libcares.a,'`"]
-	if test "$CARES_LIBS" = "$CARES_LIBSPRE " ; then
-		CARES_LIBS="$CARES_LIBS $CARESLIBSALT"
-	fi
-fi
-AC_SUBST(CARES_LIBS)
-cd $cur_dir
-],[
-dnl use pkg-config for system c-ares:
-PKG_CHECK_MODULES([CARES], libcares >= 1.6.0)
+PKG_CHECK_MODULES([CARES], [libcares >= 1.6.0], [], [
+	AC_MSG_ERROR([C-ARES is required to build RabbitIRCD])
 ])
 
 AC_CONFIG_FILES([Makefile
