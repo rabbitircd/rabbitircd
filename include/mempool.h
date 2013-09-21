@@ -98,4 +98,10 @@ struct mp_pool_t {
 #endif
 };
 
+static inline void *mp_pool_get0(mp_pool_t *pool) {
+	void *ptr = mp_pool_get(pool);
+	memset(ptr, 0, pool->item_alloc_size);
+	return ptr;
+}
+
 #endif

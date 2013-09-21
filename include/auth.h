@@ -19,10 +19,10 @@
  *   $Id$
  */
 
-typedef	struct {
-	char	*data;
-	short	type;
-} anAuthStruct;
+#ifndef __AUTH_H__
+#define __AUTH_H__
+
+#include <stdbool.h>
 
 #define AUTHTYPE_PLAINTEXT  0
 #define AUTHTYPE_UNIXCRYPT  1
@@ -33,19 +33,27 @@ typedef	struct {
 #define AUTHTYPE_SSL_CLIENTCERTFP 6
 
 /* md5 is always available and enabled as of Unreal3.2.1 */
+/* we requie openssl in rabbitircd */
 #define AUTHENABLE_MD5
-#ifdef USE_SSL
 #define AUTHENABLE_SHA1
 #define AUTHENABLE_SSL_CLIENTCERT
 #define AUTHENABLE_RIPEMD160
 #define AUTHENABLE_SSL_CLIENTCERTFP
-/* OpenSSL provides a crypt() */
-#ifndef AUTHENABLE_UNIXCRYPT
 #define AUTHENABLE_UNIXCRYPT
-#if OPENSSL_VERSION_NUMBER >= 0x0090700fL 
-#ifndef HAVE_CRYPT
-#define crypt DES_crypt
-#endif
-#endif
-#endif
+
+struct auth_data {
+	char	*data;
+	short	type;
+};
+
+struct auth_ops {
+	const char *name;
+	bool (*validate)(aClient *client, struct auth_data *auth, const char *param);
+	const char *(*make_hash)(const char *param);
+};
+
+extern bool auth_register_ops(struct auth_ops *ops);
+extern bool auth_unregister_ops(struct auth_ops *ops);
+extern struct auth_ops *auth_lookup_ops(const char *name);
+
 #endif

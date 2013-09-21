@@ -724,7 +724,7 @@ patricia_elem_add(struct patricia_tree *dict, const char *key, void *data)
 		assert(prev == NULL);
 		assert(dict->count == 0);
 		place1 = &dict->root;
-		*place1 = mp_pool_get(leaf_heap);
+		*place1 = mp_pool_get0(leaf_heap);
 		if (*place1 == NULL)
 			return NULL;
 		(*place1)->nibnum = -1;
@@ -750,7 +750,7 @@ patricia_elem_add(struct patricia_tree *dict, const char *key, void *data)
 	if ((prev == NULL) || (prev->nibnum < i))
 	{
 		/* Insert new node below prev */
-		newnode = mp_pool_get(node_heap);
+		newnode = mp_pool_get0(node_heap);
 		if (newnode == NULL)
 			return NULL;
 		newnode->nibnum = i;
@@ -806,7 +806,7 @@ patricia_elem_add(struct patricia_tree *dict, const char *key, void *data)
 	val = NIBBLE_VAL(ckey, i);
 	place1 = &newnode->node.down[val];
 	assert(*place1 == NULL);
-	*place1 = mp_pool_get(leaf_heap);
+	*place1 = mp_pool_get0(leaf_heap);
 	if (*place1 == NULL)
 		return NULL;
 	(*place1)->nibnum = -1;

@@ -43,9 +43,7 @@ static dbufbuf *dbuf_alloc(dbuf *dbuf_p)
 
 	assert(dbuf_p != NULL);
 
-	ptr = mp_pool_get(dbuf_bufpool);
-	memset(ptr, 0, sizeof(dbufbuf));
-
+	ptr = mp_pool_get0(dbuf_bufpool);
 	INIT_LIST_HEAD(&ptr->dbuf_node);
 	list_add_tail(&ptr->dbuf_node, &dbuf_p->dbuf_list);
 
