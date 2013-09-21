@@ -306,7 +306,6 @@ DLLFUNC CMD_FUNC(m_server)
 	ConfigItem_deny_link *deny;
 	char *flags = NULL, *protocol = NULL, *inf = NULL, *num = NULL;
 
-
 	/* Ignore it  */
 	if (IsPerson(sptr))
 	{
@@ -314,7 +313,6 @@ DLLFUNC CMD_FUNC(m_server)
 		    me.name, parv[0]);
 		sendnotice(cptr,
 		    "*** Sorry, but your IRC program doesn't appear to support changing servers.");
-		sptr->since += 7;
 		return 0;
 	}
 

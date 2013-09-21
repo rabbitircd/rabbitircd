@@ -53,7 +53,7 @@ ModuleHeader MOD_HEADER(m_userip)
 
 DLLFUNC int MOD_INIT(m_userip)(ModuleInfo *modinfo)
 {
-	CommandAdd(modinfo->handle, MSG_USERIP, m_userip, 1, M_USER|M_ANNOUNCE);
+	CommandAdd(modinfo->handle, MSG_USERIP, m_userip, 1, M_USER|M_ANNOUNCE|M_RATELIMIT_USER);
 	MARK_AS_OFFICIAL_MODULE(modinfo);
 	return MOD_SUCCESS;
 }
@@ -127,8 +127,6 @@ DLLFUNC CMD_FUNC(m_userip)
 				? "*" : "",
 			    (acptr->user->away) ? '-' : '+',
 			    acptr->user->username, ip);
-			/* add extra fakelag (penalty) because of all the work we need to do: 1s per entry: */
-			sptr->since += 1;
 		}
 		if (p)
 			p++;

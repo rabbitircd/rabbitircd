@@ -55,7 +55,7 @@ ModuleHeader MOD_HEADER(m_mkpasswd)
 
 DLLFUNC int MOD_INIT(m_mkpasswd)(ModuleInfo *modinfo)
 {
-	CommandAdd(modinfo->handle, MSG_MKPASSWD, m_mkpasswd, MAXPARA, 0);
+	CommandAdd(modinfo->handle, MSG_MKPASSWD, m_mkpasswd, MAXPARA, M_USER|M_RATELIMIT_CMD);
 	MARK_AS_OFFICIAL_MODULE(modinfo);
 	return MOD_SUCCESS;
 }
@@ -86,10 +86,9 @@ int  m_mkpasswd(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	}
 	if (!IsAnOper(sptr))
 	{
-		/* Non-opers /mkpasswd usage: lag them up, and send a notice to eyes snomask.
+		/* Non-opers /mkpasswd usage: send a notice to eyes snomask.
 		 * This notice is always sent, even in case of bad usage/bad auth methods/etc.
 		 */
-		sptr->since += 7;
 		sendto_snomask(SNO_EYES, "*** /mkpasswd used by %s (%s@%s)",
 			sptr->name, sptr->user->username, GetHost(sptr));
 	}

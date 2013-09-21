@@ -190,7 +190,6 @@ DLLFUNC int  m_oper(aClient *cptr, aClient *sptr, int parc, char *parv[]) {
 		    parv[0], sptr->user->username, sptr->sockhost);
 		ircd_log(LOG_OPER, "OPER UNKNOWNOPER (%s) by (%s!%s@%s)", name, parv[0],
 			sptr->user->username, sptr->sockhost);
-		sptr->since += 7;
 		return 0;
 	}
 
@@ -209,7 +208,6 @@ DLLFUNC int  m_oper(aClient *cptr, aClient *sptr, int parc, char *parv[]) {
 		    parv[0], sptr->user->username, sptr->sockhost, name);
 		ircd_log(LOG_OPER, "OPER NOHOSTMATCH (%s) by (%s!%s@%s)", name, parv[0],
 			sptr->user->username, sptr->sockhost);
-		sptr->since += 7;
 		return 0;
 	}
 
@@ -228,7 +226,6 @@ DLLFUNC int  m_oper(aClient *cptr, aClient *sptr, int parc, char *parv[]) {
 			ircd_log(LOG_OPER, "OPER MISSINGMODES (%s) by (%s!%s@%s), needs modes=%s",
 				 name, parv[0], sptr->user->username, sptr->sockhost,
 				 get_modestr(aconf->require_modes & ~sptr->umodes));
-			sptr->since += 7;
 			return 0;
 		}
 
@@ -242,7 +239,6 @@ DLLFUNC int  m_oper(aClient *cptr, aClient *sptr, int parc, char *parv[]) {
 				parv[0], sptr->user->username, sptr->sockhost, name);
 			ircd_log(LOG_OPER, "OPER TOOMANYLOGINS (%s) by (%s!%s@%s)", name, parv[0],
 				sptr->user->username, sptr->sockhost);
-			sptr->since += 4;
 			return 0;
 		}
 
@@ -373,7 +369,6 @@ DLLFUNC int  m_oper(aClient *cptr, aClient *sptr, int parc, char *parv[]) {
 		sendto_snomask_global
 		    (SNO_OPER, "Failed OPER attempt by %s (%s@%s) using UID %s [FAILEDAUTH]",
 		    parv[0], sptr->user->username, sptr->sockhost, name);
-		sptr->since += 7;
 	}
 	/* Belay that order, number One. (-2) */
 	return 0;

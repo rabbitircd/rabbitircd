@@ -2268,8 +2268,6 @@ DLLFUNC CMD_FUNC(_m_umode)
 			rejoin_doquits(sptr);
 			sptr->umodes |= UMODE_HIDE;
 			rejoin_dojoinandmode(sptr);
-			if (MyClient(sptr))
-				sptr->since += 7; /* Add fake lag */
 		}
 	}
 
@@ -2282,8 +2280,6 @@ DLLFUNC CMD_FUNC(_m_umode)
 			rejoin_doquits(sptr);
 			sptr->umodes &= ~UMODE_HIDE;
 			rejoin_dojoinandmode(sptr);
-			if (MyClient(sptr))
-				sptr->since += 7; /* Add fake lag */
 		}
 		if (sptr->user->virthost)
 		{

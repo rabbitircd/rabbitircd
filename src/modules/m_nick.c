@@ -583,7 +583,6 @@ DLLFUNC CMD_FUNC(m_nick)
 			}
 			if (!IsOper(cptr))
 			{
-				sptr->since += 4; /* lag them up */
 				sendto_one(sptr, err_str(ERR_ERRONEUSNICKNAME),
 				    me.name, BadPtr(parv[0]) ? "*" : parv[0],
 				    nick, tklban->reason);
@@ -620,9 +619,6 @@ DLLFUNC CMD_FUNC(m_nick)
 		sptr->flags |= FLAGS_KILLED;
 		return exit_client(cptr, sptr, &me, "Nick/Server collision");
 	}
-
-	if (MyClient(cptr) && !IsOper(cptr))
-		cptr->since += 3;	/* Nick-flood prot. -Donwulff */
 
 	if (!(acptr = find_client(nick, NULL)))
 		goto nickkilldone;	/* No collisions, all clear... */
