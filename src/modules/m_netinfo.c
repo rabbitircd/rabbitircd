@@ -86,7 +86,7 @@ DLLFUNC int MOD_UNLOAD(m_netinfo)(int module_unload)
 DLLFUNC CMD_FUNC(m_netinfo)
 {
 	long 		lmax;
-	time_t	 	xx;
+	time_t	 	deltat;
 	long 		endsync, protocol;
 	char		buf[512];
 
@@ -126,20 +126,15 @@ DLLFUNC CMD_FUNC(m_netinfo)
 		    lmax, cptr->name);
 	}
 
-	xx = TStime();
-	if ((xx - endsync) < 0)
+	deltat = abs(endsync - TStime());
+	if (deltat > 5)
 	{
-		char *emsg = "";
-		if (xx - endsync < -10)
-		{
-			emsg = " [\002PLEASE SYNC YOUR CLOCKS!\002]";
-		}
 		sendto_realops
-		    ("Possible negative TS split at link %s (%li - %li = %li)%s",
-		    cptr->name, (xx), (endsync), (xx - endsync), emsg);
+		    ("Link %s has a notable TS delta [my TS=%ld, their TS=%ld, delta=%ld]",
+		    cptr->name, TStime(), endsync, deltat);
 		sendto_server(&me, 0, 0,
-		    ":%s SMO o :\2(sync)\2 Possible negative TS split at link %s (%li - %li = %li)%s",
-		    me.name, cptr->name, (xx), (endsync), (xx - endsync), emsg);
+                    ":%s SMO o :\2(sync)\2 Link %s has a notable TS delta [my TS=%ld, their TS=%ld, delta=%ld]",
+		    me.name, cptr->name, TStime(), endsync, deltat);
 	}
 	sendto_realops
 	    ("Link %s -> %s is now synced [secs: %li recv: %ld.%hu sent: %ld.%hu]",
