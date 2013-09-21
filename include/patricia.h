@@ -135,4 +135,6 @@ extern void *patricia_elem_get_data(struct patricia_leaf *elem);
 extern unsigned int patricia_size(struct patricia_tree *dict);
 extern void patricia_stats(struct patricia_tree *dict, void (*cb)(const char *line, void *privdata), void *privdata);
 
+extern void patricia_strcasecanon(char *str);
+
 #endif

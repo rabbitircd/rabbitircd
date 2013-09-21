@@ -1104,3 +1104,15 @@ patricia_stats(struct patricia_tree *dict, void (*cb)(const char *line, void *pr
 	cb(str, privdata);
 	return;
 }
+
+void
+patricia_strcasecanon(char *key)
+{
+	char *p = key;
+
+	while (*p)
+	{
+		*p = toupper(*p);
+		p++;
+	}
+}
