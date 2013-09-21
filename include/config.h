@@ -45,17 +45,13 @@
 
 /*	BSD			Nothing Needed 4.{2,3} BSD, SunOS 3.x, 4.x */
 /*	HPUX			Nothing needed (A.08/A.09) */
-/*	ULTRIX			Nothing needed (4.2) */
 /*	OSF			Nothing needed (1.2) */
 /* #undef	AIX		IBM ugly so-called Unix, AIX */
 /* #undef	MIPS		MIPS Unix */
 /*	SGI			Nothing needed (IRIX 4.0.4) */
-/* #undef 	SVR3		SVR3 stuff - being worked on where poss. */
 /* #undef	DYNIXPTX	Sequents Brain-dead Posix implement. */
 /* #undef	SOL20		Solaris2 */
-/* #undef	ESIX		ESIX */
 /* #undef	NEXT		NeXTStep */
-/* #undef	SVR4 */
 
 /* Additional flags to give FreeBSD's malloc, only play with this if you
  * know what you're doing.
@@ -181,21 +177,6 @@
 
 /* #undef	VMS		   Should work for IRC client, not server */
 /* #undef	MAIL50		   If you're running VMS 5.0 */
-/* #undef	PCS		   PCS Cadmus MUNIX, use with BSD flag! */
-
-/*
- * NOTE: On some systems, valloc() causes many problems.
- */
-#undef	VALLOC			/* Define this if you have valloc(3) */
-
-/*
- * read/write are restarted after signals defining this 1, gets
- * siginterrupt call compiled, which attempts to remove this
- * behaviour (apollo sr10.1/bsd4.3 needs this)
- */
-#ifdef APOLLO
-#define	RESTARTING_SYSTEMCALLS
-#endif
 
 /*
  * If your host supports varargs and has vsprintf(), vprintf() and vscanf()
@@ -474,10 +455,6 @@
 #endif
 #endif
 
-#ifdef	ultrix
-#define	ULTRIX
-#endif
-
 #ifdef	__hpux
 #define	HPUX
 #endif
@@ -507,7 +484,7 @@
 #endif
 
 
-#if defined(mips) || defined(PCS)
+#if defined(mips)
 #undef SYSV
 #endif
 
@@ -538,16 +515,6 @@ error You stuffed up config.h signals
  * whatever else.  -4 allows "safety" margin of 1 and space reserved.
  */
 #define	MAXCLIENTS	(MAXCONNECTIONS-4)
-#ifdef HAVECURSES
-# define DOCURSES
-#else
-# undef DOCURSES
-#endif
-#ifdef HAVETERMCAP
-# define DOTERMCAP
-#else
-# undef DOTERMCAP
-#endif
 # define stricmp strcasecmp
 # define strnicmp strncasecmp
 #if defined(CLIENT_FLOOD)

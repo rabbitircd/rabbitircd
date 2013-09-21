@@ -1,0 +1,17 @@
+*.so
+/Makefile
+/aclocal.m4
+/autom4te.cache
+/config.log
+/config.settings
+/config.status
+/configure
+/include/setup.h
+/ircdcron/ircd.cron
+/ircdcron/ircdchk
+/rabbitircd
+/server.*.pem
+/src/ircd
+/src/modules/Makefile
+/src/version.c
+/ssl.rnd

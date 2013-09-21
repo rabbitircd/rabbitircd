@@ -67,19 +67,10 @@ XCFLAGS=@TRE_CFLAGS@ @CARES_CFLAGS@ @CFLAGS@
 # Solaris 2
 #IRCDLIBS=-lsocket -lnsl -lresolv -L/usr/ucblib -R/usr/ucblib -lgen
 #
-# ESIX
-#CFLAGS=-O -I$(INCLUDEDIR) -I/usr/ucbinclude
-#IRCDLIBS=-L/usr/ucblib -L/usr/lib -lsocket -lucb -lns -lnsl
-#
 # LDFLAGS - flags to send the loader (ld). SunOS users may want to add
 # -Bstatic here.
 #
 #LDFLAGS=-Bstatic
-#
-#Dell SVR4
-#CC=gcc
-#CFLAGS= -I$(INCLUDEDIR) -O2
-#IRCDLIBS=-lsocket -lnsl -lucb
 
 # [CHANGEME]
 # IRCDMODE is the mode you want the binary to be.
@@ -93,9 +84,6 @@ IRCDMODE = 711
 # IRCDDIR must be the same as DPATH in include/config.h
 #
 IRCDDIR=@IRCDDIR@
-
-
-URL=@URL@
 
 # [CHANGEME]
 # If you get a link-time error dealing with strtoul, comment out
@@ -133,8 +121,7 @@ MAKEARGS =	'CFLAGS=${CFLAGS}' 'CC=${CC}' 'IRCDLIBS=${IRCDLIBS}' \
 		'RM=${RM}' 'CP=${CP}' 'TOUCH=${TOUCH}' \
 		'SHELL=${SHELL}' 'STRTOUL=${STRTOUL}' \
 		'CRYPTOLIB=${CRYPTOLIB}' \
-		'CRYPTOINCLUDES=${CRYPTOINCLUDES}' \
-		'URL=${URL}'
+		'CRYPTOINCLUDES=${CRYPTOINCLUDES}'
 
 custommodule:
 	@if test -z "${MODULEFILE}"; then echo "Please set MODULEFILE when calling \`\`make custommodule''. For example, \`\`make custommodule MODULEFILE=callerid''." >&2; exit 1; fi
