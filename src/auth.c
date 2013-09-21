@@ -568,13 +568,13 @@ int i;
 	 */
 
 	/* STEP 1 */
-	DoMD5(result1, para, strlen(para));
+	MD5(para, strlen(para), result2);
 
 	/* STEP 2 */
 	/* add salt to result */
 	memcpy(result1+16, saltraw, RAWSALTLEN);
 	/* Then hash it all together */
-	DoMD5(result2, result1, RAWSALTLEN+16);
+	MD5(result1, RAWSALTLEN+16, result2);
 	
 	/* STEP 3 */
 	/* Then base64 encode it all together.. */
