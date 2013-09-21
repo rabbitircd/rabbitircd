@@ -54,7 +54,7 @@ int  parse_help(aClient *sptr, char *name, char *help)
 		if (!helpitem)
 			return 1;
 		SND(" -");
-		HDR("        ***** UnrealIRCd Help System *****");
+		HDR("        ***** RabbitIRCd Help System *****");
 		SND(" -");
 		text = helpitem->text;
 		while (text) {
