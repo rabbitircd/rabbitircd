@@ -52,17 +52,11 @@ ConfigItem_badword* conf_badword_quit = 0;
 
 static Cmode_t EXTMODE_BADWORDS = 0L;
 
-static void chm_permanent_channel_destroy(aChannel *chptr, bool *should_destroy)
-{
-	if (chptr->mode.extmode & EXTMODE_BADWORDS)
-		*should_destroy = false;
-}
-
 static int chm_badwords_is_ok(aClient *cptr, aChannel *chptr, char *para, int checkt, int what)
 {
-	if (!IsOper(cptr))
+	if (!is_chan_op(cptr, chptr))
 	{
-		sendto_one(cptr, err_str(ERR_NOPRIVILEGES), me.name, cptr->name);
+		sendto_one(cptr, err_str(ERR_CHANOPRIVSNEEDED), me.name, cptr->name, chptr->chname);
 		return EX_DENY;
 	}
 
@@ -109,8 +103,6 @@ DLLFUNC int MOD_INIT(chm_badwords)(ModuleInfo *modinfo)
 	chm_badwords.flag = 'G';
 	chm_badwords.is_ok = chm_badwords_is_ok;
 	CmodeAdd(modinfo->handle, chm_badwords, &EXTMODE_BADWORDS);
-
-	HookAddVoidEx(modinfo->handle, HOOKTYPE_CHANNEL_DESTROY, chm_permanent_channel_destroy);
 
         return MOD_SUCCESS;
 }
