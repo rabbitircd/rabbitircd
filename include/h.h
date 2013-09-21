@@ -490,7 +490,7 @@ extern int		Auth_FindType(char *type);
 extern anAuthStruct	*Auth_ConvertConf2AuthStruct(ConfigEntry *ce);
 extern void		Auth_DeleteAuthStruct(anAuthStruct *as);
 extern int		Auth_Check(aClient *cptr, anAuthStruct *as, char *para);
-extern char   		*Auth_Make(short type, char *para);
+extern const char 	*Auth_Make(const char *type, char *para);
 extern int   		Auth_CheckError(ConfigEntry *ce);
 
 extern int is_chanownprotop(aClient *cptr, aChannel *chptr);

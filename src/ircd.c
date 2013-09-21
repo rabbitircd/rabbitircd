@@ -1005,23 +1005,16 @@ int main(int argc, char *argv[])
 			  strlcpy(me.name, p, sizeof(me.name));
 			  break;
 		  case 'P':{
-			  short type;
-			  char *result;
+                          const char *type;
+			  const char *result;
 			  srandom(TStime());
-			  if ((type = Auth_FindType(p)) == -1) {
+			  if ((auth_lookup_ops(p)) == NULL) {
 				  printf("No such auth type %s\n", p);
 				  exit(0);
 			  }
+			  type = p;
 			  p = *++argv;
 			  argc--;
-#ifdef AUTHENABLE_UNIXCRYPT
-			  if ((type == AUTHTYPE_UNIXCRYPT) && (strlen(p) > 8))
-			  {
-			      printf("WARNING: Password truncated to 8 characters due to 'crypt' algorithm. "
-		                 "You are suggested to use the 'md5' algorithm instead.");
-				  p[8] = '\0';
-			  }
-#endif
 			  if (!(result = Auth_Make(type, p))) {
 				  printf("Authentication failed\n");
 				  exit(0);

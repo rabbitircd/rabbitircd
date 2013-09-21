@@ -58,6 +58,7 @@ struct auth_ops *auth_lookup_ops(const char *name)
 	return patricia_retrieve(auth_ops_tree, name);
 }
 
+#if 0
 anAuthStruct MODVAR AuthTypes[] = {
 	{"plain",	AUTHTYPE_PLAINTEXT},
 	{"plaintext",   AUTHTYPE_PLAINTEXT},
@@ -95,6 +96,7 @@ int		Auth_FindType(char *type)
 	}
 	return -1;
 }
+#endif
 
 /*
  * This is for converting something like:
@@ -105,11 +107,13 @@ int		Auth_FindType(char *type)
 
 int		Auth_CheckError(ConfigEntry *ce)
 {
-	short		type = AUTHTYPE_PLAINTEXT;
+	struct auth_ops *ops = NULL;
+
 #ifdef AUTHENABLE_SSL_CLIENTCERT
 	X509 *x509_filecert = NULL;
 	FILE *x509_f = NULL;
 #endif
+
 	if (!ce->ce_vardata)
 	{
 		config_error("%s:%i: authentication module failure: missing parameter",
@@ -126,14 +130,21 @@ int		Auth_CheckError(ConfigEntry *ce)
 	{
 		if (ce->ce_entries->ce_varname)
 		{
-			type = Auth_FindType(ce->ce_entries->ce_varname);
-			if (type == -1)
+			ops = auth_lookup_ops(ce->ce_entries->ce_varname);
+			if (ops == NULL)
 			{
 				config_error("%s:%i: authentication module failure: %s is not an implemented/enabled authentication method",
 					ce->ce_fileptr->cf_filename, ce->ce_varlinenum,
 					ce->ce_entries->ce_varname);
 				return -1;
 			}
+
+			if (ops->config_handle != NULL)
+				return ops->config_handle(ce);
+			else
+				return 1;
+
+#if 0
 			switch (type)
 			{
 #ifdef AUTHENABLE_UNIXCRYPT
@@ -168,33 +179,35 @@ int		Auth_CheckError(ConfigEntry *ce)
 #endif
 				default: ;
 			}
+#endif
 		}
 	}
 	
-	if ((type == AUTHTYPE_PLAINTEXT) && (strlen(ce->ce_vardata) > PASSWDLEN))
+	if (ops == NULL && (strlen(ce->ce_vardata) > PASSWDLEN))
 	{
 		config_error("%s:%i: passwords length may not exceed %d",
 			ce->ce_fileptr->cf_filename, ce->ce_varlinenum, PASSWDLEN);
 		return -1;
 	}
+
 	return 1;	
 }
 
 anAuthStruct	*Auth_ConvertConf2AuthStruct(ConfigEntry *ce)
 {
-	short		type = AUTHTYPE_PLAINTEXT;
+	struct auth_ops	*ops = NULL;
 	anAuthStruct 	*as = NULL;
 	/* If there is a {}, use it */
 	if (ce->ce_entries)
 	{
 		if (ce->ce_entries->ce_varname)
 		{
-			type = Auth_FindType(ce->ce_entries->ce_varname);
+			ops = auth_lookup_ops(ce->ce_entries->ce_varname);
 		}
 	}
 	as = (anAuthStruct *) MyMalloc(sizeof(anAuthStruct));
 	as->data = strdup(ce->ce_vardata);
-	as->type = type;
+	as->ops = ops;
 	return as;
 }
 
@@ -462,16 +475,22 @@ int	Auth_Check(aClient *cptr, anAuthStruct *as, char *para)
 	if (!as)
 		return 1;
 		
+	if (as->ops == NULL)
+	{
+		if (!para)
+			return -1;
+		/* plain text compare */
+		if (!strcmp(para, as->data))
+			return 2;
+		else
+			return -1;
+	}
+	else if (as->ops->validate != NULL)
+		return as->ops->validate(cptr, as, para);
+#if 0
 	switch (as->type)
 	{
 		case AUTHTYPE_PLAINTEXT:
-			if (!para)
-				return -1;
-			/* plain text compare */
-			if (!strcmp(para, as->data))
-				return 2;
-			else
-				return -1;
 			break;
 #ifdef AUTHENABLE_UNIXCRYPT
 		case AUTHTYPE_UNIXCRYPT:
@@ -561,6 +580,7 @@ int	Auth_Check(aClient *cptr, anAuthStruct *as, char *para)
 			return 2;
 #endif
 	}
+#endif
 	return -1;
 }
 
@@ -723,13 +743,23 @@ int i;
 }
 #endif /* AUTHENABLE_RIPEMD160 */
 
-char	*Auth_Make(short type, char *para)
+const char *Auth_Make(const char *type, char *para)
 {
+	struct auth_ops *ops = auth_lookup_ops(type);
+
 #ifdef	AUTHENABLE_UNIXCRYPT
 	char	salt[3];
 	extern	char *crypt();
 #endif
 
+	if (ops != NULL && ops->make_hash != NULL)
+	{
+		return ops->make_hash(para);
+	}
+
+	return para;
+
+#if 0
 	switch (type)
 	{
 		case AUTHTYPE_PLAINTEXT:
@@ -763,6 +793,6 @@ char	*Auth_Make(short type, char *para)
 		default:
 			return (NULL);
 	}
-
+#endif
 }
 

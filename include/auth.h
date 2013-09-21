@@ -41,15 +41,17 @@
 #define AUTHENABLE_SSL_CLIENTCERTFP
 #define AUTHENABLE_UNIXCRYPT
 
+struct auth_ops;
 struct auth_data {
 	char	*data;
-	short	type;
+	struct auth_ops *ops;
 };
 
 struct auth_ops {
 	const char *name;
 	bool (*validate)(aClient *client, struct auth_data *auth, const char *param);
 	const char *(*make_hash)(const char *param);
+	int (*config_handle)(ConfigEntry *ce);
 };
 
 extern bool auth_register_ops(struct auth_ops *ops);
