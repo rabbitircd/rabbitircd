@@ -1,5 +1,5 @@
 language: c
 before_install:
  - sudo apt-get update -qq
- - sudo apt-get install -qq libssl-dev zlib1g-dev libtre-dev libc-ares-dev autoconf automake libtool
+ - sudo apt-get install -qq libssl-dev zlib1g-dev libtre-dev libc-ares-dev autoconf automake libtool bash
 script: sh ./extras/ci-build.sh
