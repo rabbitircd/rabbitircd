@@ -86,7 +86,9 @@ extern MODVAR char *(*stripbadwords_channel)(char *str, int *blocked);
 extern MODVAR char *(*stripbadwords_message)(char *str, int *blocked);
 extern MODVAR char *(*stripbadwords_quit)(char *str, int *blocked);
 
-DLLFUNC int MOD_TEST(m_message)(ModuleInfo* modinfo) {
+DLLFUNC int MOD_TEST(chm_badwords)(ModuleInfo* modinfo) {
+        MARK_AS_OFFICIAL_MODULE(modinfo);
+
         EfunctionAddPChar(modinfo->handle, EFUNC_STRIPBADWORDS_CHANNEL, _stripbadwords_channel);
         EfunctionAddPChar(modinfo->handle, EFUNC_STRIPBADWORDS_MESSAGE, _stripbadwords_message);
         EfunctionAddPChar(modinfo->handle, EFUNC_STRIPBADWORDS_QUIT, _stripbadwords_quit);
@@ -96,8 +98,6 @@ DLLFUNC int MOD_TEST(m_message)(ModuleInfo* modinfo) {
 DLLFUNC int MOD_INIT(chm_badwords)(ModuleInfo *modinfo)
 {
 	CmodeInfo chm_badwords = { };
-
-        MARK_AS_OFFICIAL_MODULE(modinfo);
 
 	chm_badwords.paracount = 0;
 	chm_badwords.flag = 'G';
