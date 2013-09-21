@@ -92,6 +92,8 @@ DLLFUNC int MOD_TEST(chm_badwords)(ModuleInfo* modinfo) {
         EfunctionAddPChar(modinfo->handle, EFUNC_STRIPBADWORDS_CHANNEL, _stripbadwords_channel);
         EfunctionAddPChar(modinfo->handle, EFUNC_STRIPBADWORDS_MESSAGE, _stripbadwords_message);
         EfunctionAddPChar(modinfo->handle, EFUNC_STRIPBADWORDS_QUIT, _stripbadwords_quit);
+
+	return MOD_SUCCESS;
 }
 
 /* This is called on module init, before Server Ready */
