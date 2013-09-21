@@ -403,31 +403,6 @@ void reset_help(void)
 	free_str_list(helpign);
 }
 
-EVENT(save_tunefile)
-{
-	FILE *tunefile;
-
-	tunefile = fopen(conf_files->tune_file, "w");
-	if (!tunefile)
-	{
-		sendto_ops("Unable to write tunefile.. %s", strerror(errno));
-		return;
-	}
-	fprintf(tunefile, "%d\n", IRCstats.me_max);
-	fclose(tunefile);
-}
-
-void load_tunefile(void)
-{
-	FILE *tunefile;
-	tunefile = fopen(conf_files->tune_file, "r");
-	if (!tunefile) return;
-        errno = 0;
-	if (fscanf(tunefile, "%d", &IRCstats.me_max) != 1)
-	    fprintf(stderr, "Warning: error while reading the peak user count from the tunefile%s%s\n", errno? ": ": "", errno? strerror(errno): "");
-	fclose(tunefile);
-}
-
 /** Rehash motd and rule files (motd_file/rules_file and all tld entries). */
 void rehash_motdrules()
 {

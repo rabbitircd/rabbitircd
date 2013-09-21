@@ -1453,7 +1453,7 @@ int config_test_openfile(ConfigEntry *cep, int flags, mode_t mode, const char *e
 	 * because we don't feel like unlink()ing them...which would require
 	 * stat()ing them to make sure that we don't delete existing ones
 	 * and that we deal with all of the bugs that come with complexity. 
-	 * The only files we may be creating are the tunefile and pidfile so far.
+	 * The only file we may be creating is the pidfile so far.
 	 */
 	if(flags & O_CREAT)
 		fd = open(cep->ce_vardata, flags, mode);
@@ -2287,7 +2287,6 @@ void	config_rehash()
 	ircfree(conf_files->svsmotd_file);
 	ircfree(conf_files->botmotd_file);
 	ircfree(conf_files->rules_file);
-	ircfree(conf_files->tune_file);
 	/* 
 	   Don't free conf_files->pid_file here; the old value is used to determine if 
 	   the pidfile location has changed and write_pidfile() needs to be called 
@@ -3272,7 +3271,6 @@ int	_conf_files(ConfigFile *conf, ConfigEntry *ce)
 		conf_files->svsmotd_file = strdup(VPATH);
 		
 		conf_files->pid_file = strdup(IRCD_PIDFILE);
-		conf_files->tune_file = strdup(IRCDTUNE);
 		
 		/* we let actual files get read in later by the motd caching mechanism */
 	}
@@ -3299,8 +3297,6 @@ int	_conf_files(ConfigFile *conf, ConfigEntry *ce)
 			ircstrdup(conf_files->botmotd_file, cep->ce_vardata);
 		else if (!strcmp(cep->ce_varname, "rules"))
 			ircstrdup(conf_files->rules_file, cep->ce_vardata);
-		else if (!strcmp(cep->ce_varname, "tunefile"))
-			ircstrdup(conf_files->tune_file, cep->ce_vardata);
 		else if (!strcmp(cep->ce_varname, "pidfile"))
 			ircstrdup(conf_files->pid_file, cep->ce_vardata);
 	}
@@ -3313,7 +3309,7 @@ int	_test_files(ConfigFile *conf, ConfigEntry *ce)
 	int	    errors = 0;
 	char has_motd = 0, has_smotd = 0, has_rules = 0;
 	char has_botmotd = 0, has_opermotd = 0, has_svsmotd = 0;
-	char has_pidfile = 0, has_tunefile = 0;
+	char has_pidfile = 0;
 	
 	for (cep = ce->ce_entries; cep; cep = cep->ce_next)
 	{
@@ -3404,18 +3400,6 @@ int	_test_files(ConfigFile *conf, ConfigEntry *ce)
 			
 			errors += config_test_openfile(cep, O_WRONLY | O_CREAT, 0600, "files::pidfile", 1, 0);
 			has_pidfile = 1;
-		}
-		/* files::tunefile */
-		else if (!strcmp(cep->ce_varname, "tunefile")) 
-		{
-			if (has_tunefile)
-			{
-				config_warn_duplicate(cep->ce_fileptr->cf_filename,
-					cep->ce_varlinenum, "files::tunefile");
-				continue;
-			}
-			errors += config_test_openfile(cep, O_RDWR | O_CREAT, 0600, "files::tunefile", 1, 0);
-			has_tunefile = 1;
 		}
 		/* <random directive here> */
 		else

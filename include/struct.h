@@ -1069,7 +1069,7 @@ struct _configitem_me {
 struct _configitem_files {
 	char	*motd_file, *rules_file, *smotd_file;
 	char	*botmotd_file, *opermotd_file, *svsmotd_file;
-	char	*pid_file, *tune_file;
+	char	*pid_file;
 };
 
 struct _configitem_admin {

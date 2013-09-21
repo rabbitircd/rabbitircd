@@ -1151,7 +1151,6 @@ int main(int argc, char *argv[])
 		exit(-1);
 	}
 	booted = TRUE;
-	load_tunefile();
 	make_umodestr();
 	make_cmodestr();
 	make_extcmodestr();

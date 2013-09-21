@@ -54,8 +54,6 @@ EVENT(try_connections);
 char *my_itoa(int i);
 
 /* s_serv.c */
-void load_tunefile(void);
-extern EVENT(save_tunefile);
 extern void read_motd(const char *filename, aMotdFile *motd);
 
 /* s_user.c */
