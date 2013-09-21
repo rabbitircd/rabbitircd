@@ -297,7 +297,7 @@ unsigned int alpha, beta, gamma;
 	MD5(buf, strlen(buf), res);
 	strlcpy(res+16, KEY1, sizeof(res)-16); /* first 16 bytes are filled, append our key.. */
 	n = strlen(res+16) + 16;
-	DoMD5(res2, res, n);
+	MD5(res, n, res2);
 	alpha = downsample(res2);
 
 	/* BETA... */
