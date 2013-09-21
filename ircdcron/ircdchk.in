@@ -36,7 +36,7 @@ if test -r $ircdname; then
     # back out quietly
     exit 0
   fi
-  echo "UnrealIRCd Crontab notice:"
+  echo "RabbitIRCd Crontab notice:"
   echo ""
   echo "Stale $ircdname file (erasing it)"
   rm -f $ircdname
