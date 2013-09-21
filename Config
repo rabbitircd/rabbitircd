@@ -45,12 +45,10 @@ if [ "$DISABLEEXTBANSTACKING" = "1" ]; then
 	ARG="$ARG--with-disable-extendedban-stacking ";
 fi
 fi
-if [  "$CRYPTOIRCD" = "1" ] ; then
 if test x"$SSLDIR" = "x" ; then
 ARG="$ARG--enable-ssl "
 else
 ARG="$ARG--enable-ssl=$SSLDIR "
-fi
 fi
 if [ "$INET6" = "1" ] ; then
 ARG="$ARG--enable-inet6 "
@@ -70,7 +68,6 @@ CONF="./configure $ARG"
 echo $CONF
 $CONF || exit 1
 cd "$UNREALCWD"
-if [  "$CRYPTOIRCD" = "1" ] ; then
 if [ ! -f server.req.pem ]; then
 export OPENSSLPATH
 TEST=""
@@ -110,7 +107,6 @@ echo "are installed as server.crt.pem and server.key.pem prior to starting the I
 fi
 else
 echo "SSL certificate already existing, no need to regenerate"
-fi
 fi
 }
 
@@ -327,7 +323,6 @@ UNREALCWD="`pwd`"
 DPATH="`pwd`"
 SPATH="`pwd`/src/ircd"
 DEFPERM="0600"
-CRYPTOIRCD="1"
 SSLDIR=""
 NICKNAMEHISTORYLENGTH="2000"
 MAXSENDQLENGTH="3000000"
@@ -458,36 +453,6 @@ while [ -z "$TEST" ] ; do
 
 done
 
-TEST=""
-while [ -z "$TEST" ] ; do
-    if [ "$CRYPTOIRCD" = "1" ] ; then
-	TEST="Yes"
-    else
-	TEST="No"
-    fi
-    echo ""
-    echo "Do you want to support SSL (Secure Sockets Layer) connections?"
-    echo $n "[$TEST] -> $c"
-	read cc
-    if [ -z "$cc" ] ; then
-	cc=$TEST
-    fi
-    case "$cc" in
-	[Yy]*)
-	    CRYPTOIRCD="1"
-	    ;;
-	[Nn]*)
-	    CRYPTOIRCD=""
-	    ;;
-	*)
-	    echo ""
-	    echo "You must enter either Yes or No"
-	    TEST=""
-	    ;;
-    esac
-done
-
-if [ "$CRYPTOIRCD" = "1" ] ; then
 TEST="$SSLDIR"
 echo ""
 echo "If you know the path to OpenSSL on your system, enter it here. If not"
@@ -498,7 +463,6 @@ if [ -z "$cc" ] ; then
     SSLDIR="$TEST"
 else 
     SSLDIR=`eval echo $cc` # modified
-fi
 fi
 
 TEST=""

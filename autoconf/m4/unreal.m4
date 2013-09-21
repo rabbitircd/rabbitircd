@@ -44,7 +44,9 @@ AC_DEFUN([CHECK_SSL],
 AC_ARG_ENABLE(ssl,
 	[AC_HELP_STRING([--enable-ssl=],[enable ssl will check /usr/local/ssl /usr/lib/ssl /usr/ssl /usr/pkg /usr/sfw /usr/local /usr])],
 	[],
-	[enable_ssl=no])
+	[])
+AS_IF([test $enable_ssl = "no"],
+	[AC_MSG_ERROR([OpenSSL is required to build RabbitIRCD])])
 AS_IF([test $enable_ssl != "no"],
 	[ 
 	AC_MSG_CHECKING([for openssl])
