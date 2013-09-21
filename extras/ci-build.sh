@@ -1,7 +1,8 @@
 #!/bin/sh
 
-PWD=`cwd`
+PWD=`pwd`
 
+sh autogen.sh || exit 1
 ./configure \
 	--with-showlistmodes \
 	--enable-ssl \
