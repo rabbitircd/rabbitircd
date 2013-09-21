@@ -5,4 +5,7 @@ before_install:
 script: sh ./extras/ci-build.sh
 notifications:
   irc:
-    - "irc.weresource.org#ircd"
+    channels:
+      - "irc.weresource.org#ircd"
+    on_success: change
+    on_failure: always
