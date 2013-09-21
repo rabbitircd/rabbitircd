@@ -768,7 +768,9 @@ struct Server {
 #define M_VIRUS			0x0080
 #define M_ANNOUNCE		0x0100
 #define M_OPER			0x0200
-
+#define M_RATELIMIT_CMD		0x1000
+#define M_RATELIMIT_USER	0x2000
+#define M_RATELIMIT_COMPLEX	0x4000
 
 /* tkl:
  *   TKL_KILL|TKL_GLOBAL 	= Global K:Line (G:Line)
@@ -969,6 +971,8 @@ struct Client {
 	unsigned char sasl_out;
 	unsigned char sasl_complete;
 	u_short sasl_cookie;
+
+	TS last_cmd_run;	/* last time a ratelimited command was run */
 };
 
 
@@ -1708,6 +1712,7 @@ struct Command {
 	unsigned long 		lticks;
 	unsigned long 		rticks;
 #endif
+	TS			last_run;
 };
 
 struct _cmdoverride {

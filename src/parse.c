@@ -385,6 +385,31 @@ int  parse(aClient *cptr, char *buffer, char *bufend)
 		cmptr->bytes += bytes;
 		if (!(cmptr->flags & M_NOLAG))
 			parse_addlag(cptr, bytes);
+
+		if (cmptr->flags & M_RATELIMIT_CMD)
+		{
+			TS bias = (cmptr->flags & M_RATELIMIT_COMPLEX) ? RATELIMIT_TIME : RATELIMIT_TIME_SIMPLE;
+			if (TStime() < (cmptr->last_run + bias))
+			{
+				sendto_one(cptr, rpl_str(RPL_LOAD2HI), me.name,
+					from->name, cmptr->cmd);
+				return -1;
+			}
+		}
+		else if (cmptr->flags & M_RATELIMIT_USER)
+		{
+			TS bias = (cmptr->flags & M_RATELIMIT_COMPLEX) ? RATELIMIT_TIME : RATELIMIT_TIME_SIMPLE;
+			if (TStime() < (from->last_cmd_run + bias))
+			{
+				sendto_one(cptr, rpl_str(RPL_LOAD2HI), me.name,
+					from->name, cmptr->cmd);
+				return -1;
+			}
+
+			from->last_cmd_run = TStime();
+		}
+
+		cmptr->last_run = TStime();
 	}
 	/*
 	   ** Must the following loop really be so devious? On
