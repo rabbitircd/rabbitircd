@@ -32,6 +32,31 @@
 #include <string.h>
 #include <fcntl.h>
 #include "h.h"
+#include "patricia.h"
+
+static struct patricia_tree *auth_ops_tree = NULL;
+
+bool auth_register_ops(struct auth_ops *ops)
+{
+	if (!auth_ops_tree)
+		auth_ops_tree = patricia_create(patricia_strcasecanon);
+
+	return patricia_add(auth_ops_tree, ops->name, ops);
+}
+
+bool auth_unregister_ops(struct auth_ops *ops)
+{
+	if (!auth_ops_tree)
+		auth_ops_tree = patricia_create(patricia_strcasecanon);
+
+	patricia_delete(auth_ops_tree, ops->name);
+	return true;
+}
+
+struct auth_ops *auth_lookup_ops(const char *name)
+{
+	return patricia_retrieve(auth_ops_tree, name);
+}
 
 anAuthStruct MODVAR AuthTypes[] = {
 	{"plain",	AUTHTYPE_PLAINTEXT},
