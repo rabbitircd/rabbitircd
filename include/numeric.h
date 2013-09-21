@@ -309,6 +309,7 @@
 #define	RPL_ADMINEMAIL       259
 
 #define	RPL_TRACELOG         261
+#define RPL_LOAD2HI          263
 #define RPL_LOCALUSERS       265
 #define RPL_GLOBALUSERS      266
 
