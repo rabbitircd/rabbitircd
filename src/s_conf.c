@@ -40,7 +40,6 @@
 #include "h.h"
 #include "inet.h"
 #include "proto.h"
-#include "badwords.h"
 
 #define ircstrdup(x,y) do { if (x) MyFree(x); if (!y) x = NULL; else x = strdup(y); } while(0)
 #define ircfree(x) do { if (x) MyFree(x); x = NULL; } while(0)
@@ -1959,7 +1958,6 @@ void	config_rehash()
 	ConfigItem_listen	 	*listen_ptr;
 	ConfigItem_tld			*tld_ptr;
 	ConfigItem_vhost		*vhost_ptr;
-	ConfigItem_badword		*badword_ptr;
 	ConfigItem_deny_dcc		*deny_dcc_ptr;
 	ConfigItem_allow_dcc		*allow_dcc_ptr;
 	ConfigItem_deny_link		*deny_link_ptr;
