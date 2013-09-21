@@ -1,6 +1,10 @@
 /*
- *   Unreal Internet Relay Chat Daemon, src/auth.c
- *   (C) 2001 Carsten V. Munk (stskeeps@tspre.org)
+ * RabbitIRCd, src/auth.c
+ * Copyright (c) 2013 William Pitcock <kaniini@dereferenced.org>.
+ *
+ * Based in part on:
+ * Unreal Internet Relay Chat Daemon, src/auth.c
+ * (C) 2001 Carsten V. Munk (stskeeps@tspre.org)
  *
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -57,27 +61,6 @@ struct auth_ops *auth_lookup_ops(const char *name)
 {
 	return patricia_retrieve(auth_ops_tree, name);
 }
-
-#if 0
-anAuthStruct MODVAR AuthTypes[] = {
-	{"plain",	AUTHTYPE_PLAINTEXT},
-	{"plaintext",   AUTHTYPE_PLAINTEXT},
-	{NULL,		0}
-};
-
-int		Auth_FindType(char *type)
-{
-	anAuthStruct 	*p = AuthTypes;
-	
-	while (p->data)
-	{
-		if (!strcmp(p->data, type))
-			return p->type;
-		p++;
-	}
-	return -1;
-}
-#endif
 
 /*
  * This is for converting something like:
@@ -159,47 +142,6 @@ void	Auth_DeleteAuthStruct(anAuthStruct *as)
 	MyFree(as);
 }
 
-/* Both values are pretty insane as of 2004, but... just in case. */
-#define MAXSALTLEN		127
-#define MAXHASHLEN		255
-
-/* RAW salt length (before b64_encode) to use in /MKPASSWD
- * and REAL salt length (after b64_encode, including terminating nul),
- * used for reserving memory.
- */
-#define RAWSALTLEN		6
-#define REALSALTLEN		12
-
-/** Parses a password.
- * This routine can parse a pass that has a salt (new as of unreal 3.2.1)
- * and will set the 'salt' pointer and 'hash' accordingly.
- * RETURN VALUES:
- * 1 If succeeded, salt and hash can be used.
- * 0 If it's a password without a salt ('old'), salt and hash are not touched.
- */
-static int parsepass(char *str, char **salt, char **hash)
-{
-static char saltbuf[MAXSALTLEN+1], hashbuf[MAXHASHLEN+1];
-char *p;
-int max;
-
-	/* Syntax: $<salt>$<hash> */
-	if (*str != '$')
-		return 0;
-	p = strchr(str+1, '$');
-	if (!p || (p == str+1) || !p[1])
-		return 0;
-
-	max = p - str;
-	if (max > sizeof(saltbuf))
-		max = sizeof(saltbuf);
-	strlcpy(saltbuf, str+1, max);
-	strlcpy(hashbuf, p+1, sizeof(hashbuf));
-	*salt = saltbuf;
-	*hash = hashbuf;
-	return 1;
-}
-
 /*
  * cptr MUST be a local client
  * as is what it will be compared with
@@ -230,16 +172,7 @@ int	Auth_Check(aClient *cptr, anAuthStruct *as, char *para)
 	}
 	else if (as->ops->validate != NULL)
 		return as->ops->validate(cptr, as, para);
-#if 0
-	switch (as->type)
-	{
-		case AUTHTYPE_PLAINTEXT:
-			break;
-		case AUTHTYPE_MD5:
-			return authcheck_md5(cptr, as, para);
-			break;
-	}
-#endif
+
 	return -1;
 }
 
@@ -253,17 +186,5 @@ const char *Auth_Make(const char *type, char *para)
 	}
 
 	return para;
-
-#if 0
-	switch (type)
-	{
-		case AUTHTYPE_PLAINTEXT:
-			return (para);
-			break;
-
-		default:
-			return (NULL);
-	}
-#endif
 }
 
