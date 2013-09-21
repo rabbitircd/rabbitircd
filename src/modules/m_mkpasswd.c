@@ -77,8 +77,7 @@ DLLFUNC int MOD_UNLOAD(m_mkpasswd)(int module_unload)
 */
 int  m_mkpasswd(aClient *cptr, aClient *sptr, int parc, char *parv[])
 {
-	short	type;
-	char	*result = NULL;
+	const char	*result = NULL;
 
 	if (!MKPASSWD_FOR_EVERYONE && !IsAnOper(sptr))
 	{
@@ -108,7 +107,8 @@ int  m_mkpasswd(aClient *cptr, aClient *sptr, int parc, char *parv[])
 			me.name, sptr->name);
 		return 0;
 	}
-	if ((type = Auth_FindType(parv[1])) == -1)
+
+	if ((auth_lookup_ops(parv[1])) == NULL)
 	{
 		sendto_one(sptr, 
 			":%s NOTICE %s :*** %s is not an enabled authentication method",
@@ -116,16 +116,7 @@ int  m_mkpasswd(aClient *cptr, aClient *sptr, int parc, char *parv[])
 		return 0;
 	}
 
-#ifdef AUTHENABLE_UNIXCRYPT
-	if ((type == AUTHTYPE_UNIXCRYPT) && (strlen(parv[2]) > 8))
-	{
-		sendnotice(sptr, "WARNING: Password truncated to 8 characters due to 'crypt' algorithm. "
-		                 "You are suggested to use the 'md5' algorithm instead.");
-		parv[2][8] = '\0';
-	}
-#endif
-
-	if (!(result = Auth_Make(type, parv[2])))
+	if (!(result = Auth_Make(parv[1], parv[2])))
 	{
 		sendto_one(sptr, 
 			":%s NOTICE %s :*** Authentication method %s failed",
