@@ -62,7 +62,6 @@ struct auth_ops *auth_lookup_ops(const char *name)
 anAuthStruct MODVAR AuthTypes[] = {
 	{"plain",	AUTHTYPE_PLAINTEXT},
 	{"plaintext",   AUTHTYPE_PLAINTEXT},
-	{"md5",	        AUTHTYPE_MD5},
 #ifdef AUTHENABLE_SHA1
 	{"sha1",	AUTHTYPE_SHA1},
 #endif
@@ -207,62 +206,6 @@ int max;
 	*salt = saltbuf;
 	*hash = hashbuf;
 	return 1;
-}
-
-static int authcheck_md5(aClient *cptr, anAuthStruct *as, char *para)
-{
-static char buf[512];
-int	i, r;
-char *saltstr, *hashstr;
-
-	if (!para)
-		return -1;
-	r = parsepass(as->data, &saltstr, &hashstr);
-	if (r == 0) /* Old method without salt: b64(MD5(<pass>)) */
-	{
-		char result[MD5_DIGEST_LENGTH];
-		
-		MD5(para, strlen(para), result);
-		if ((i = b64_encode(result, sizeof(result), buf, sizeof(buf))))
-		{
-			if (!strcmp(buf, as->data))
-				return 2;
-			else
-				return -1;
-		} else
-			return -1;
-	} else {
-		/* New method with salt: b64(MD5(MD5(<pass>)+salt)) */
-		char result1[MD5_DIGEST_LENGTH*2];
-		char result2[MD5_DIGEST_LENGTH];
-		char rsalt[MAXSALTLEN+1];
-		int rsaltlen;
-		
-		/* First, decode the salt to something real... */
-		rsaltlen = b64_decode(saltstr, rsalt, sizeof(rsalt));
-		if (rsaltlen <= 0)
-			return -1;
-		
-		/* Then hash the password (1st round)... */
-		MD5(para, strlen(para), result1);
-
-		/* Add salt to result */
-		memcpy(result1+MD5_DIGEST_LENGTH, rsalt, MD5_DIGEST_LENGTH); //excess bytes will be ignored
-
-		/* Then hash it all together again (2nd round)... */
-		MD5(result1, rsaltlen+MD5_DIGEST_LENGTH, result2);
-		
-		/* Then base64 encode it all and we are done... */
-		if ((i = b64_encode(result2, sizeof(result2), buf, sizeof(buf))))
-		{
-			if (!strcmp(buf, hashstr))
-				return 2;
-			else
-				return -1;
-		} else
-			return -1;
-	}
-	return -1; /* NOTREACHED */
 }
 
 #ifdef AUTHENABLE_SHA1
@@ -434,55 +377,6 @@ int	Auth_Check(aClient *cptr, anAuthStruct *as, char *para)
 	return -1;
 }
 
-static char *mkpass_md5(char *para)
-{
-static char buf[128];
-char result1[16+REALSALTLEN];
-char result2[16];
-char saltstr[REALSALTLEN]; /* b64 encoded printable string*/
-char saltraw[RAWSALTLEN];  /* raw binary */
-char xresult[64];
-int i;
-
-	if (!para) return NULL;
-
-	/* generate a random salt... */
-	for (i=0; i < RAWSALTLEN; i++)
-		saltraw[i] = getrandom8();
-
-	i = b64_encode(saltraw, RAWSALTLEN, saltstr, REALSALTLEN);
-	if (!i) return NULL;
-
-	/* b64(MD5(MD5(<pass>)+salt))
-	 *         ^^^^^^^^^^^
-	 *           step 1
-	 *     ^^^^^^^^^^^^^^^^^^^^^
-	 *     step 2
-	 * ^^^^^^^^^^^^^^^^^^^^^^^^^^
-	 * step 3
-	 */
-
-	/* STEP 1 */
-	MD5(para, strlen(para), result2);
-
-	/* STEP 2 */
-	/* add salt to result */
-	memcpy(result1+16, saltraw, RAWSALTLEN);
-	/* Then hash it all together */
-	MD5(result1, RAWSALTLEN+16, result2);
-	
-	/* STEP 3 */
-	/* Then base64 encode it all together.. */
-	i = b64_encode(result2, sizeof(result2), xresult, sizeof(xresult));
-	if (!i) return NULL;
-
-	/* Good.. now create the whole string:
-	 * $<saltb64d>$<totalhashb64d>
-	 */
-	ircsnprintf(buf, sizeof(buf), "$%s$%s", saltstr, xresult);
-	return buf;
-}
-
 #ifdef AUTHENABLE_SHA1
 static char *mkpass_sha1(char *para)
 {
@@ -610,9 +504,6 @@ const char *Auth_Make(const char *type, char *para)
 		case AUTHTYPE_PLAINTEXT:
 			return (para);
 			break;
-
-		case AUTHTYPE_MD5:
-			return mkpass_md5(para);
 
 #ifdef AUTHENABLE_SHA1
 		case AUTHTYPE_SHA1:
