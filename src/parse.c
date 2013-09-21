@@ -159,25 +159,6 @@ void ban_flooder(aClient *cptr)
 }
 
 /*
- * This routine adds fake lag if needed.
- */
-inline void parse_addlag(aClient *cptr, int cmdbytes)
-{
-	if (!IsServer(cptr) && !IsNoFakeLag(cptr) &&
-#ifdef FAKELAG_CONFIGURABLE
-		!(cptr->class && (cptr->class->options & CLASS_OPT_NOFAKELAG)) && 
-#endif
-#ifdef NO_FAKE_LAG_FOR_LOCOPS	
-	!IsAnOper(cptr))
-#else
-	!IsOper(cptr))
-#endif		
-	{
-		cptr->since += (1 + cmdbytes/90);
-	}		
-}
-
-/*
  * parse a buffer.
  *
  * NOTE: parse() should not be called recusively by any other fucntions!
@@ -345,7 +326,6 @@ int  parse(aClient *cptr, char *buffer, char *bufend)
 			if (!IsRegistered(cptr) && stricmp(ch, "NOTICE")) {
 				sendto_one(from, ":%s %d %s :You have not registered",
 				    me.name, ERR_NOTREGISTERED, ch);
-				parse_addlag(cptr, bytes);
 				return -1;
 			}
 			if (IsShunned(cptr))
@@ -360,7 +340,6 @@ int  parse(aClient *cptr, char *buffer, char *bufend)
 					    from->name, ch);
 				Debug((DEBUG_ERROR, "Unknown (%s) from %s",
 				    ch, get_client_name(cptr, TRUE)));
-				parse_addlag(cptr, bytes);
 			}
 			ircstp->is_unco++;
 			return (-1);
@@ -383,8 +362,6 @@ int  parse(aClient *cptr, char *buffer, char *bufend)
 		}
 		paramcount = cmptr->parameters;
 		cmptr->bytes += bytes;
-		if (!(cmptr->flags & M_NOLAG))
-			parse_addlag(cptr, bytes);
 
 		if (cmptr->flags & M_RATELIMIT_CMD)
 		{

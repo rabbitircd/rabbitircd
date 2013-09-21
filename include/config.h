@@ -255,20 +255,6 @@
  */
 #undef	CMDLINE_CONFIG
 
-/** FAKELAG_CONFIGURABLE makes it possible to make certain classes exempted
- * from 'fake lag' (that is, the artificial delay that is added by the ircd
- * to prevent flooding, which causes the messages/commands of the user to
- * slow down). Naturally, incorrect use of this feature can cause SEVERE
- * issues, in fact it can easily bring your whole IRCd down if one of the
- * users with class::options::nofakelag does a good flood at full speed.
- * Hence, this is disabled by default, and you need to explicitly enable it
- * here IF YOU KNOW WHAT YOU ARE DOING. People complaining their ircd
- * ""crashed"" because of this setting will be shot. </DISCLAIMER>
- * Common usage for this are: a trusted bot ran by an IRCOp, that you only
- * want to give "flood access" and nothing else, and other such things.
- */
-#undef FAKELAG_CONFIGURABLE
-
 /*
  * Max amount of internal send buffering when socket is stuck (bytes)
  */

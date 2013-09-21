@@ -3819,8 +3819,7 @@ int	_conf_class(ConfigFile *conf, ConfigEntry *ce)
 		else if (!strcmp(cep->ce_varname, "options"))
 		{
 			for (cep2 = cep->ce_entries; cep2; cep2 = cep2->ce_next)
-				if (!strcmp(cep2->ce_varname, "nofakelag"))
-					class->options |= CLASS_OPT_NOFAKELAG;
+				;
 		}
 	}
 	if (isnew)
@@ -3852,11 +3851,6 @@ int	_test_class(ConfigFile *conf, ConfigEntry *ce)
 		{
 			for (cep2 = cep->ce_entries; cep2; cep2 = cep2->ce_next)
 			{
-#ifdef FAKELAG_CONFIGURABLE
-				if (!strcmp(cep2->ce_varname, "nofakelag"))
-					;
-				else
-#endif
 				{
 					config_error("%s:%d: Unknown option '%s' in class::options",
 						cep2->ce_fileptr->cf_filename, cep2->ce_varlinenum, cep2->ce_varname);

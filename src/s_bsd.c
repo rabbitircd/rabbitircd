@@ -1308,8 +1308,7 @@ static int parse_client_queued(aClient *cptr)
 	time_t now = TStime();
 	char buf[BUFSIZE];
 
-	while (DBufLength(&cptr->recvQ) &&
-	    ((cptr->status < STAT_UNKNOWN) || (cptr->since - now < 10)))
+	while (DBufLength(&cptr->recvQ) && (cptr->status < STAT_UNKNOWN))
 	{
 		dolen = dbuf_getmsg(&cptr->recvQ, buf);
 
@@ -1395,7 +1394,7 @@ void read_packet(int fd, int revents, void *data)
 
 		dbuf_put(&cptr->recvQ, readbuf, length);
 
-		/* parse some of what we have (inducing fakelag, etc) */
+		/* parse some of what we have */
 		if (!(DoingDNS(cptr) || DoingAuth(cptr)))
 			if (parse_client_queued(cptr) == FLUSH_BUFFER)
 				return;
