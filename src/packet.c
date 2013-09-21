@@ -78,7 +78,7 @@ void	init_CommandHash(void)
 	add_CommandX(MSG_VERSION, m_version, MAXPARA, M_UNREGISTERED|M_USER|M_SERVER);
 	add_Command(MSG_SUMMON, m_summon, 1);
 	add_Command(MSG_USERS, m_users, MAXPARA);
-	add_Command(MSG_INFO, m_info, MAXPARA);
+	add_CommandX(MSG_INFO, m_info, MAXPARA, M_USER|M_RATELIMIT_CMD);
 	add_Command(MSG_DNS, m_dns, MAXPARA);
 	add_Command(MSG_REHASH, m_rehash, MAXPARA);
 	add_Command(MSG_RESTART, m_restart, 2);
