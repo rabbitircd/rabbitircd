@@ -205,7 +205,6 @@ void	SetupEvents(void)
 	LockEventSystem();
 
 	/* Start events */
-	EventAddEx(NULL, "tunefile", 300, 0, save_tunefile, NULL);
 	EventAddEx(NULL, "garbage", GARBAGE_COLLECT_EVERY, 0, garbage_collect, NULL);
 	EventAddEx(NULL, "loop", 0, 0, loop_event, NULL);
 #ifdef JOINTHROTTLE

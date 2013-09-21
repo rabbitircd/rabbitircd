@@ -18,7 +18,6 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 #include "struct.h"
-#include "url.h"
 #include "common.h"
 #include "sys.h"
 #include "numeric.h"
@@ -31,20 +30,16 @@
 #ifdef __hpux
 #include "inet.h"
 #endif
-#if defined(PCS) || defined(AIX) || defined(SVR3)
+#if defined(AIX)
 #include <time.h>
 #endif
 #include <string.h>
 #ifdef GLOBH
 #include <glob.h>
 #endif
-#ifdef STRIPBADWORDS
-#include "badwords.h"
-#endif
 #include "h.h"
 #include "inet.h"
 #include "proto.h"
-#include "badwords.h"
 
 #define ircstrdup(x,y) do { if (x) MyFree(x); if (!y) x = NULL; else x = strdup(y); } while(0)
 #define ircfree(x) do { if (x) MyFree(x); x = NULL; } while(0)
@@ -86,9 +81,6 @@ static int	_conf_vhost		(ConfigFile *conf, ConfigEntry *ce);
 static int	_conf_link		(ConfigFile *conf, ConfigEntry *ce);
 static int	_conf_ban		(ConfigFile *conf, ConfigEntry *ce);
 static int	_conf_set		(ConfigFile *conf, ConfigEntry *ce);
-#ifdef STRIPBADWORDS
-static int	_conf_badword		(ConfigFile *conf, ConfigEntry *ce);
-#endif
 static int	_conf_deny		(ConfigFile *conf, ConfigEntry *ce);
 static int	_conf_deny_dcc		(ConfigFile *conf, ConfigEntry *ce);
 static int	_conf_deny_link		(ConfigFile *conf, ConfigEntry *ce);
@@ -124,9 +116,6 @@ static int	_test_vhost		(ConfigFile *conf, ConfigEntry *ce);
 static int	_test_link		(ConfigFile *conf, ConfigEntry *ce);
 static int	_test_ban		(ConfigFile *conf, ConfigEntry *ce);
 static int	_test_set		(ConfigFile *conf, ConfigEntry *ce);
-#ifdef STRIPBADWORDS
-static int	_test_badword		(ConfigFile *conf, ConfigEntry *ce);
-#endif
 static int	_test_deny		(ConfigFile *conf, ConfigEntry *ce);
 static int	_test_allow_channel	(ConfigFile *conf, ConfigEntry *ce);
 static int	_test_allow_dcc		(ConfigFile *conf, ConfigEntry *ce);
@@ -143,9 +132,6 @@ static ConfigCommand _ConfigCommands[] = {
 	{ "admin", 		_conf_admin,		_test_admin 	},
 	{ "alias",		_conf_alias,		_test_alias	},
 	{ "allow",		_conf_allow,		_test_allow	},
-#ifdef STRIPBADWORDS
-	{ "badword",		_conf_badword,		_test_badword	},
-#endif
 	{ "ban", 		_conf_ban,		_test_ban	},
 	{ "cgiirc", 	_conf_cgiirc,	_test_cgiirc	},
 	{ "class", 		_conf_class,		_test_class	},
@@ -200,7 +186,6 @@ static int _OldOperFlags[] = {
 	OFLAG_UMODEQ, 'q',
 	OFLAG_DCCDENY, 'd',
 	OFLAG_ADDLINE, 'X',
-        OFLAG_TSCTL, 'T',
 	0, 0
 };
 
@@ -224,7 +209,6 @@ static OperFlag _OperFlags[] = {
 	{ OFLAG_REHASH,		"can_rehash" },
 	{ OFLAG_RESTART,        "can_restart" },
 	{ OFLAG_UMODEQ,		"can_setq" },
-	{ OFLAG_TSCTL,		"can_tsctl" },
 	{ OFLAG_UNKLINE,	"can_unkline" },
 	{ OFLAG_WALLOP,         "can_wallops" },
 	{ OFLAG_ZLINE,		"can_zline"},
@@ -262,6 +246,7 @@ static OperFlag _LinkFlags[] = {
 static OperFlag _LogFlags[] = {
 	{ LOG_CHGCMDS, "chg-commands" },
 	{ LOG_CLIENT, "connects" },
+	{ LOG_DEBUG, "debug" },
 	{ LOG_ERROR, "errors" },
 	{ LOG_KILL, "kills" },
 	{ LOG_KLINE, "kline" },
@@ -325,7 +310,6 @@ void 			config_error(char *format, ...);
 void 			config_status(char *format, ...);
 void 			config_progress(char *format, ...);
 
-extern void add_entropy_configfile(struct stat st, char *buf);
 extern void unload_all_unused_snomasks(void);
 extern void unload_all_unused_umodes(void);
 extern void unload_all_unused_extcmodes(void);
@@ -374,11 +358,6 @@ ConfigItem_log		*conf_log = NULL;
 ConfigItem_alias	*conf_alias = NULL;
 ConfigItem_include	*conf_include = NULL;
 ConfigItem_help		*conf_help = NULL;
-#ifdef STRIPBADWORDS
-ConfigItem_badword	*conf_badword_channel = NULL;
-ConfigItem_badword      *conf_badword_message = NULL;
-ConfigItem_badword	*conf_badword_quit = NULL;
-#endif
 ConfigItem_offchans	*conf_offchans = NULL;
 
 aConfiguration		iConf;
@@ -389,11 +368,6 @@ MODVAR int			config_error_flag = 0;
 int			config_verbose = 0;
 
 void add_include(const char *filename, const char *included_from, int included_from_line);
-#ifdef USE_LIBCURL
-void add_remote_include(const char *, const char *, int, const char *, const char *included_from, int included_from_line);
-void update_remote_include(ConfigItem_include *inc, const char *file, int, const char *errorbuf);
-int remote_include(ConfigEntry *ce);
-#endif
 void unload_notloaded_includes(void);
 void load_includes(void);
 void unload_loaded_includes(void);
@@ -1021,7 +995,6 @@ ConfigFile *config_load(char *filename)
 	/* Just me or could this cause memory corrupted when ret <0 ? */
 	buf[ret] = '\0';
 	close(fd);
-	add_entropy_configfile(sb, buf);
 	cfptr = config_parse(filename, buf);
 	free(buf);
 	return cfptr;
@@ -1476,31 +1449,12 @@ int config_test_openfile(ConfigEntry *cep, int flags, mode_t mode, const char *e
 		return 1;
 	}
 
-	/* There's not much checking that can be done for asynchronously downloaded files */
-#ifdef USE_LIBCURL
-	if(url_is_valid(cep->ce_vardata))
-	{
-		if(allow_url)
-			return 0;
-
-		/* but we can check if a URL is used wrongly :-) */
-		config_warn("%s:%i: %s: %s: URL used where not allowed",
-			    cep->ce_fileptr->cf_filename,
-			    cep->ce_varlinenum,
-			    entry, cep->ce_vardata);
-		if(fatal)
-			return 1;
-		else
-			return 0;
-	}
-#endif /* USE_LIBCURL */
-
 	/* 
 	 * Make sure that files are created with the correct mode. This is 
 	 * because we don't feel like unlink()ing them...which would require
 	 * stat()ing them to make sure that we don't delete existing ones
 	 * and that we deal with all of the bugs that come with complexity. 
-	 * The only files we may be creating are the tunefile and pidfile so far.
+	 * The only file we may be creating is the pidfile so far.
 	 */
 	if(flags & O_CREAT)
 		fd = open(cep->ce_vardata, flags, mode);
@@ -1645,10 +1599,7 @@ void config_setdefaultsettings(aConfiguration *i)
 	i->check_target_nick_bans = 1;
 	i->maxbans = 60;
 	i->maxbanlength = 2048;
-	i->timesynch_enabled = 1;
-	i->timesynch_timeout = 3;
-	i->timesynch_server = strdup("193.67.79.202,192.43.244.18,128.250.36.3"); /* nlnet (EU), NIST (US), uni melbourne (AU). All open acces, nonotify, nodns. */
-	i->name_server = strdup("127.0.0.1"); /* default, especially needed for w2003+ in some rare cases */
+	i->name_server = strdup("127.0.0.1"); /* default */
 	i->level_on_join = CHFL_CHANOP;
 	i->watch_away_notification = 1;
 	i->new_linking_protocol = 1;
@@ -1658,6 +1609,8 @@ void config_setdefaultsettings(aConfiguration *i)
 	i->default_ipv6_clone_mask = 64;
 #endif /* INET6 */
 	i->nicklen = NICKLEN;
+	i->warn_ts_delta = 5;
+	i->max_ts_delta = 30;
 }
 
 /* 1: needed for set::options::allow-part-if-shunned,
@@ -1937,13 +1890,6 @@ int	load_conf(char *filename, const char *original_path)
 			counter ++;
 			continue;
 		}
-#ifdef USE_LIBCURL
-		if (inc->url && !strcmp(original_path, inc->url))
-		{
-			counter ++;
-			continue;
-		}
-#endif
 	}
 	if (counter > 1 || my_inc->flag.type & INCLUDE_USED)
 	{
@@ -2013,7 +1959,6 @@ void	config_rehash()
 	ConfigItem_listen	 	*listen_ptr;
 	ConfigItem_tld			*tld_ptr;
 	ConfigItem_vhost		*vhost_ptr;
-	ConfigItem_badword		*badword_ptr;
 	ConfigItem_deny_dcc		*deny_dcc_ptr;
 	ConfigItem_allow_dcc		*allow_dcc_ptr;
 	ConfigItem_deny_link		*deny_link_ptr;
@@ -2175,38 +2120,6 @@ void	config_rehash()
 		MyFree(vhost_ptr);
 	}
 
-#ifdef STRIPBADWORDS
-	for (badword_ptr = conf_badword_channel; badword_ptr;
-		badword_ptr = (ConfigItem_badword *) next) {
-		next = (ListStruct *)badword_ptr->next;
-		ircfree(badword_ptr->word);
-		if (badword_ptr->replace)
-			ircfree(badword_ptr->replace);
-		regfree(&badword_ptr->expr);
-		DelListItem(badword_ptr, conf_badword_channel);
-		MyFree(badword_ptr);
-	}
-	for (badword_ptr = conf_badword_message; badword_ptr;
-		badword_ptr = (ConfigItem_badword *) next) {
-		next = (ListStruct *)badword_ptr->next;
-		ircfree(badword_ptr->word);
-		if (badword_ptr->replace)
-			ircfree(badword_ptr->replace);
-		regfree(&badword_ptr->expr);
-		DelListItem(badword_ptr, conf_badword_message);
-		MyFree(badword_ptr);
-	}
-	for (badword_ptr = conf_badword_quit; badword_ptr;
-		badword_ptr = (ConfigItem_badword *) next) {
-		next = (ListStruct *)badword_ptr->next;
-		ircfree(badword_ptr->word);
-		if (badword_ptr->replace)
-			ircfree(badword_ptr->replace);
-		regfree(&badword_ptr->expr);
-		DelListItem(badword_ptr, conf_badword_quit);
-		MyFree(badword_ptr);
-	}
-#endif
 	/* Clean up local spamfilter entries... */
 	for (tk = tklines[tkl_hash('f')]; tk; tk = tk_next)
 	{
@@ -2375,7 +2288,6 @@ void	config_rehash()
 	ircfree(conf_files->svsmotd_file);
 	ircfree(conf_files->botmotd_file);
 	ircfree(conf_files->rules_file);
-	ircfree(conf_files->tune_file);
 	/* 
 	   Don't free conf_files->pid_file here; the old value is used to determine if 
 	   the pidfile location has changed and write_pidfile() needs to be called 
@@ -3100,13 +3012,7 @@ int	_conf_include(ConfigFile *conf, ConfigEntry *ce)
 			ce->ce_varlinenum);
 		return -1;
 	}
-#ifdef USE_LIBCURL
-	if (url_is_valid(ce->ce_vardata))
-		return remote_include(ce);
-#endif
-#if !defined(OSXTIGER) && DEFAULT_PERMISSIONS != 0
 	chmod(ce->ce_vardata, DEFAULT_PERMISSIONS);
-#endif
 #ifdef GLOBH
 #if defined(__OpenBSD__) && defined(GLOB_LIMIT)
 	glob(ce->ce_vardata, GLOB_NOSORT|GLOB_NOCHECK|GLOB_LIMIT, NULL, &files);
@@ -3366,7 +3272,6 @@ int	_conf_files(ConfigFile *conf, ConfigEntry *ce)
 		conf_files->svsmotd_file = strdup(VPATH);
 		
 		conf_files->pid_file = strdup(IRCD_PIDFILE);
-		conf_files->tune_file = strdup(IRCDTUNE);
 		
 		/* we let actual files get read in later by the motd caching mechanism */
 	}
@@ -3393,8 +3298,6 @@ int	_conf_files(ConfigFile *conf, ConfigEntry *ce)
 			ircstrdup(conf_files->botmotd_file, cep->ce_vardata);
 		else if (!strcmp(cep->ce_varname, "rules"))
 			ircstrdup(conf_files->rules_file, cep->ce_vardata);
-		else if (!strcmp(cep->ce_varname, "tunefile"))
-			ircstrdup(conf_files->tune_file, cep->ce_vardata);
 		else if (!strcmp(cep->ce_varname, "pidfile"))
 			ircstrdup(conf_files->pid_file, cep->ce_vardata);
 	}
@@ -3407,7 +3310,7 @@ int	_test_files(ConfigFile *conf, ConfigEntry *ce)
 	int	    errors = 0;
 	char has_motd = 0, has_smotd = 0, has_rules = 0;
 	char has_botmotd = 0, has_opermotd = 0, has_svsmotd = 0;
-	char has_pidfile = 0, has_tunefile = 0;
+	char has_pidfile = 0;
 	
 	for (cep = ce->ce_entries; cep; cep = cep->ce_next)
 	{
@@ -3498,18 +3401,6 @@ int	_test_files(ConfigFile *conf, ConfigEntry *ce)
 			
 			errors += config_test_openfile(cep, O_WRONLY | O_CREAT, 0600, "files::pidfile", 1, 0);
 			has_pidfile = 1;
-		}
-		/* files::tunefile */
-		else if (!strcmp(cep->ce_varname, "tunefile")) 
-		{
-			if (has_tunefile)
-			{
-				config_warn_duplicate(cep->ce_fileptr->cf_filename,
-					cep->ce_varlinenum, "files::tunefile");
-				continue;
-			}
-			errors += config_test_openfile(cep, O_RDWR | O_CREAT, 0600, "files::tunefile", 1, 0);
-			has_tunefile = 1;
 		}
 		/* <random directive here> */
 		else
@@ -5730,212 +5621,6 @@ int	_test_vhost(ConfigFile *conf, ConfigEntry *ce)
 	return errors;
 }
 
-#ifdef STRIPBADWORDS
-
-static ConfigItem_badword *copy_badword_struct(ConfigItem_badword *ca, int regex, int regflags)
-{
-	ConfigItem_badword *x = MyMalloc(sizeof(ConfigItem_badword));
-	memcpy(x, ca, sizeof(ConfigItem_badword));
-	x->word = strdup(ca->word);
-	if (ca->replace)
-		x->replace = strdup(ca->replace);
-	if (regex) 
-	{
-		memset(&x->expr, 0, sizeof(regex_t));
-		regcomp(&x->expr, x->word, regflags);
-	}
-	return x;
-}
-
-int     _conf_badword(ConfigFile *conf, ConfigEntry *ce)
-{
-	ConfigEntry *cep, *word = NULL;
-	ConfigItem_badword *ca;
-	char *tmp;
-	short regex = 0;
-	int regflags = 0;
-	int ast_l = 0, ast_r = 0;
-
-	ca = MyMallocEx(sizeof(ConfigItem_badword));
-	ca->action = BADWORD_REPLACE;
-	regflags = REG_ICASE|REG_EXTENDED;
-
-	for (cep = ce->ce_entries; cep; cep = cep->ce_next)
-	{
-		if (!strcmp(cep->ce_varname, "action"))
-		{
-			if (!strcmp(cep->ce_vardata, "block"))
-			{
-				ca->action = BADWORD_BLOCK;
-				/* If it is set to just block, then we don't need to worry about
-				 * replacements 
-				 */
-				regflags |= REG_NOSUB;
-			}
-		}
-		else if (!strcmp(cep->ce_varname, "replace"))
-		{
-			ircstrdup(ca->replace, cep->ce_vardata);
-		}
-		else if (!strcmp(cep->ce_varname, "word"))
-			word = cep;
-	}
-	/* The fast badwords routine can do: "blah" "*blah" "blah*" and "*blah*",
-	 * in all other cases use regex.
-	 */
-	for (tmp = word->ce_vardata; *tmp; tmp++) {
-		if (!isalnum(*tmp) && !(*tmp >= 128)) {
-			if ((word->ce_vardata == tmp) && (*tmp == '*')) {
-				ast_l = 1; /* Asterisk at the left */
-				continue;
-			}
-			if ((*(tmp + 1) == '\0') && (*tmp == '*')) {
-				ast_r = 1; /* Asterisk at the right */
-				continue;
-			}
-			regex = 1;
-			break;
-		}
-	}
-	if (regex)
-	{
-		ca->type = BADW_TYPE_REGEX;
-		ircstrdup(ca->word, word->ce_vardata);
-		regcomp(&ca->expr, ca->word, regflags);
-	}
-	else
-	{
-		char *tmpw;
-		ca->type = BADW_TYPE_FAST;
-		ca->word = tmpw = MyMalloc(strlen(word->ce_vardata) - ast_l - ast_r + 1);
-		/* Copy except for asterisks */
-		for (tmp = word->ce_vardata; *tmp; tmp++)
-			if (*tmp != '*')
-				*tmpw++ = *tmp;
-		*tmpw = '\0';
-		if (ast_l)
-			ca->type |= BADW_TYPE_FAST_L;
-		if (ast_r)
-			ca->type |= BADW_TYPE_FAST_R;
-	}
-	if (!strcmp(ce->ce_vardata, "channel"))
-		AddListItem(ca, conf_badword_channel);
-	else if (!strcmp(ce->ce_vardata, "message"))
-		AddListItem(ca, conf_badword_message);
-	else if (!strcmp(ce->ce_vardata, "quit"))
-		AddListItem(ca, conf_badword_quit);
-	else if (!strcmp(ce->ce_vardata, "all"))
-	{
-		AddListItem(ca, conf_badword_channel);
-		AddListItem(copy_badword_struct(ca,regex,regflags), conf_badword_message);
-		AddListItem(copy_badword_struct(ca,regex,regflags), conf_badword_quit);
-	}
-	return 1;
-}
-
-int _test_badword(ConfigFile *conf, ConfigEntry *ce) 
-{ 
-	int errors = 0;
-	ConfigEntry *cep;
-	char has_word = 0, has_replace = 0, has_action = 0, action = 'r';
-
-	if (!ce->ce_vardata)
-	{
-		config_error("%s:%i: badword without type",
-			ce->ce_fileptr->cf_filename, ce->ce_varlinenum);
-		return 1;
-	}
-	else if (strcmp(ce->ce_vardata, "channel") && strcmp(ce->ce_vardata, "message") && 
-	         strcmp(ce->ce_vardata, "quit") && strcmp(ce->ce_vardata, "all")) {
-			config_error("%s:%i: badword with unknown type",
-				ce->ce_fileptr->cf_filename, ce->ce_varlinenum);
-		return 1;
-	}
-	for (cep = ce->ce_entries; cep; cep = cep->ce_next)
-	{
-		if (config_is_blankorempty(cep, "badword"))
-		{
-			errors++;
-			continue;
-		}
-		if (!strcmp(cep->ce_varname, "word"))
-		{
-			char *errbuf;
-			if (has_word)
-			{
-				config_warn_duplicate(cep->ce_fileptr->cf_filename, 
-					cep->ce_varlinenum, "badword::word");
-				continue;
-			}
-			has_word = 1;
-			if ((errbuf = unreal_checkregex(cep->ce_vardata,1,1)))
-			{
-				config_error("%s:%i: badword::%s contains an invalid regex: %s",
-					cep->ce_fileptr->cf_filename,
-					cep->ce_varlinenum,
-					cep->ce_varname, errbuf);
-				errors++;
-			}
-		}
-		else if (!strcmp(cep->ce_varname, "replace"))
-		{
-			if (has_replace)
-			{
-				config_warn_duplicate(cep->ce_fileptr->cf_filename, 
-					cep->ce_varlinenum, "badword::replace");
-				continue;
-			}
-			has_replace = 1;
-		}
-		else if (!strcmp(cep->ce_varname, "action"))
-		{
-			if (has_action)
-			{
-				config_warn_duplicate(cep->ce_fileptr->cf_filename, 
-					cep->ce_varlinenum, "badword::action");
-				continue;
-			}
-			has_action = 1;
-			if (!strcmp(cep->ce_vardata, "replace"))
-				action = 'r';
-			else if (!strcmp(cep->ce_vardata, "block"))
-				action = 'b';
-			else
-			{
-				config_error("%s:%d: Unknown badword::action '%s'",
-					cep->ce_fileptr->cf_filename, cep->ce_varlinenum,
-					cep->ce_vardata);
-				errors++;
-			}
-				
-		}
-		else
-		{
-			config_error_unknown(cep->ce_fileptr->cf_filename, cep->ce_varlinenum,
-				"badword", cep->ce_varname);
-			errors++;
-		}
-	}
-
-	if (!has_word)
-	{
-		config_error_missing(ce->ce_fileptr->cf_filename, ce->ce_varlinenum,
-			"badword::word");
-		errors++;
-	}
-	if (has_action)
-	{
-		if (has_replace && action == 'b')
-		{
-			config_error("%s:%i: badword::action is block but badword::replace exists",
-				ce->ce_fileptr->cf_filename, ce->ce_varlinenum);
-			errors++;
-		}
-	}
-	return errors; 
-}
-#endif
-
 int _conf_spamfilter(ConfigFile *conf, ConfigEntry *ce)
 {
 	ConfigEntry *cep;
@@ -7436,18 +7121,6 @@ int	_conf_set(ConfigFile *conf, ConfigEntry *ce)
 					tempiConf.ident_read_timeout = config_checkval(cepp->ce_vardata,CFG_TIME);
 			}
 		}
-		else if (!strcmp(cep->ce_varname, "timesync") || !strcmp(cep->ce_varname, "timesynch"))
-		{
-			for (cepp = cep->ce_entries; cepp; cepp = cepp->ce_next)
-			{
-				if (!strcmp(cepp->ce_varname, "enabled"))
-					tempiConf.timesynch_enabled = config_checkval(cepp->ce_vardata,CFG_YESNO);
-				else if (!strcmp(cepp->ce_varname, "timeout"))
-					tempiConf.timesynch_timeout = config_checkval(cepp->ce_vardata,CFG_TIME);
-				else if (!strcmp(cepp->ce_varname, "server"))
-					ircstrdup(tempiConf.timesynch_server, cepp->ce_vardata);
-			}
-		}
 		else if (!strcmp(cep->ce_varname, "spamfilter"))
 		{
 			for (cepp = cep->ce_entries; cepp; cepp = cepp->ce_next)
@@ -7508,6 +7181,14 @@ int	_conf_set(ConfigFile *conf, ConfigEntry *ce)
 			tempiConf.nicklen = v;
 			if (loop.ircd_booted)
 				IsupportSetValue(IsupportFind("NICKLEN"), cep->ce_vardata);
+		}
+		else if (!strcmp(cep->ce_varname, "warn-ts-delta")) {
+			int v = atoi(cep->ce_vardata);
+			tempiConf.warn_ts_delta = v;
+		}
+		else if (!strcmp(cep->ce_varname, "max-ts-delta")) {
+			int v = atoi(cep->ce_vardata);
+			tempiConf.max_ts_delta = v;
 		}
 		else if (!strcmp(cep->ce_varname, "ssl")) {
 #ifdef USE_SSL
@@ -8318,34 +7999,6 @@ int	_test_set(ConfigFile *conf, ConfigEntry *ce)
 				} else {
 					config_error_unknown(cepp->ce_fileptr->cf_filename,
 						cepp->ce_varlinenum, "set::ident",
-						cepp->ce_varname);
-					errors++;
-					continue;
-				}
-			}
-		}
-		else if (!strcmp(cep->ce_varname, "timesync") || !strcmp(cep->ce_varname, "timesynch")) {
-			for (cepp = cep->ce_entries; cepp; cepp = cepp->ce_next)
-			{
-				CheckNull(cepp);
-				if (!strcmp(cepp->ce_varname, "enabled"))
-				{
-				}
-				else if (!strcmp(cepp->ce_varname, "timeout"))
-				{
-					int v = config_checkval(cepp->ce_vardata,CFG_TIME);
-					if ((v > 5) || (v < 1))
-					{
-						config_error("%s:%i: set::timesync::%s value out of range (%d), should be between 1 and 5 (higher=unreliable).",
-							cepp->ce_fileptr->cf_filename, cepp->ce_varlinenum, cepp->ce_varname, v);
-						errors++;
-						continue;
-					}
-				} else if (!strcmp(cepp->ce_varname, "server"))
-				{
-				} else {
-					config_error_unknown(cepp->ce_fileptr->cf_filename,
-						cepp->ce_varlinenum, "set::timesync",
 						cepp->ce_varname);
 					errors++;
 					continue;
@@ -9489,118 +9142,10 @@ int     _test_deny(ConfigFile *conf, ConfigEntry *ce)
 	return errors;	
 }
 
-#ifdef USE_LIBCURL
-static void conf_download_complete(const char *url, const char *file, const char *errorbuf, int cached, void *inc_key)
-{
-	ConfigItem_include *inc;
-	if (!loop.ircd_rehashing)
-		return;
-
-	/*
-	  use inc_key to find the correct include block. This
-	  should be cheaper than using the full URL.
-	 */
-	for (inc = conf_include; inc; inc = (ConfigItem_include *)inc->next)
-	{
-		if ( inc_key != (void *)inc )
-			continue;
-		if (!(inc->flag.type & INCLUDE_REMOTE))
-			continue;
-		if (inc->flag.type & INCLUDE_NOTLOADED)
-			continue;
-		if (stricmp(url, inc->url))
-			continue;
-
-		inc->flag.type &= ~INCLUDE_DLQUEUED;
-		break;
-	}
-	if (!inc)
-	{
-		ircd_log(LOG_ERROR, "Downloaded remote include which matches no include statement.");
-		return;
-	}
-
-	if (!file && !cached)
-		update_remote_include(inc, file, 0, errorbuf); /* DOWNLOAD FAILED */
-	else
-	{
-		char *urlfile = url_getfilename(url);
-		char *file_basename = unreal_getfilename(urlfile);
-		char *tmp = unreal_mktemp("tmp", file_basename);
-		free(urlfile);
-
-		if (cached)
-		{
-			unreal_copyfileex(inc->file, tmp, 1);
-#ifdef REMOTEINC_SPECIALCACHE
-			unreal_copyfileex(inc->file, unreal_mkcache(url), 0);
-#endif
-			update_remote_include(inc, tmp, 0, NULL);
-		}
-		else
-		{
-			/*
-			  copy/hardlink file to another file because our caller will
-			  remove(file).
-			*/
-			unreal_copyfileex(file, tmp, 1);
-			update_remote_include(inc, tmp, 0, NULL);
-#ifdef REMOTEINC_SPECIALCACHE
-			unreal_copyfileex(file, unreal_mkcache(url), 0);
-#endif
-		}
-	}
-	for (inc = conf_include; inc; inc = (ConfigItem_include *)inc->next)
-	{
-		if (inc->flag.type & INCLUDE_DLQUEUED)
-			return;
-	}
-	rehash_internal(loop.rehash_save_cptr, loop.rehash_save_sptr, loop.rehash_save_sig);
-}
-#endif
-
 int     rehash(aClient *cptr, aClient *sptr, int sig)
 {
-#ifdef USE_LIBCURL
-	ConfigItem_include *inc;
-	char found_remote = 0;
-	if (loop.ircd_rehashing)
-	{
-		if (!sig)
-			sendto_one(sptr, ":%s NOTICE %s :A rehash is already in progress",
-				me.name, sptr->name);
-		return 0;
-	}
-
-	loop.ircd_rehashing = 1;
-	loop.rehash_save_cptr = cptr;
-	loop.rehash_save_sptr = sptr;
-	loop.rehash_save_sig = sig;
-	for (inc = conf_include; inc; inc = (ConfigItem_include *)inc->next)
-	{
-		time_t modtime;
-		if (!(inc->flag.type & INCLUDE_REMOTE))
-			continue;
-
-		if (inc->flag.type & INCLUDE_NOTLOADED)
-			continue;
-		found_remote = 1;
-		modtime = unreal_getfilemodtime(inc->file);
-		inc->flag.type |= INCLUDE_DLQUEUED;
-
-		/*
-		  use (void *)inc as the key for finding which
-		  include block conf_download_complete() should use.
-		*/
-		download_file_async(inc->url, modtime, conf_download_complete, (void *)inc);
-	}
-	if (!found_remote)
-		return rehash_internal(cptr, sptr, sig);
-	return 0;
-#else
 	loop.ircd_rehashing = 1;
 	return rehash_internal(cptr, sptr, sig);
-#endif
 }
 
 int	rehash_internal(aClient *cptr, aClient *sptr, int sig)
@@ -9608,11 +9153,6 @@ int	rehash_internal(aClient *cptr, aClient *sptr, int sig)
 	if (sig == 1)
 	{
 		sendto_ops("Got signal SIGHUP, reloading %s file", configfile);
-#ifdef	ULTRIX
-		if (fork() > 0)
-			exit(0);
-		write_pidfile();
-#endif
 	}
 	loop.ircd_rehashing = 1; /* double checking.. */
 	if (init_conf(configfile, 1) == 0)
@@ -9702,115 +9242,6 @@ void	listen_cleanup()
 		close_listeners();
 }
 
-#ifdef USE_LIBCURL
-char *find_remote_include(char *url, char **errorbuf)
-{
-	ConfigItem_include *inc;
-	for (inc = conf_include; inc; inc = (ConfigItem_include *)inc->next)
-	{
-		if (!(inc->flag.type & INCLUDE_NOTLOADED))
-			continue;
-		if (!(inc->flag.type & INCLUDE_REMOTE))
-			continue;
-		if (!stricmp(url, inc->url))
-		{
-			*errorbuf = inc->errorbuf;
-			return inc->file;
-		}
-	}
-	return NULL;
-}
-
-char *find_loaded_remote_include(char *url)
-{
-	ConfigItem_include *inc;
-	for (inc = conf_include; inc; inc = (ConfigItem_include *)inc->next)
-	{
-		if ((inc->flag.type & INCLUDE_NOTLOADED))
-			continue;
-		if (!(inc->flag.type & INCLUDE_REMOTE))
-			continue;
-		if (!stricmp(url, inc->url))
-			return inc->file;
-	}
-	return NULL;
-}	
-
-/**
- * Non-asynchronous remote inclusion to give a user better feedback
- * when first starting his IRCd.
- *
- * The asynchronous friend is rehash() which merely queues remote
- * includes for download using download_file_async().
- */
-int remote_include(ConfigEntry *ce)
-{
-	char *errorbuf = NULL;
-	char *file = find_remote_include(ce->ce_vardata, &errorbuf);
-	int ret;
-	if (!loop.ircd_rehashing || (loop.ircd_rehashing && !file && !errorbuf))
-	{
-		char *error;
-		if (config_verbose > 0)
-			config_status("Downloading %s", ce->ce_vardata);
-		file = download_file(ce->ce_vardata, &error);
-		if (!file)
-		{
-#ifdef REMOTEINC_SPECIALCACHE
-			if (has_cached_version(ce->ce_vardata))
-			{
-				config_warn("%s:%i: include: error downloading '%s': %s -- using cached version instead.",
-					ce->ce_fileptr->cf_filename, ce->ce_varlinenum,
-					ce->ce_vardata, error);
-				file = strdup(unreal_mkcache(ce->ce_vardata));
-				/* Let it pass to load_conf()... */
-			} else {
-#endif
-				config_error("%s:%i: include: error downloading '%s': %s",
-					ce->ce_fileptr->cf_filename, ce->ce_varlinenum,
-					 ce->ce_vardata, error);
-				return -1;
-#ifdef REMOTEINC_SPECIALCACHE
-			}
-#endif
-		}
-		add_remote_include(file, ce->ce_vardata, 0, NULL, ce->ce_fileptr->cf_filename, ce->ce_varlinenum);
-		ret = load_conf(file, ce->ce_vardata);
-		free(file);
-		return ret;
-	}
-	else
-	{
-		if (errorbuf)
-		{
-#ifdef REMOTEINC_SPECIALCACHE
-			if (has_cached_version(ce->ce_vardata))
-			{
-				config_warn("%s:%i: include: error downloading '%s': %s -- using cached version instead.",
-					ce->ce_fileptr->cf_filename, ce->ce_varlinenum,
-					ce->ce_vardata, errorbuf);
-				/* Let it pass to load_conf()... */
-				file = strdup(unreal_mkcache(ce->ce_vardata));
-			} else {
-#endif
-				config_error("%s:%i: include: error downloading '%s': %s",
-					ce->ce_fileptr->cf_filename, ce->ce_varlinenum,
-					ce->ce_vardata, errorbuf);
-				return -1;
-#ifdef REMOTEINC_SPECIALCACHE
-			}
-#endif
-		}
-		if (config_verbose > 0)
-			config_status("Loading %s from download", ce->ce_vardata);
-		add_remote_include(file, ce->ce_vardata, 0, NULL, ce->ce_fileptr->cf_filename, ce->ce_varlinenum);
-		ret = load_conf(file, ce->ce_vardata);
-		return ret;
-	}
-	return 0;
-}
-#endif
-
 /**
  * Add an item to the conf_include list for the specified file.
  *
@@ -9833,58 +9264,6 @@ void add_include(const char *file, const char *included_from, int included_from_
 	AddListItem(inc, conf_include);
 }
 
-#ifdef USE_LIBCURL
-/**
- * Adds a remote include entry to the config_include list.
- *
- * This is to be called whenever the included_from and
- * included_from_line parameters are known. This means that during a
- * rehash when downloads are done asynchronously, you call this with
- * the inclued_from and included_from_line information. After the
- * download is complete and you know there it is stored in the FS,
- * call update_remote_include().
- */
-void add_remote_include(const char *file, const char *url, int flags, const char *errorbuf, const char *included_from, int included_from_line)
-{
-	ConfigItem_include *inc;
-
-	/* we rely on MyMallocEx() zeroing the ConfigItem_include */
-	inc = MyMallocEx(sizeof(ConfigItem_include));
-	if (included_from)
-	{
-		inc->included_from = strdup(included_from);
-		inc->included_from_line = included_from_line;
-	}
-	inc->url = strdup(url);
-
-	update_remote_include(inc, file, INCLUDE_NOTLOADED|INCLUDE_REMOTE|flags, errorbuf);
-	AddListItem(inc, conf_include);
-}
-
-/**
- * Update certain information in a remote include's config_include list entry.
- *
- * @param file the place on disk where the downloaded remote include
- *        may be found
- * @param flags additional flags to set on the config_include entry
- * @param errorbuf non-NULL if there were errors encountered in
- *        downloading. The error will be stored into the config_include
- *        entry.
- */
-void update_remote_include(ConfigItem_include *inc, const char *file, int flags, const char *errorbuf)
-{
-	/*
-	 * file may be NULL when errorbuf is non-NULL and vice-versa.
-	 */
-	if (file)
-		inc->file = strdup(file);
-	inc->flag.type |= flags;
-
-	if (errorbuf)
-		inc->errorbuf = strdup(errorbuf);
-}
-#endif
-
 /**
  * Clean up conf_include after a rehash fails because of a
  * configuration file error.
@@ -9900,15 +9279,6 @@ void unload_notloaded_includes(void)
 		next = (ConfigItem_include *)inc->next;
 		if ((inc->flag.type & INCLUDE_NOTLOADED) || !(inc->flag.type & INCLUDE_USED))
 		{
-#ifdef USE_LIBCURL
-			if (inc->flag.type & INCLUDE_REMOTE)
-			{
-				remove(inc->file);
-				free(inc->url);
-				if (inc->errorbuf)
-					free(inc->errorbuf);
-			}
-#endif
 			free(inc->file);
 			free(inc->included_from);
 			DelListItem(inc, conf_include);
@@ -9930,15 +9300,6 @@ void unload_loaded_includes(void)
 		next = (ConfigItem_include *)inc->next;
 		if (!(inc->flag.type & INCLUDE_NOTLOADED) || !(inc->flag.type & INCLUDE_USED))
 		{
-#ifdef USE_LIBCURL
-			if (inc->flag.type & INCLUDE_REMOTE)
-			{
-				remove(inc->file);
-				free(inc->url);
-				if (inc->errorbuf)
-					free(inc->errorbuf);
-			}
-#endif
 			free(inc->file);
 			free(inc->included_from);
 			DelListItem(inc, conf_include);

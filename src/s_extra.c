@@ -310,7 +310,11 @@ static int last_log_file_warning = 0;
 				logs->logfd = fd_fileopen(logs->file, O_CREAT|O_WRONLY|O_TRUNC);
 				if (logs->logfd == -1)
 					continue;
-				write(logs->logfd, "Max file size reached, starting new log file\n", 45);
+				if (write(logs->logfd, "Max file size reached, starting new log file\n", 45) < 0)
+				{
+					write_failure = 1;
+					continue;
+				}
 			}
 			else if (logs->logfd == -1) {
 				logs->logfd = fd_fileopen(logs->file, O_CREAT|O_APPEND|O_WRONLY);
@@ -319,7 +323,9 @@ static int last_log_file_warning = 0;
 					if (!loop.ircd_booted)
 					{
 						config_status("WARNING: Unable to write to '%s': %s", logs->file, strerror(ERRNO));
-					} else {
+					}
+					else
+					{
 						if (last_log_file_warning + 300 < TStime())
 						{
 							config_status("WARNING: Unable to write to '%s': %s. This warning will not re-appear for at least 5 minutes.", logs->file, strerror(ERRNO));
@@ -333,7 +339,22 @@ static int last_log_file_warning = 0;
 			/* this shouldn't happen, but lets not waste unnecessary syscalls... */
 			if (logs->logfd == -1)
 				continue;
-			write(logs->logfd, timebuf, strlen(timebuf));
+			if (write(logs->logfd, timebuf, strlen(timebuf)) < 0)
+			{
+				if (!loop.ircd_booted)
+				{
+					config_status("WARNING: Unable to write to '%s': %s", logs->file, strerror(ERRNO));
+				}
+				else
+				{
+					if (last_log_file_warning + 300 < TStime())
+					{
+						config_status("WARNING: Unable to write to '%s': %s. This warning will not re-appear for at least 5 minutes.", logs->file, strerror(ERRNO));
+						last_log_file_warning = TStime();
+					}
+				}
+				write_failure = 1;
+			}
 			if (write(logs->logfd, buf, strlen(buf)) == strlen(buf))
 			{
 				written++;
@@ -343,7 +364,9 @@ static int last_log_file_warning = 0;
 				if (!loop.ircd_booted)
 				{
 					config_status("WARNING: Unable to write to '%s': %s", logs->file, strerror(ERRNO));
-				} else {
+				}
+				else
+				{
 					if (last_log_file_warning + 300 < TStime())
 					{
 						config_status("WARNING: Unable to write to '%s': %s. This warning will not re-appear for at least 5 minutes.", logs->file, strerror(ERRNO));
@@ -355,7 +378,7 @@ static int last_log_file_warning = 0;
 			fsync(logs->logfd);
 		}
 	}
-	
+
 	/* If nothing got written at all AND we had a write failure AND we are booting, then exit.
 	 * Note that we can't just fail when nothing got written, as we might have been called for
 	 * 'tkl' for example, which might not be in our log block.

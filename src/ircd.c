@@ -55,23 +55,15 @@ Computing Center and Jarkko Oikarinen";
 #endif
 #include "h.h"
 #include "fdlist.h"
-#ifdef STRIPBADWORDS
-#include "badwords.h"
-#endif
 #include "version.h"
 #include "proto.h"
-#ifdef USE_LIBCURL
-#include <curl/curl.h>
-#endif
 ID_Copyright
     ("(C) 1988 University of Oulu, Computing Center and Jarkko Oikarinen");
 ID_Notes("2.48 3/9/94");
 #ifdef __FreeBSD__
 char *malloc_options = "h" MALLOC_FLAGS_EXTRA;
 #endif
-time_t TSoffset = 0;
 
-extern char unreallogo[];
 int  SVSNOOP = 0;
 extern MODVAR char *buildid;
 time_t timeofday = 0;
@@ -92,10 +84,6 @@ MODVAR char *me_hash;
 extern char backupbuf[8192];
 
 unsigned char conf_debuglevel = 0;
-
-#ifdef USE_LIBCURL
-extern void url_init(void);
-#endif
 
 time_t highesttimeofday=0, oldtimeofday=0, lasthighwarn=0;
 
@@ -666,33 +654,6 @@ int error = 0;
 		error=1;
 	}
 #endif
-#ifdef USE_LIBCURL
-	/* Perhaps someone should tell them to do this a bit more easy ;)
-	 * problem is runtime output is like: 'libcurl/7.11.1 c-ares/1.2.0'
-	 * while header output is like: '7.11.1'.
-	 */
-	{
-		char buf[128], *p;
-		
-		runtime = curl_version();
-		compiledfor = LIBCURL_VERSION;
-		if (!strncmp(runtime, "libcurl/", 8))
-		{
-			strlcpy(buf, runtime+8, sizeof(buf));
-			p = strchr(buf, ' ');
-			if (p)
-			{
-				*p = '\0';
-				if (strcmp(compiledfor, buf))
-				{
-					version_check_logerror("Curl version mismatch: compiled for '%s', library is '%s'",
-						compiledfor, buf);
-					error = 1;
-				}
-			}
-		}
-	}
-#endif
 
 	if (error)
 	{
@@ -703,10 +664,6 @@ int error = 0;
 		tainted = 1;
 	}
 }
-
-extern time_t TSoffset;
-
-extern int unreal_time_synch(int timeout);
 
 extern MODVAR Event *events;
 extern struct MODVAR ThrottlingBucket *ThrottlingHash[THROTTLING_HASH_SIZE+1];
@@ -980,14 +937,10 @@ int main(int argc, char *argv[])
 	mp_pool_init();
 	dbuf_init();
 
-#ifdef USE_LIBCURL
-	url_init();
-#endif
 	tkl_init();
 	umode_init();
 	extcmode_init();
 	extban_init();
-	init_random(); /* needs to be done very early!! */
 	clear_scache_hash_table();
 #ifdef FORCE_CORE
 	corelim.rlim_cur = corelim.rlim_max = RLIM_INFINITY;
@@ -1052,23 +1005,16 @@ int main(int argc, char *argv[])
 			  strlcpy(me.name, p, sizeof(me.name));
 			  break;
 		  case 'P':{
-			  short type;
-			  char *result;
+                          const char *type;
+			  const char *result;
 			  srandom(TStime());
-			  if ((type = Auth_FindType(p)) == -1) {
+			  if ((auth_lookup_ops(p)) == NULL) {
 				  printf("No such auth type %s\n", p);
 				  exit(0);
 			  }
+			  type = p;
 			  p = *++argv;
 			  argc--;
-#ifdef AUTHENABLE_UNIXCRYPT
-			  if ((type == AUTHTYPE_UNIXCRYPT) && (strlen(p) > 8))
-			  {
-			      printf("WARNING: Password truncated to 8 characters due to 'crypt' algorithm. "
-		                 "You are suggested to use the 'md5' algorithm instead.");
-				  p[8] = '\0';
-			  }
-#endif
 			  if (!(result = Auth_Make(type, p))) {
 				  printf("Authentication failed\n");
 				  exit(0);
@@ -1145,9 +1091,6 @@ int main(int argc, char *argv[])
 	}
 #endif
 	mkdir("tmp", S_IRUSR|S_IWUSR|S_IXUSR); /* Create the tmp dir, if it doesn't exist */
-#if defined(USE_LIBCURL) && defined(REMOTEINC_SPECIALCACHE)
- 	mkdir("cache", S_IRUSR|S_IWUSR|S_IXUSR); /* Create the cache dir, if using curl and it doesn't exist */
-#endif
 	/*
 	 * didn't set debuglevel 
 	 */
@@ -1162,14 +1105,10 @@ int main(int argc, char *argv[])
 
 	if (argc > 0)
 		return bad_command(myargv[0]);	/* This should exit out */
-	fprintf(stderr, "%s", unreallogo);
-	fprintf(stderr, "                           v%s\n", VERSIONONLY);
-	fprintf(stderr, "                     using %s\n", tre_version());
+	fprintf(stderr, "rabbitircd %s is starting.\n", VERSIONONLY);
+	fprintf(stderr, "     using %s\n", tre_version());
 #ifdef USE_SSL
-	fprintf(stderr, "                     using %s\n", SSLeay_version(SSLEAY_VERSION));
-#endif
-#ifdef USE_LIBCURL
-	fprintf(stderr, "                     using %s\n", curl_version());
+	fprintf(stderr, "     using %s\n", SSLeay_version(SSLEAY_VERSION));
 #endif
 	fprintf(stderr, "\n");
 	clear_client_hash_table();
@@ -1212,7 +1151,6 @@ int main(int argc, char *argv[])
 		exit(-1);
 	}
 	booted = TRUE;
-	load_tunefile();
 	make_umodestr();
 	make_cmodestr();
 	make_extcmodestr();
@@ -1335,15 +1273,7 @@ int main(int argc, char *argv[])
 		}
 	}
 #endif
-	if (TIMESYNCH)
-	{
-		if (!unreal_time_synch(TIMESYNCH_TIMEOUT))
-			ircd_log(LOG_ERROR, "TIME SYNCH: Unable to synchronize time: %s. "
-			                    "This means UnrealIRCd was unable to synchronize the IRCd clock to a known good time source. "
-			                    "As long as the server owner keeps the server clock synchronized through NTP, everything will be fine.",
-				unreal_time_synch_error());
-	}
-	fix_timers(); /* Fix timers AFTER reading tune file AND timesynch */
+	fix_timers(); /* Fix timers AFTER reading tune file */
 	write_pidfile();
 	Debug((DEBUG_NOTICE, "Server ready..."));
 	init_throttling_hash();
@@ -1369,7 +1299,7 @@ int main(int argc, char *argv[])
 #define NEGATIVE_SHIFT_WARN	-15
 #define POSITIVE_SHIFT_WARN	20
 
-		timeofday = time(NULL) + TSoffset;
+		timeofday = time(NULL);
 		if (oldtimeofday == 0)
 			oldtimeofday = timeofday; /* pretend everything is ok the first time.. */
 		if (mytdiff(timeofday, oldtimeofday) < NEGATIVE_SHIFT_WARN) {
@@ -1381,11 +1311,11 @@ int main(int argc, char *argv[])
 			sendto_realops("WARNING: Time running backwards! Clock set back ~%ld seconds (%ld -> %ld)",
 				tdiff, oldtimeofday, timeofday);
 			sendto_realops("Incorrect time for IRC servers is a serious problem. "
-			               "Time being set backwards (either by TSCTL or by resetting the clock) is "
+			               "Time being set backwards (by resetting the clock) is "
 			               "even more serious and can cause clients to freeze, channels to be "
 			               "taken over, and other issues.");
 			sendto_realops("Please be sure your clock is always synchronized before "
-			               "the IRCd is started or use the built-in timesynch feature.");
+			               "the IRCd is started.");
 			sendto_realops("[TimeShift] Resetting a few timers to prevent IRCd freeze!");
 			fix_timers();
 		} else
@@ -1399,10 +1329,10 @@ int main(int argc, char *argv[])
 			sendto_realops("WARNING: Time jumped ~%ld seconds ahead! (%ld -> %ld)",
 			        tdiff, oldtimeofday, timeofday);
 			sendto_realops("Incorrect time for IRC servers is a serious problem. "
-			               "Time being adjusted (either by TSCTL or by resetting the clock) "
+			               "Time being adjusted (by resetting the clock) "
 			               "more than a few seconds forward/backward can lead to serious issues.");
 			sendto_realops("Please be sure your clock is always synchronized before "
-			               "the IRCd is started or use the built-in timesynch feature.");
+			               "the IRCd is started.");
 			sendto_realops("[TimeShift] Resetting some timers!");
 			fix_timers();
 		}
@@ -1454,7 +1384,7 @@ int main(int argc, char *argv[])
 			delay = MIN(delay, TIMESEC);
 
 		fd_select(delay * 1000);
-		timeofday = time(NULL) + TSoffset;
+		timeofday = time(NULL);
 
 		/*
 		 * Debug((DEBUG_DEBUG, "Got message(s)")); 
@@ -1568,13 +1498,5 @@ static void setup_signals()
 	(void)signal(SIGHUP, s_rehash);
 	(void)signal(SIGTERM, s_die);
 	(void)signal(SIGINT, s_restart);
-#endif
-#ifdef RESTARTING_SYSTEMCALLS
-	/*
-	 * ** At least on Apollo sr10.1 it seems continuing system calls
-	 * ** after signal is the default. The following 'siginterrupt'
-	 * ** should change that default to interrupting calls.
-	 */
-	(void)siginterrupt(SIGALRM, 1);
 #endif
 }

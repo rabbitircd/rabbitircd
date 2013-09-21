@@ -30,7 +30,7 @@ W              Windows version
 Y              Syslog logging enabled
 K              No ident checking (?)
 6              IPv6 supported
-X              STRIPBADWORDS enabled (chmode/umode +G)
+X              Obsolete (was STRIPBADWORDS)
 P              Uses poll()
 e              SSL supported
 O              OperOverride enabled

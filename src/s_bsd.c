@@ -97,10 +97,6 @@ extern char *version;
 extern ircstats IRCstats;
 MODVAR TS last_allinuse = 0;
 
-#ifdef USE_LIBCURL
-extern void url_do_transfers_async(void);
-#endif
-
 /*
  * Try and find the correct name to use with getrlimit() for setting the max.
  * number of files allowed to be open by this process.
@@ -561,17 +557,11 @@ void init_sys(void)
 	   fprintf(stderr, "| MAXCONNECTIONS set at %d\n", MAXCONNECTIONS);
 	   fprintf(stderr, "| Process ID: %d\n", pid);
 	   fprintf(stderr, "|---------------------------------------------\n"); */
-#if defined(PCS) || defined(SVR3)
-char logbuf[BUFSIZ];
-
-(void)setvbuf(stderr, logbuf, _IOLBF, sizeof(logbuf));
-#else
-# if defined(HPUX)
+#if defined(HPUX)
 (void)setvbuf(stderr, NULL, _IOLBF, 0);
-# else
-#  ifndef _SOLARIS
+#else
+# ifndef _SOLARIS
 (void)setlinebuf(stderr);
-#  endif
 # endif
 #endif
 #ifdef HAVE_SYSLOG
@@ -608,7 +598,7 @@ if ((bootopt & BOOT_CONSOLE) || isatty(0))
 #endif
 
 #if defined(HPUX) || defined(_SOLARIS) || \
-    defined(_POSIX_SOURCE) || defined(SVR4) || defined(SGI) || \
+    defined(_POSIX_SOURCE) || defined(SGI) || \
     defined(OSXTIGER) || defined(__QNX__)
 	(void)setsid();
 #else

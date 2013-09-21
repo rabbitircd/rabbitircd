@@ -20,16 +20,15 @@
 #*/
 # major edit from fez - to compile objects individually...
 
-INCLUDES = ../include/auth.h ../include/badwords.h ../include/channel.h \
+INCLUDES = ../include/auth.h ../include/channel.h \
 	../include/class.h ../include/common.h ../include/config.h ../include/dbuf.h \
 	../include/dynconf.h ../include/events.h ../include/fdlist.h ../include/h.h \
-	../include/hash.h ../include/inet.h ../include/ircsprintf.h \
-	../include/license.h ../include/macros.h ../include/md5.h \
+	../include/hash.h ../include/inet.h ../include/ircsprintf.h ../include/macros.h \
 	../include/modules.h ../include/modversion.h ../include/msg.h \
 	../include/numeric.h ../include/proto.h ../include/res.h \
 	../include/resource.h ../include/setup.h ../include/sjoin.h \
 	../include/sock.h ../include/ssl.h ../include/struct.h ../include/sys.h \
-	../include/threads.h ../include/types.h ../include/url.h \
+	../include/threads.h ../include/types.h \
 	../include/version.h ../include/whowas.h
 
 R_MODULES= \
@@ -40,7 +39,7 @@ R_MODULES= \
 	 m_adminchat.so m_chgname.so m_guest.so m_kill.so \
 	 m_lag.so m_message.so m_nachat.so m_oper.so m_pingpong.so \
 	 m_quit.so m_rping.so m_sendumode.so m_sqline.so \
-	 m_tsctl.so m_unkline.so m_unsqline.so m_unzline.so m_whois.so \
+	 m_unkline.so m_unsqline.so m_unzline.so m_whois.so \
 	 m_tkl.so m_vhost.so m_cycle.so m_svsjoin.so m_svspart.so \
 	 m_svswatch.so m_svssilence.so m_sendsno.so m_svssno.so \
 	 m_sajoin.so m_sapart.so m_samode.so m_kick.so m_topic.so \
@@ -57,7 +56,9 @@ R_MODULES= \
 	 m_svslusers.so m_starttls.so m_nopost.so m_issecure.so m_cap.so \
 	 m_sasl.so cap_invitenotify.so
 
-MODES	= chm_permanent.so
+MODES	= chm_permanent.so chm_badwords.so
+AUTH	= auth_clientcert.so auth_clientcertfp.so auth_crypt.so \
+	  auth_unreal_md5.so auth_unreal_ripemd160.so auth_unreal_sha1.so
 
 #note change of .c to .o
 COMMANDS=m_sethost.o m_chghost.o m_chgident.o m_setname.o m_setident.o \
@@ -66,7 +67,7 @@ COMMANDS=m_sethost.o m_chghost.o m_chgident.o m_setname.o m_setident.o \
 	 m_adminchat.o m_chgname.o m_guest.o m_kill.o \
 	 m_lag.o m_message.o m_nachat.o m_oper.o m_pingpong.o \
 	 m_quit.o m_rping.o m_sendumode.o m_sqline.o \
-	 m_tsctl.o m_unkline.o m_unsqline.o m_unzline.o m_whois.o \
+	 m_unkline.o m_unsqline.o m_unzline.o m_whois.o \
 	 m_tkl.o m_vhost.o m_cycle.o m_svsjoin.o m_svspart.o \
 	 m_svslusers.o m_svswatch.o m_svssilence.o m_sendsno.o \
 	 m_svssno.o m_sajoin.o m_sapart.o m_samode.o m_kick.o m_topic.o \
@@ -83,7 +84,7 @@ COMMANDS=m_sethost.o m_chghost.o m_chgident.o m_setname.o m_setident.o \
 	 m_nopost.o m_issecure.o m_cap.o m_sasl.o
 
 
-MODULES=cloak.so $(R_MODULES) $(MODES)
+MODULES=cloak.so $(R_MODULES) $(MODES) $(AUTH)
 MODULEFLAGS=@MODULEFLAGS@
 CC=@CC@
 RM=@RM@
@@ -151,10 +152,6 @@ m_sendumode.so: m_sendumode.c $(INCLUDES)
 m_sqline.so: m_sqline.c $(INCLUDES)
 	$(CC) $(CFLAGS) $(MODULEFLAGS) -DDYNAMIC_LINKING \
 		-o m_sqline.so m_sqline.c
-
-m_tsctl.so: m_tsctl.c $(INCLUDES)
-	$(CC) $(CFLAGS) $(MODULEFLAGS) -DDYNAMIC_LINKING \
-		-o m_tsctl.so m_tsctl.c
 
 m_unkline.so: m_unkline.c $(INCLUDES)
 	$(CC) $(CFLAGS) $(MODULEFLAGS) -DDYNAMIC_LINKING \
@@ -531,6 +528,38 @@ cap_invitenotify.so: cap_invitenotify.c $(INCLUDES)
 chm_permanent.so: chm_permanent.c $(INCLUDES)
 	$(CC) $(CFLAGS) $(MODULEFLAGS) -DDYNAMIC_LINKING \
 		-o chm_permanent.so chm_permanent.c
+
+chm_badwords.so: chm_badwords.c $(INCLUDES)
+	$(CC) $(CFLAGS) $(MODULEFLAGS) -DDYNAMIC_LINKING \
+		-o chm_badwords.so chm_badwords.c
+
+#############################################################################
+# auth mechanisms
+#############################################################################
+
+auth_clientcert.so: auth_clientcert.c $(INCLUDES)
+	$(CC) $(CFLAGS) $(MODULEFLAGS) -DDYNAMIC_LINKING \
+		-o auth_clientcert.so auth_clientcert.c
+
+auth_clientcertfp.so: auth_clientcertfp.c $(INCLUDES)
+	$(CC) $(CFLAGS) $(MODULEFLAGS) -DDYNAMIC_LINKING \
+		-o auth_clientcertfp.so auth_clientcertfp.c
+
+auth_crypt.so: auth_crypt.c $(INCLUDES)
+	$(CC) $(CFLAGS) $(MODULEFLAGS) -DDYNAMIC_LINKING \
+		-o auth_crypt.so auth_crypt.c
+
+auth_unreal_md5.so: auth_unreal_md5.c $(INCLUDES)
+	$(CC) $(CFLAGS) $(MODULEFLAGS) -DDYNAMIC_LINKING \
+		-o auth_unreal_md5.so auth_unreal_md5.c
+
+auth_unreal_ripemd160.so: auth_unreal_ripemd160.c $(INCLUDES)
+	$(CC) $(CFLAGS) $(MODULEFLAGS) -DDYNAMIC_LINKING \
+		-o auth_unreal_ripemd160.so auth_unreal_ripemd160.c
+
+auth_unreal_sha1.so: auth_unreal_sha1.c $(INCLUDES)
+	$(CC) $(CFLAGS) $(MODULEFLAGS) -DDYNAMIC_LINKING \
+		-o auth_unreal_sha1.so auth_unreal_sha1.c
 
 #############################################################################
 #             and now the remaining modules...

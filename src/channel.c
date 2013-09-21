@@ -756,8 +756,28 @@ int  is_chanprot(aClient *cptr, aChannel *chptr)
 #define CANNOT_SEND_BAN 4
 #define CANNOT_SEND_NOCTCP 5
 #define CANNOT_SEND_MODREG 6
-#define CANNOT_SEND_SWEAR 7 /* This isn't actually used here */
-#define CANNOT_SEND_NOTICE 8 
+#define CANNOT_SEND_NOTICE 7 
+
+#define ERR_CANTSEND_VOICE "You need voice (+v)"
+#define ERR_CANTSEND_EXTERNAL "You must be joined to this channel"
+#define ERR_CANTSEND_COLOUR "Colour is not permitted in this channel"
+#define ERR_CANTSEND_BANNED "You are banned from this channel"
+#define ERR_CANTSEND_CTCP "CTCPs are not permitted in this channel"
+#define ERR_CANTSEND_REGISTERED "You must have a registered nick (+r) to talk on this channel"
+#define ERR_CANTSEND_NOTICE "NOTICEs are not permitted in this channel"
+
+inline const char* cantsend_strerror(uint32_t reason) {
+    switch (reason) {
+    case 1: return "You need voice (+v)";
+    case 2: return "You must be joined to this channel";
+    case 3: return "Colour is not permitted in this channel";
+    case 4: return "You are banned from this channel";
+    case 5: return "CTCPs are not permitted in this channel";
+    case 6: return "You must have a registered nick (+r) to talk on this channel";
+    case 7: return "NOTICEs are not permitted in this channel";
+    default: return "No reason given";
+    }
+}
 
 int  can_send(aClient *cptr, aChannel *chptr, char *msgtext, int notice)
 {

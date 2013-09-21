@@ -45,17 +45,13 @@
 
 /*	BSD			Nothing Needed 4.{2,3} BSD, SunOS 3.x, 4.x */
 /*	HPUX			Nothing needed (A.08/A.09) */
-/*	ULTRIX			Nothing needed (4.2) */
 /*	OSF			Nothing needed (1.2) */
 /* #undef	AIX		IBM ugly so-called Unix, AIX */
 /* #undef	MIPS		MIPS Unix */
 /*	SGI			Nothing needed (IRIX 4.0.4) */
-/* #undef 	SVR3		SVR3 stuff - being worked on where poss. */
 /* #undef	DYNIXPTX	Sequents Brain-dead Posix implement. */
 /* #undef	SOL20		Solaris2 */
-/* #undef	ESIX		ESIX */
 /* #undef	NEXT		NeXTStep */
-/* #undef	SVR4 */
 
 /* Additional flags to give FreeBSD's malloc, only play with this if you
  * know what you're doing.
@@ -124,34 +120,6 @@
 #define REMOTE_REHASH
 
 /*
- * Special remote include caching, see this Changelog item:
- * - Added special caching of remote includes. When a remote include fails to
- *   load (for example when the webserver is down), then the most recent
- *   version of that remote include will be used, and the ircd will still boot
- *   and be able to rehash. Even though this is quite a simple feature, it
- *   can make a key difference when deciding to roll out remote includes on
- *   your network. Previously, servers would be unable to boot or rehash when
- *   the webserver was down, which would be a big problem (often unacceptable).
- *   The latest version of fetched urls are cached in the cache/ directory as
- *   cache/<md5 hash of url>.
- *   Obviously, if there's no 'latest version' and an url fails, the ircd will
- *   still not be able to boot. This would be the case if you added or changed
- *   the path of a remote include and it's trying to fetch it for the first time.
- * There usually is no reason to disable this.
- */
-#define REMOTEINC_SPECIALCACHE
-
-/*
-  Stripbadwords patch
-*/
-#define STRIPBADWORDS
-
-/*
- * Always strip badwords in channels? (channel does not have to be +G)
-*/
-#undef STRIPBADWORDS_CHAN_ALWAYS
-
-/*
  * No spoof code
  *
  * This enables the spoof protection.
@@ -199,21 +167,6 @@
 
 /* #undef	VMS		   Should work for IRC client, not server */
 /* #undef	MAIL50		   If you're running VMS 5.0 */
-/* #undef	PCS		   PCS Cadmus MUNIX, use with BSD flag! */
-
-/*
- * NOTE: On some systems, valloc() causes many problems.
- */
-#undef	VALLOC			/* Define this if you have valloc(3) */
-
-/*
- * read/write are restarted after signals defining this 1, gets
- * siginterrupt call compiled, which attempts to remove this
- * behaviour (apollo sr10.1/bsd4.3 needs this)
- */
-#ifdef APOLLO
-#define	RESTARTING_SYSTEMCALLS
-#endif
 
 /*
  * If your host supports varargs and has vsprintf(), vprintf() and vscanf()
@@ -237,13 +190,13 @@
 /*
  * Full pathnames and defaults of irc system's support files. Please note that
  * these are only the recommened names and paths.  You must define PPATH if you 
- * want a pidfile written. Also, IRCDTUNE should be defined because it is needed for
- * operation. All of these options are runtime-configurable (except for CPATH and LPATH)
- * in the files block of unrealircd.conf. CPATH is runtime-configurable as a command-
+ * want a pidfile written. 
+ * All of these options are runtime-configurable (except for CPATH and LPATH)
+ * in the files block of ircd.conf. CPATH is runtime-configurable as a command-
  * line argument. These used as the default values for options absent from the user's
  * unrealircd.conf.
  */
-#define	CPATH		"unrealircd.conf"	/* server configuration file */
+#define	CPATH		"ircd.conf"	/* server configuration file */
 #define	MPATH		"ircd.motd"	/* server MOTD file */
 #define SMPATH          "ircd.smotd"    /* short MOTD file */
 #define RPATH   	"ircd.rules"	/* server rules file */
@@ -252,7 +205,6 @@
 #define	PPATH		"ircd.pid"	/* file for server pid */
 #define VPATH		"ircd.svsmotd"	/* Services MOTD append. */
 #define BPATH		"bot.motd"	/* Bot MOTD */
-#define IRCDTUNE 	"ircd.tune"	/* tuning .. */
 
 /* CHROOTDIR
  *
@@ -492,10 +444,6 @@
 #endif
 #endif
 
-#ifdef	ultrix
-#define	ULTRIX
-#endif
-
 #ifdef	__hpux
 #define	HPUX
 #endif
@@ -525,7 +473,7 @@
 #endif
 
 
-#if defined(mips) || defined(PCS)
+#if defined(mips)
 #undef SYSV
 #endif
 
@@ -556,16 +504,6 @@ error You stuffed up config.h signals
  * whatever else.  -4 allows "safety" margin of 1 and space reserved.
  */
 #define	MAXCLIENTS	(MAXCONNECTIONS-4)
-#ifdef HAVECURSES
-# define DOCURSES
-#else
-# undef DOCURSES
-#endif
-#ifdef HAVETERMCAP
-# define DOTERMCAP
-#else
-# undef DOTERMCAP
-#endif
 # define stricmp strcasecmp
 # define strnicmp strncasecmp
 #if defined(CLIENT_FLOOD)

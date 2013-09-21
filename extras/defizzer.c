@@ -21,9 +21,6 @@
 #include <string.h>
 #include <fcntl.h>
 #include "h.h"
-#ifdef STRIPBADWORDS
-#include "badwords.h"
-#endif
 DLLFUNC int h_defizzer_connect(aClient *sptr);
 
 static Hook *LocConnect = NULL;

@@ -51,7 +51,6 @@
 #ifdef STDDEFH
 # include <stddef.h>
 #endif
-#include "md5.h"
 
 #ifdef HAVE_SYSLOG
 # include <syslog.h>
@@ -59,7 +58,6 @@
 #  include <sys/syslog.h>
 # endif
 #endif
-#include "auth.h" 
 #include "tre/regex.h"
 
 #include "channel.h"
@@ -68,6 +66,8 @@
 /* needed to workaround a warning / prototype/dll inconsistency crap */
 #define vsnprintf unrl_vsnprintf
 #endif
+
+typedef struct auth_data anAuthStruct;
 
 extern MODVAR int sendanyways;
 
@@ -104,7 +104,6 @@ typedef struct _configitem_except ConfigItem_except;
 typedef struct _configitem_link	ConfigItem_link;
 typedef struct _configitem_cgiirc ConfigItem_cgiirc;
 typedef struct _configitem_ban ConfigItem_ban;
-typedef struct _configitem_badword ConfigItem_badword;
 typedef struct _configitem_deny_dcc ConfigItem_deny_dcc;
 typedef struct _configitem_deny_link ConfigItem_deny_link;
 typedef struct _configitem_deny_channel ConfigItem_deny_channel;
@@ -137,9 +136,6 @@ typedef struct ListOptions LOpts;
 typedef struct FloodOpt aFloodOpt;
 typedef struct Motd aMotdFile; /* represents a whole MOTD, including remote MOTD support info */
 typedef struct MotdItem aMotdLine; /* one line of a MOTD stored as a linked list */
-#ifdef USE_LIBCURL
-typedef struct MotdDownload aMotdDownload; /* used to coordinate download of a remote MOTD */
-#endif
 
 typedef struct trecord aTrecord;
 typedef struct Command aCommand;
@@ -355,10 +351,6 @@ typedef unsigned int u_int32_t;	/* XXX Hope this works! */
 #define IsKix(x)		((x)->umodes & UMODE_KIX)
 #define IsHelpOp(x)		((x)->umodes & UMODE_HELPOP)
 #define IsAdmin(x)		((x)->umodes & UMODE_ADMIN)
-
-#ifdef STRIPBADWORDS
-#define IsFilteringWords(x)	((x)->umodes & UMODE_STRIPBADWORDS)
-#endif
 #define IsNetAdmin(x)		((x)->umodes & UMODE_NETADMIN)
 #define IsCoAdmin(x)		((x)->umodes & UMODE_COADMIN)
 #define IsSAdmin(x)		((x)->umodes & UMODE_SADMIN)
@@ -531,7 +523,7 @@ typedef unsigned int u_int32_t;	/* XXX Hope this works! */
 #define OFLAG_GNOTICE	0x00008000	/* Oper can send global notices */
 #define OFLAG_ADMIN	0x00010000	/* Admin */
 #define OFLAG_ADDLINE	0x00020000	/* Oper can use /addline */
-#define OFLAG_TSCTL	0x00040000	/* Oper can use /tsctl */
+//#define OFLAG_TSCTL	0x00040000	//UNUSED - was OFLAG_TSCTL oper can tsctl
 #define OFLAG_ZLINE	0x00080000	/* Oper can use /zline and /unzline */
 #define OFLAG_NETADMIN	0x00200000	/* netadmin gets +N */
 #define OFLAG_COADMIN	0x00800000	/* co admin gets +C */
@@ -559,7 +551,6 @@ typedef unsigned int u_int32_t;	/* XXX Hope this works! */
 #define OPCanZline(x)   ((x)->oflag & OFLAG_ZLINE)
 #define OPCanRehash(x)	((x)->oflag & OFLAG_REHASH)
 #define OPCanDie(x)	((x)->oflag & OFLAG_DIE)
-#define OPCanTSCtl(x)	((x)->oflag & OFLAG_TSCTL)
 #define OPCanRestart(x)	((x)->oflag & OFLAG_RESTART)
 #define OPCanHelpOp(x)	((x)->oflag & OFLAG_HELPOP)
 #define OPCanGlobOps(x)	((x)->oflag & OFLAG_GLOBOP)
@@ -586,7 +577,6 @@ typedef unsigned int u_int32_t;	/* XXX Hope this works! */
 
 #define OPSetRehash(x)	((x)->oflag |= OFLAG_REHASH)
 #define OPSetDie(x)	((x)->oflag |= OFLAG_DIE)
-#define OPSetTSCtl(x)	((x)->oflag |= OFLAG_TSCTL)
 #define OPSetRestart(x)	((x)->oflag |= OFLAG_RESTART)
 #define OPSetHelpOp(x)	((x)->oflag |= OFLAG_HELPOP)
 #define OPSetGlobOps(x)	((x)->oflag |= OFLAG_GLOBOP)
@@ -608,7 +598,6 @@ typedef unsigned int u_int32_t;	/* XXX Hope this works! */
 #define OPSetWhois(x)   ((x)->oflag |= OFLAG_WHOIS)
 #define OPClearRehash(x)	((x)->oflag &= ~OFLAG_REHASH)
 #define OPClearDie(x)		((x)->oflag &= ~OFLAG_DIE)
-#define OPClearTSCtl(x)		((x)->oflag &= ~OFLAG_TSCTL)
 #define OPClearRestart(x)	((x)->oflag &= ~OFLAG_RESTART)
 #define OPClearHelpOp(x)	((x)->oflag &= ~OFLAG_HELPOP)
 #define OPClearGlobOps(x)	((x)->oflag &= ~OFLAG_GLOBOP)
@@ -645,13 +634,6 @@ typedef unsigned int u_int32_t;	/* XXX Hope this works! */
 /* blah */
 #define IsSkoAdmin(sptr) (IsAdmin(sptr) || IsNetAdmin(sptr) || IsSAdmin(sptr))
 
-/*
- * defines for curses in client
- */
-#define	DUMMY_TERM	0
-#define	CURSES_TERM	1
-#define	TERMCAP_TERM	2
-
 /* Dcc deny types (see src/s_extra.c) */
 #define DCCDENY_HARD	0
 #define DCCDENY_SOFT	1
@@ -674,44 +656,10 @@ struct FloodOpt {
 	TS   firstmsg;
 };
 
-#ifdef USE_LIBCURL
-struct Motd;
-struct MotdDownload
-{
-	struct Motd *themotd;
-};
-#endif /* USE_LIBCURL */
-
 struct Motd 
 {
 	struct MotdItem *lines;
 	struct tm last_modified; /* store the last modification time */
-
-#ifdef USE_LIBCURL
-	/*
-	  This pointer is used to communicate with an asynchronous MOTD
-	  download. The problem is that a download may take 10 seconds or
-	  more to complete and, in that time, the IRCd could be rehashed.
-	  This would mean that TLD blocks are reallocated and thus the
-	  aMotd structs would be free()d in the meantime.
-
-	  To prevent such a situation from leading to a segfault, we
-	  introduce this remote control pointer. It works like this:
-	  1. read_motd() is called with a URL. A new MotdDownload is
-	     allocated and the pointer is placed here. This pointer is
-	     also passed to the asynchrnous download handler.
-	  2.a. The download is completed and read_motd_asynch_downloaded()
-	       is called with the same pointer. From this function, this pointer
-	       if free()d. No other code may free() the pointer. Not even free_motd().
-	    OR
-	  2.b. The user rehashes the IRCd before the download is completed.
-	       free_motd() is called, which sets motd_download->themotd to NULL
-	       to signal to read_motd_asynch_downloaded() that it should ignore
-	       the download. read_motd_asynch_downloaded() is eventually called
-	       and frees motd_download.
-	 */
-	struct MotdDownload *motd_download;
-#endif /* USE_LIBCURL */
 };
 
 struct MotdItem {
@@ -1121,7 +1069,7 @@ struct _configitem_me {
 struct _configitem_files {
 	char	*motd_file, *rules_file, *smotd_file;
 	char	*botmotd_file, *opermotd_file, *svsmotd_file;
-	char	*pid_file, *tune_file;
+	char	*pid_file;
 };
 
 struct _configitem_admin {
@@ -1277,24 +1225,6 @@ struct _iplist {
 /*	struct irc_netmask  *netmask; */
 };
 
-#define BADW_TYPE_INVALID 0x0
-#define BADW_TYPE_FAST    0x1
-#define BADW_TYPE_FAST_L  0x2
-#define BADW_TYPE_FAST_R  0x4
-#define BADW_TYPE_REGEX   0x8
-
-#define BADWORD_REPLACE 1
-#define BADWORD_BLOCK 2
-
-struct _configitem_badword {
-	ConfigItem      *prev, *next;
-	ConfigFlag	flag;
-	char		*word, *replace;
-	unsigned short	type;
-	char		action;
-	regex_t 	expr;
-};
-
 struct _configitem_deny_dcc {
 	ConfigItem		*prev, *next;
 	ConfigFlag_ban		flag;
@@ -1400,10 +1330,6 @@ struct _configitem_include {
 	ConfigItem *prev, *next;
 	ConfigFlag_ban flag;
 	char *file;
-#ifdef USE_LIBCURL
-	char *url;
-	char *errorbuf;
-#endif
 	char *included_from;
 	int included_from_line;
 };
@@ -1716,11 +1642,7 @@ struct liststruct {
 #define	MyClient(x)			(MyConnect(x) && IsClient(x))
 #define	MyOper(x)			(MyConnect(x) && IsAnOper(x))
 
-#ifdef CLEAN_COMPILE
-#define TStime() (time(NULL) + TSoffset)
-#else
-#define TStime() (timeofday == 0 ? (timeofday = time(NULL) + TSoffset) : timeofday)
-#endif
+#define TStime() (timeofday)
 
 /* Lifted somewhat from Undernet code --Rak */
 
@@ -1754,9 +1676,8 @@ struct liststruct {
 
 /* misc variable externs */
 
-extern MODVAR char *version, *infotext[], *dalinfotext[], *unrealcredits[], *unrealinfo[];
+extern MODVAR char *version, *unrealinfo[];
 extern MODVAR char *generation, *creation;
-extern MODVAR char *gnulicense[];
 /* misc defines */
 
 #define	FLUSH_BUFFER	-2
@@ -1878,3 +1799,4 @@ int	throttle_can_connect(aClient *, struct IN_ADDR *in);
 #endif /* __struct_include__ */
 
 #include "dynconf.h"
+#include "auth.h"

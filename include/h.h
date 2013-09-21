@@ -41,7 +41,6 @@ extern MODVAR aClient me;
 extern MODVAR aChannel *channel;
 extern MODVAR struct stats *ircstp;
 extern MODVAR int bootopt;
-extern MODVAR time_t TSoffset;
 extern MODVAR time_t timeofday;
 /* newconf */
 #define get_sendq(x) ((x)->class ? (x)->class->sendq : MAXSENDQLENGTH) 
@@ -69,9 +68,6 @@ extern MODVAR ConfigItem_except	*conf_except;
 extern MODVAR ConfigItem_vhost		*conf_vhost;
 extern MODVAR ConfigItem_link		*conf_link;
 extern MODVAR ConfigItem_ban		*conf_ban;
-extern MODVAR ConfigItem_badword	*conf_badword_channel;
-extern MODVAR ConfigItem_badword       *conf_badword_message;
-extern MODVAR ConfigItem_badword	*conf_badword_quit;
 extern MODVAR ConfigItem_deny_dcc	*conf_deny_dcc;
 extern MODVAR ConfigItem_deny_channel  *conf_deny_channel;
 extern MODVAR ConfigItem_deny_link	*conf_deny_link;
@@ -404,7 +400,7 @@ extern MODVAR long UMODE_VICTIM;    /* 0x8000000	 Intentional Victim */
 extern MODVAR long UMODE_DEAF;      /* 0x10000000       Deaf */
 extern MODVAR long UMODE_HIDEOPER;  /* 0x20000000	 Hide oper mode */
 extern MODVAR long UMODE_SETHOST;   /* 0x40000000	 used sethost */
-extern MODVAR long UMODE_STRIPBADWORDS; /* 0x80000000	 */
+//UNUSED 0x80000000 was STRIPBADWORDS
 extern MODVAR long UMODE_HIDEWHOIS; /* hides channels in /whois */
 extern MODVAR long UMODE_NOCTCP;    /* blocks all ctcp (except dcc and action) */
 extern MODVAR long UMODE_HIDLE;     /* hides oper idle times */
@@ -427,9 +423,6 @@ extern MODVAR long SNO_OPER;
 
 /* Extended chanmodes... */
 extern MODVAR Cmode_t EXTMODE_NONOTICE;
-#ifdef STRIPBADWORDS
-extern MODVAR Cmode_t EXTMODE_STRIPBADWORDS;
-#endif
 extern MODVAR Cmode_t EXTMODE_JOINTHROTTLE;
 
 #ifndef HAVE_STRLCPY
@@ -497,7 +490,7 @@ extern int		Auth_FindType(char *type);
 extern anAuthStruct	*Auth_ConvertConf2AuthStruct(ConfigEntry *ce);
 extern void		Auth_DeleteAuthStruct(anAuthStruct *as);
 extern int		Auth_Check(aClient *cptr, anAuthStruct *as, char *para);
-extern char   		*Auth_Make(short type, char *para);
+extern const char 	*Auth_Make(const char *type, char *para);
 extern int   		Auth_CheckError(ConfigEntry *ce);
 
 extern int is_chanownprotop(aClient *cptr, aChannel *chptr);
@@ -544,9 +537,9 @@ extern MODFUNC char  *ssl_get_cipher(SSL *ssl);
 extern long config_checkval(char *value, unsigned short flags);
 extern void config_status(char *format, ...) __attribute__((format(printf,1,2)));
 extern void init_random();
-extern u_char getrandom8();
-extern u_int16_t getrandom16();
-extern u_int32_t getrandom32();
+extern u_char getrandom8(void);
+extern u_int16_t getrandom16(void);
+extern u_int32_t getrandom32(void);
 extern void rejoin_doquits(aClient *sptr);
 extern void rejoin_dojoinandmode(aClient *sptr);
 extern void ident_failed(aClient *cptr);
@@ -581,8 +574,6 @@ extern int count_oper_sessions(char *);
 extern char *unreal_mktemp(const char *dir, const char *suffix);
 extern char *unreal_getpathname(char *filepath, char *path);
 extern char *unreal_getfilename(char *path);
-extern char *unreal_mkcache(const char *url);
-extern int has_cached_version(const char *url);
 extern int unreal_copyfile(const char *src, const char *dest);
 extern int unreal_copyfileex(const char *src, const char *dest, int tryhardlink);
 extern time_t unreal_getfilemodtime(const char *filename);
@@ -679,9 +670,6 @@ extern MODVAR int (*place_host_ban)(aClient *sptr, int action, char *reason, lon
 extern MODVAR int (*dospamfilter)(aClient *sptr, char *str_in, int type, char *target, int flags, aTKline **rettk);
 extern MODVAR int (*dospamfilter_viruschan)(aClient *sptr, aTKline *tk, int type);
 extern MODVAR void (*send_list)(aClient *cptr, int numsend);
-extern MODVAR char *(*stripbadwords_channel)(char *str, int *blocked);
-extern MODVAR char *(*stripbadwords_message)(char *str, int *blocked);
-extern MODVAR char *(*stripbadwords_quit)(char *str, int *blocked);
 extern MODVAR unsigned char *(*StripColors)(unsigned char *text);
 extern MODVAR const char *(*StripControlCodes)(unsigned char *text);
 extern MODVAR void (*spamfilter_build_user_string)(char *buf, char *nick, aClient *acptr);
@@ -700,8 +688,6 @@ extern void chanfloodtimer_del(aChannel *chptr, char mflag, long mbit);
 extern char *clean_ban_mask(char *, int, aClient *);
 extern void chanfloodtimer_stopchantimers(aChannel *chptr);
 extern int find_invex(aChannel *chptr, aClient *sptr);
-extern void DoMD5(unsigned char *mdout, const unsigned char *src, unsigned long n);
-extern char *md5hash(unsigned char *dst, const unsigned char *src, unsigned long n);
 #ifdef JOINTHROTTLE
 aJFlood *cmodej_addentry(aClient *cptr, aChannel *chptr);
 void cmodej_delentry(aJFlood *e);
@@ -728,8 +714,6 @@ extern void unreal_free_hostent(struct hostent *he);
 extern int match_esc(const char *mask, const char *name);
 extern int iplist_onlist(IPList *iplist, char *ip);
 extern struct hostent *unreal_create_hostent(char *name, struct IN_ADDR *addr);
-extern char *unreal_time_synch_error(void);
-extern int unreal_time_synch(int timeout);
 extern int extban_is_banned_helper(char *buf);
 extern char *getcloak(aClient *sptr);
 extern void kick_insecure_users(aChannel *);

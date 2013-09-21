@@ -1,4 +1,5 @@
-# rabbitircd
+rabbitircd [![Build Status](https://travis-ci.org/rabbitircd/rabbitircd.png?branch=master)](https://travis-ci.org/rabbitircd/rabbitircd)
+==========
 
 RabbitIRCD is a fork of the now-defunct UnrealIRCd 3.4 tree, originated by
 developers on the Weresource IRC network.  Compared to UnrealIRCd 3.2, it

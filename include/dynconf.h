@@ -143,9 +143,6 @@ struct zConfiguration {
 	long spamfilter_detectslow_fatal;
 	int maxbans;
 	int maxbanlength;
-	int timesynch_enabled;
-	int timesynch_timeout;
-	char *timesynch_server;
 	int pingpong_warning;
 	int watch_away_notification;
 	int uhnames;
@@ -155,6 +152,8 @@ struct zConfiguration {
 #endif /* INET6 */
 	int ping_cookie;
 	int nicklen;
+	unsigned int warn_ts_delta;
+	unsigned int max_ts_delta;
 };
 
 #ifndef DYNCONF_C
@@ -263,15 +262,14 @@ extern MODVAR aConfiguration iConf;
 #define MAXBANS		iConf.maxbans
 #define MAXBANLENGTH	iConf.maxbanlength
 
-#define TIMESYNCH	iConf.timesynch_enabled
-#define TIMESYNCH_TIMEOUT	iConf.timesynch_timeout
-#define TIMESYNCH_SERVER	iConf.timesynch_server
-
 #define PINGPONG_WARNING	iConf.pingpong_warning
 
 #define WATCH_AWAY_NOTIFICATION	iConf.watch_away_notification
 
 #define UHNAMES_ENABLED	iConf.uhnames
+
+#define WARN_TS_DELTA	iConf.warn_ts_delta
+#define MAX_TS_DELTA	iConf.max_ts_delta
 
 /* Used for "is present?" and duplicate checking */
 struct SetCheck {
@@ -386,6 +384,8 @@ struct SetCheck {
 	unsigned has_cgiirc_webpass:1;
 	unsigned has_ping_cookie:1;
 	unsigned has_nicklen:1;
+	unsigned has_warn_ts_delta:1;
+	unsigned has_max_ts_delta:1;
 };
 
 

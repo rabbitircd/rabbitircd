@@ -40,10 +40,6 @@ static char sccsid[] =
 #include "h.h"
 #include "proto.h"
 #include <string.h>
-#ifdef USE_LIBCURL
-#include "url.h"
-#include <curl/curl.h>
-#endif
 /* for uname(), is POSIX so should be OK... */
 #include <sys/utsname.h>
 extern VOIDSIG s_die();
@@ -64,9 +60,6 @@ aMotdFile smotd;
 
 void read_motd(const char *filename, aMotdFile *motd);
 void do_read_motd(const char *filename, aMotdFile *themotd);
-#ifdef USE_LIBCURL
-void read_motd_asynch_downloaded(const char *url, const char *filename, const char *errorbuf, int cached, aMotdDownload *motd_download);
-#endif
 
 extern aMotdLine *Find_file(char *, short);
 
@@ -185,10 +178,6 @@ CMD_FUNC(m_version)
 		if (IsAnOper(sptr))
 			sendto_one(sptr, ":%s NOTICE %s :%s", me.name, sptr->name, OPENSSL_VERSION_TEXT);
 #endif
-#ifdef USE_LIBCURL
-		if (IsAnOper(sptr))
-			sendto_one(sptr, ":%s NOTICE %s :%s", me.name, sptr->name, curl_version());
-#endif
 		if (MyClient(sptr))
 normal:
 			reply = RPL_ISUPPORT;
@@ -233,62 +222,32 @@ char buf[1024];
  * sends m_info into to sptr
 */
 
-char *unrealinfo[] =
+char *ircdinfo[] =
 {
-	"This release was brought to you by the following people:",
+	"RabbitIRCD --",
+	"Based on the original IRCd code by Jarkko Oikarinen",
+	"Copyright 1988, 1989, 1990, 1991 University of Oulu, Computing Center",
+	"Copyright 1999 - 2013 UnrealIRCd developers (see COPYRIGHT)",
+	"Copyright 2013 RabbitIRCD developers (see COPYRIGHT)",
 	"",
-	"Head coder:",
-	"* Syzop        <syzop@unrealircd.com>",
+	"RabbitIRCD began as a fork of UnrealIRCd 3.4 development with the intent of",
+	"creating and maintaining a codebase with modern, relevant goals related to the",
+	"next generation of IRC server deployments, and features the work of many",
+	"stakeholders.",
 	"",
-	"Coders:",
-	"* binki        <binki@unrealircd.com>",
+	"Visit us on IRC at: irc.weresource.org #ircd",
 	"",
-	"Contributors:",
-	"* nenolod, Adam, warg, Stealth, WolfSage, katsklaw, darkex,"
-	"  fspijkerman, fbi, Apocalypse",
-	"",
-	"RC Testers:",
-	"* <<TODO>>,",
-	"  and everyone else who downloaded the release candidates.",
-	"",
-	"Past UnrealIRCd3.2* coders/contributors:",
-	"* Stskeeps (ret. head coder / project leader)",
-	"* codemastr (ret. u3.2 head coder)",
-	"* aquanight, WolfSage, ..",
-	"* McSkaf, Zogg, NiQuiL, chasm, llthangel, nighthawk, ..",
 	NULL
 };
 
 void m_info_send(aClient *sptr)
 {
-char **text = unrealinfo;
-
-	sendto_one(sptr, ":%s %d %s :=-=-=-= %s =-=-=-=",
-	    me.name, RPL_INFO, sptr->name, IRCDTOTALVERSION);
+	char **text = ircdinfo;
 
 	while (*text)
-		sendto_one(sptr, ":%s %d %s :| %s", 
+		sendto_one(sptr, ":%s %d %s :%s",
 		    me.name, RPL_INFO, sptr->name, *text++);
 
-	sendto_one(sptr, ":%s %d %s :|", me.name, RPL_INFO, sptr->name);
-	sendto_one(sptr, ":%s %d %s :|", me.name, RPL_INFO, sptr->name);
-	sendto_one(sptr, ":%s %d %s :| Credits - Type /Credits",
-	    me.name, RPL_INFO, sptr->name);
-	sendto_one(sptr, ":%s %d %s :| DALnet Credits - Type /DalInfo",
-	    me.name, RPL_INFO, sptr->name);
-	sendto_one(sptr, ":%s %d %s :|", me.name, RPL_INFO, sptr->name);
-	sendto_one(sptr, ":%s %d %s :| This is an UnrealIRCd-style server",
-	    me.name, RPL_INFO, sptr->name);
-	sendto_one(sptr, ":%s %d %s :| If you find any bugs, please report them at:",
-	    me.name, RPL_INFO, sptr->name);
-	sendto_one(sptr, ":%s %d %s :|  http://bugs.unrealircd.org/",
-	    me.name, RPL_INFO, sptr->name);
-	sendto_one(sptr,
-	    ":%s %d %s :| UnrealIRCd Homepage: http://www.unrealircd.com",
-	    me.name, RPL_INFO, sptr->name);
-	sendto_one(sptr,
-	    ":%s %d %s :-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=", me.name,
-	    RPL_INFO, sptr->name);
 	sendto_one(sptr, ":%s %d %s :Birth Date: %s, compile # %s", me.name,
 	    RPL_INFO, sptr->name, creation, generation);
 	sendto_one(sptr, ":%s %d %s :On-line since %s", me.name, RPL_INFO,
@@ -310,82 +269,6 @@ CMD_FUNC(m_info)
 	if (hunt_server(cptr, sptr, ":%s INFO :%s", 1, parc, parv) == HUNTED_ISME)
 	{
 		m_info_send(sptr);
-	}
-
-	return 0;
-}
-
-/*
-** m_dalinfo
-**      parv[0] = sender prefix
-**      parv[1] = servername
-*/
-CMD_FUNC(m_dalinfo)
-{
-	char **text = dalinfotext;
-
-	if (hunt_server(cptr, sptr, ":%s DALINFO :%s", 1, parc, parv) == HUNTED_ISME)
-	{
-		while (*text)
-			sendto_one(sptr, rpl_str(RPL_INFO),
-			    me.name, parv[0], *text++);
-
-		sendto_one(sptr, rpl_str(RPL_INFO), me.name, parv[0], "");
-		sendto_one(sptr,
-		    ":%s %d %s :Birth Date: %s, compile # %s",
-		    me.name, RPL_INFO, parv[0], creation, generation);
-		sendto_one(sptr, ":%s %d %s :On-line since %s",
-		    me.name, RPL_INFO, parv[0], myctime(me.firsttime));
-		sendto_one(sptr, rpl_str(RPL_ENDOFINFO), me.name, parv[0]);
-	}
-
-	return 0;
-}
-
-/*
-** m_license
-**      parv[0] = sender prefix
-**      parv[1] = servername
-*/
-CMD_FUNC(m_license)
-{
-	char **text = gnulicense;
-
-	if (hunt_server(cptr, sptr, ":%s LICENSE :%s", 1, parc, parv) == HUNTED_ISME)
-	{
-		while (*text)
-			sendto_one(sptr, rpl_str(RPL_INFO),
-			    me.name, parv[0], *text++);
-
-		sendto_one(sptr, rpl_str(RPL_INFO), me.name, parv[0], "");
-		sendto_one(sptr, rpl_str(RPL_ENDOFINFO), me.name, parv[0]);
-	}
-
-	return 0;
-}
-
-/*
-** m_credits
-**      parv[0] = sender prefix
-**      parv[1] = servername
-*/
-CMD_FUNC(m_credits)
-{
-	char **text = unrealcredits;
-
-	if (hunt_server(cptr, sptr, ":%s CREDITS :%s", 1, parc, parv) == HUNTED_ISME)
-	{
-		while (*text)
-			sendto_one(sptr, rpl_str(RPL_INFO),
-			    me.name, parv[0], *text++);
-
-		sendto_one(sptr, rpl_str(RPL_INFO), me.name, parv[0], "");
-		sendto_one(sptr,
-		    ":%s %d %s :Birth Date: %s, compile # %s",
-		    me.name, RPL_INFO, parv[0], creation, generation);
-		sendto_one(sptr, ":%s %d %s :On-line since %s",
-		    me.name, RPL_INFO, parv[0], myctime(me.firsttime));
-		sendto_one(sptr, rpl_str(RPL_ENDOFINFO), me.name, parv[0]);
 	}
 
 	return 0;
@@ -518,42 +401,6 @@ Link *helpign = NULL;
 void reset_help(void)
 {
 	free_str_list(helpign);
-}
-
-EVENT(save_tunefile)
-{
-	FILE *tunefile;
-
-	tunefile = fopen(conf_files->tune_file, "w");
-	if (!tunefile)
-	{
-		sendto_ops("Unable to write tunefile.. %s", strerror(errno));
-		return;
-	}
-	fprintf(tunefile, "%li\n", TSoffset);
-	fprintf(tunefile, "%d\n", IRCstats.me_max);
-	fclose(tunefile);
-}
-
-void load_tunefile(void)
-{
-	FILE *tunefile;
-	char buf[1024];
-
-	tunefile = fopen(conf_files->tune_file, "r");
-	if (!tunefile)
-		return;
-	fprintf(stderr, "* Loading tunefile..\n");
-	if (!fgets(buf, sizeof(buf), tunefile))
-	    fprintf(stderr, "Warning: error while reading the timestamp offset from the tunefile%s%s\n",
-		errno? ": ": "", errno? strerror(errno): "");
-	TSoffset = atol(buf);
-
-	if (!fgets(buf, sizeof(buf), tunefile))
-	    fprintf(stderr, "Warning: error while reading the peak user count from the tunefile%s%s\n",
-		errno? ": ": "", errno? strerror(errno): "");
-	IRCstats.me_max = atol(buf);
-	fclose(tunefile);
 }
 
 /** Rehash motd and rule files (motd_file/rules_file and all tld entries). */
@@ -946,119 +793,12 @@ int short_motd(aClient *sptr)
  */
 void read_motd(const char *filename, aMotdFile *themotd)
 {
-#ifdef USE_LIBCURL
-	time_t modtime;
-	aMotdDownload *motd_download;
-#endif
-
 	/* TODO: if themotd points to a tld's motd,
 	   could a rehash disrupt this pointer?*/
-#ifdef USE_LIBCURL
-	if(themotd->motd_download)
-	{
-		themotd->motd_download->themotd = NULL;
-		/*
-		 * It is not our job to free() motd_download, the
-		 * read_motd_asynch_downloaded() function will do that
-		 * when it sees that ->themod == NULL.
-		 */
-		themotd->motd_download = NULL;
-	}
-
-	/* if filename is NULL, do_read_motd will catch it */
-	if(filename && url_is_valid(filename))
-	{
-		/* prepare our payload for read_motd_asynch_downloaded() */
-		motd_download = MyMallocEx(sizeof(aMotdDownload));
-		if(!motd_download)
-			outofmemory();
-		motd_download->themotd = themotd;
-		themotd->motd_download = motd_download;
-
-#ifdef REMOTEINC_SPECIALCACHE
-		modtime = unreal_getfilemodtime(unreal_mkcache(filename));
-#else
-		modtime = 0;
-#endif
-
-		download_file_async(filename, modtime, (vFP)read_motd_asynch_downloaded, motd_download);
-		return;
-	}
-#endif /* USE_LIBCURL */
-
 	do_read_motd(filename, themotd);
 
 	return;
 }
-
-#ifdef USE_LIBCURL
-/**
-   Callback for download_file_async() called from read_motd()
-   below.
-   @param url the URL curl groked or NULL if the MOTD is stored locally.
-   @param filename the path to the local copy of the MOTD or NULL if either cached=1 or there's an error.
-   @param errorbuf NULL or an errorstring if there was an error while downloading the MOTD.
-   @param cached 0 if the URL was downloaded freshly or 1 if the last download was canceled and the local copy should be used.
- */
-void read_motd_asynch_downloaded(const char *url, const char *filename, const char *errorbuf, int cached, aMotdDownload *motd_download)
-{
-	aMotdFile *themotd;
-
-	themotd = motd_download->themotd;
-	/*
-	  check if the download was soft-canceled. See struct.h's docs on
-	  struct MotdDownload for details.
-	*/
-	if(!themotd)
-	{
-		MyFree(motd_download);
-		return;
-	}
-
-	/* errors -- check for specialcached version if applicable */
-	if(!cached && !filename)
-	{
-#ifdef REMOTEINC_SPECIALCACHE
-		if(has_cached_version(url))
-		{
-			config_warn("Error downloading MOTD file from \"%s\": %s -- using cached version instead.", url, errorbuf);
-			filename = unreal_mkcache(url);
-		} else {
-#endif
-			config_error("Error downloading MOTD file from \"%s\": %s", url, errorbuf);
-
-			/* remove reference to this chunk of memory about to be freed. */
-			motd_download->themotd->motd_download = NULL;
-			MyFree(motd_download);
-			return;
-#ifdef REMOTEINC_SPECIALCACHE
-		}
-#endif
-	}
-
-#ifdef REMOTEINC_SPECIALCACHE
-	/*
-	 * We need to move our newly downloaded file to its cache file
-	 * if it isn't there already.
-	 */
-	if(!cached)
-	{
-		/* create specialcached version for later */
-		unreal_copyfileex(filename, unreal_mkcache(url), 1);
-	} else {
-		/*
-		 * The file is cached. Thus we must look for it at the
-		 * cache location where we placed it earlier.
-		 */
-		filename = unreal_mkcache(url);
-	}
-#endif
-
-	do_read_motd(filename, themotd);
-	MyFree(motd_download);
-}
-#endif /* USE_LIBCURL */
-
 
 /**
    Does the actual reading of the MOTD. To be called only by
@@ -1141,11 +881,6 @@ void free_motd(aMotdFile *themotd)
 
 	themotd->lines = NULL;
 	memset(&themotd->last_modified, '\0', sizeof(struct tm));
-
-#ifdef USE_LIBCURL
-	/* see struct.h for more information about motd_download */
-	themotd->motd_download = NULL;
-#endif
 }
 
 

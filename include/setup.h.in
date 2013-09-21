@@ -377,10 +377,6 @@
    -rc2 for unrealircd-3.2.9-rc2) */
 #undef UNREAL_VERSION_SUFFIX
 
-/* Define if you have libcurl installed to get remote includes and MOTD
-   support */
-#undef USE_LIBCURL
-
 /* Define if you want to allow SSL connections */
 #undef USE_SSL
 

@@ -33,15 +33,8 @@
 #include <fcntl.h>
 #include "h.h"
 #include "proto.h"
-#ifdef STRIPBADWORDS
-#include "badwords.h"
-#endif
-#include "badwords.h"
 
 int _is_silenced(aClient *, aClient *);
-char *_stripbadwords_channel(char *str, int *blocked);
-char *_stripbadwords_message(char *str, int *blocked);
-char *_stripbadwords_quit(char *str, int *blocked);
 char *_StripColors(unsigned char *text);
 char *_StripControlCodes(unsigned char *text);
 
@@ -67,9 +60,6 @@ ModuleHeader MOD_HEADER(m_message)
 DLLFUNC int MOD_TEST(m_message)(ModuleInfo *modinfo)
 {
 	MARK_AS_OFFICIAL_MODULE(modinfo);
-	EfunctionAddPChar(modinfo->handle, EFUNC_STRIPBADWORDS_CHANNEL, _stripbadwords_channel);
-	EfunctionAddPChar(modinfo->handle, EFUNC_STRIPBADWORDS_MESSAGE, _stripbadwords_message);
-	EfunctionAddPChar(modinfo->handle, EFUNC_STRIPBADWORDS_QUIT, _stripbadwords_quit);
 	EfunctionAddPChar(modinfo->handle, EFUNC_STRIPCOLORS, _StripColors);
 	EfunctionAddPChar(modinfo->handle, EFUNC_STRIPCONTROLCODES, _StripControlCodes);
 	EfunctionAdd(modinfo->handle, EFUNC_IS_SILENCED, _is_silenced);
@@ -158,9 +148,6 @@ int ret;
 
 	if (!is_silenced(sptr, acptr))
 	{
-#ifdef STRIPBADWORDS
-		int blocked = 0;
-#endif
 		Hook *tmphook;
 		
 		if (!notice && MyConnect(sptr) &&
@@ -168,20 +155,6 @@ int ret;
 			sendto_one(sptr, rpl_str(RPL_AWAY),
 			    me.name, sptr->name, acptr->name,
 			    acptr->user->away);
-
-#ifdef STRIPBADWORDS
-		if (MyClient(sptr) && !IsULine(acptr) && IsFilteringWords(acptr))
-		{
-			*text = stripbadwords_message(*text, &blocked);
-			if (blocked)
-			{
-				if (!notice && MyClient(sptr))
-					sendto_one(sptr, rpl_str(ERR_NOSWEAR),
-						me.name, sptr->name, acptr->name);
-				return CANPRIVMSG_CONTINUE;
-			}
-		}
-#endif
 
 		if (MyClient(sptr))
 		{
@@ -218,6 +191,7 @@ int ret;
 ** rev argv 6/91
 **
 */
+
 static int recursive_webtv = 0;
 DLLFUNC int m_message(aClient *cptr, aClient *sptr, int parc, char *parv[], int notice)
 {
@@ -229,21 +203,6 @@ DLLFUNC int m_message(aClient *cptr, aClient *sptr, int parc, char *parv[], int 
 	int  prefix = 0;
 	char pfixchan[CHANNELLEN + 4];
 	int ret;
-
-	/*
-	 * Reasons why someone can't send to a channel
-	 */
-	static char *err_cantsend[] = {
-		"You need voice (+v)",
-		"No external channel messages",
-		"Color is not permitted in this channel",
-		"You are banned",
-		"CTCPs are not permitted in this channel",
-		"You must have a registered nick (+r) to talk on this channel",
-		"Swearing is not permitted in this channel",
-		"NOTICEs are not permitted in this channel",
-		NULL
-	};
 
 	if (IsHandshake(sptr))
 		return 0;
@@ -422,13 +381,9 @@ DLLFUNC int m_message(aClient *cptr, aClient *sptr, int parc, char *parv[], int 
 				continue;
 			}
 			
-			cansend =
-			    !IsULine(sptr) ? can_send(sptr, chptr, parv[2], notice) : 0;
+			cansend = !IsULine(sptr) ? can_send(sptr, chptr, parv[2], notice) : 0;
 			if (!cansend)
 			{
-#ifdef STRIPBADWORDS
-				int blocked = 0;
-#endif
 				Hook *tmphook;
 
 				if (chptr->mode.floodprot && chptr->mode.floodprot->l[FLD_TEXT])
@@ -439,35 +394,6 @@ DLLFUNC int m_message(aClient *cptr, aClient *sptr, int parc, char *parv[], int 
 				text = parv[2];
 				if (MyClient(sptr) && (chptr->mode.mode & MODE_STRIP))
 					text = StripColors(parv[2]);
-#ifdef STRIPBADWORDS
-				if (MyClient(sptr))
-				{
- #ifdef STRIPBADWORDS_CHAN_ALWAYS
-					text = stripbadwords_channel(text,& blocked);
-					if (blocked)
-					{
-						if (!notice)
-							sendto_one(sptr, err_str(ERR_CANNOTSENDTOCHAN),
-							    me.name, parv[0], chptr->chname,
-							    err_cantsend[6], p2);
-						continue;
-					}
- #else
-					if (chptr->mode.extmode & EXTMODE_STRIPBADWORDS)
-					{
-						text = stripbadwords_channel(text, &blocked);
-						if (blocked)
-						{
-							if (!notice)
-								sendto_one(sptr, err_str(ERR_CANNOTSENDTOCHAN),
-								    me.name, parv[0], chptr->chname,
-								    err_cantsend[6], p2);
-							continue;
-						}
-					}
- #endif
-				}
-#endif
 
 				if (MyClient(sptr))
 				{
@@ -514,7 +440,7 @@ DLLFUNC int m_message(aClient *cptr, aClient *sptr, int parc, char *parv[], int 
 				if (!notice || (cansend == 8)) /* privmsg or 'cannot send notice'... */
 					sendto_one(sptr, err_str(ERR_CANNOTSENDTOCHAN),
 					    me.name, parv[0], chptr->chname,
-					    err_cantsend[cansend - 1], p2);
+					    cantsend_strerror(cansend), p2);
 			}
 			continue;
 		}
@@ -881,277 +807,6 @@ int size_string;
 
 	return 1; /* allowed */
 }
-
-/* This was modified a bit in order to use newconf. The loading functions
- * have been trashed and integrated into the config parser. The striping
- * function now only uses REPLACEWORD if no word is specifically defined
- * for the word found. Also the freeing function has been ditched. -- codemastr
- */
-
-/*
- * our own strcasestr implementation because strcasestr is often not
- * available or is not working correctly (??).
- */
-char *our_strcasestr(char *haystack, char *needle) {
-int i;
-int nlength = strlen (needle);
-int hlength = strlen (haystack);
-
-	if (nlength > hlength) return NULL;
-	if (hlength <= 0) return NULL;
-	if (nlength <= 0) return haystack;
-	for (i = 0; i <= (hlength - nlength); i++) {
-		if (strncasecmp (haystack + i, needle, nlength) == 0)
-			return haystack + i;
-	}
-  return NULL; /* not found */
-}
-inline int fast_badword_match(ConfigItem_badword *badword, char *line)
-{
- 	char *p;
-	int bwlen = strlen(badword->word);
-	if ((badword->type & BADW_TYPE_FAST_L) && (badword->type & BADW_TYPE_FAST_R))
-		return (our_strcasestr(line, badword->word) ? 1 : 0);
-
-	p = line;
-	while((p = our_strcasestr(p, badword->word)))
-	{
-		if (!(badword->type & BADW_TYPE_FAST_L))
-		{
-			if ((p != line) && !iswseperator(*(p - 1))) /* aaBLA but no *BLA */
-				goto next;
-		}
-		if (!(badword->type & BADW_TYPE_FAST_R))
-		{
-			if (!iswseperator(*(p + bwlen)))  /* BLAaa but no BLA* */
-				goto next;
-		}
-		/* Looks like it matched */
-		return 1;
-next:
-		p += bwlen;
-	}
-	return 0;
-}
-/* fast_badword_replace:
- * a fast replace routine written by Syzop used for replacing badwords.
- * searches in line for huntw and replaces it with replacew,
- * buf is used for the result and max is sizeof(buf).
- * (Internal assumptions: max > 0 AND max > strlen(line)+1)
- */
-inline int fast_badword_replace(ConfigItem_badword *badword, char *line, char *buf, int max)
-{
-/* Some aliases ;P */
-char *replacew = badword->replace ? badword->replace : REPLACEWORD;
-char *pold = line, *pnew = buf; /* Pointers to old string and new string */
-char *poldx = line;
-int replacen = -1; /* Only calculated if needed. w00t! saves us a few nanosecs? lol */
-int searchn = -1;
-char *startw, *endw;
-char *c_eol = buf + max - 1; /* Cached end of (new) line */
-int run = 1;
-int cleaned = 0;
-
-	Debug((DEBUG_NOTICE, "replacing %s -> %s in '%s'", badword->word, replacew, line));
-
-	while(run) {
-		pold = our_strcasestr(pold, badword->word);
-		if (!pold)
-			break;
-		if (replacen == -1)
-			replacen = strlen(replacew);
-		if (searchn == -1)
-			searchn = strlen(badword->word);
-		/* Hunt for start of word */
- 		if (pold > line) {
-			for (startw = pold; (!iswseperator(*startw) && (startw != line)); startw--);
-			if (iswseperator(*startw))
-				startw++; /* Don't point at the space/seperator but at the word! */
-		} else {
-			startw = pold;
-		}
-
-		if (!(badword->type & BADW_TYPE_FAST_L) && (pold != startw)) {
-			/* not matched */
-			pold++;
-			continue;
-		}
-
-		/* Hunt for end of word */
-		for (endw = pold; ((*endw != '\0') && (!iswseperator(*endw))); endw++);
-
-		if (!(badword->type & BADW_TYPE_FAST_R) && (pold+searchn != endw)) {
-			/* not matched */
-			pold++;
-			continue;
-		}
-
-		cleaned = 1; /* still too soon? Syzop/20050227 */
-
-		/* Do we have any not-copied-yet data? */
-		if (poldx != startw) {
-			int tmp_n = startw - poldx;
-			if (pnew + tmp_n >= c_eol) {
-				/* Partial copy and return... */
-				memcpy(pnew, poldx, c_eol - pnew);
-				*c_eol = '\0';
-				return 1;
-			}
-
-			memcpy(pnew, poldx, tmp_n);
-			pnew += tmp_n;
-		}
-		/* Now update the word in buf (pnew is now something like startw-in-new-buffer */
-
-		if (replacen) {
-			if ((pnew + replacen) >= c_eol) {
-				/* Partial copy and return... */
-				memcpy(pnew, replacew, c_eol - pnew);
-				*c_eol = '\0';
-				return 1;
-			}
-			memcpy(pnew, replacew, replacen);
-			pnew += replacen;
-		}
-		poldx = pold = endw;
-	}
-	/* Copy the last part */
-	if (*poldx) {
-		strncpy(pnew, poldx, c_eol - pnew);
-		*(c_eol) = '\0';
-	} else {
-		*pnew = '\0';
-	}
-	return cleaned;
-}
-
-/*
- * Returns a string, which has been filtered by the words loaded via
- * the loadbadwords() function.  It's primary use is to filter swearing
- * in both private and public messages
- */
-
-char *stripbadwords(char *str, ConfigItem_badword *start_bw, int *blocked)
-{
-	regmatch_t pmatch[MAX_MATCH];
-	static char cleanstr[4096];
-	char buf[4096];
-	char *ptr;
-	int  matchlen, m, stringlen, cleaned;
-	ConfigItem_badword *this_word;
-	
-	*blocked = 0;
-
-	if (!start_bw)
-		return str;
-
-	/*
-	 * work on a copy
-	 */
-	stringlen = strlcpy(cleanstr, StripControlCodes(str), sizeof cleanstr);
-	memset(&pmatch, 0, sizeof pmatch);
-	matchlen = 0;
-	buf[0] = '\0';
-	cleaned = 0;
-
-	for (this_word = start_bw; this_word; this_word = (ConfigItem_badword *)this_word->next)
-	{
-		if (this_word->type & BADW_TYPE_FAST)
-		{
-			if (this_word->action == BADWORD_BLOCK)
-			{
-				if (fast_badword_match(this_word, cleanstr))
-				{
-					*blocked = 1;
-					return NULL;
-				}
-			}
-			else
-			{
-				int n;
-				/* fast_badword_replace() does size checking so we can use 512 here instead of 4096 */
-				n = fast_badword_replace(this_word, cleanstr, buf, 512);
-				if (!cleaned && n)
-					cleaned = n;
-				strcpy(cleanstr, buf);
-				memset(buf, 0, sizeof(buf)); /* regexp likes this somehow */
-			}
-		} else
-		if (this_word->type & BADW_TYPE_REGEX)
-		{
-			if (this_word->action == BADWORD_BLOCK)
-			{
-				if (!regexec(&this_word->expr, cleanstr, 0, NULL, 0))
-				{
-					*blocked = 1;
-					return NULL;
-				}
-			}
-			else
-			{
-				ptr = cleanstr; /* set pointer to start of string */
-				while (regexec(&this_word->expr, ptr, MAX_MATCH, pmatch,0) != REG_NOMATCH)
-				{
-					if (pmatch[0].rm_so == -1)
-						break;
-					m = pmatch[0].rm_eo - pmatch[0].rm_so;
-					if (m == 0)
-						break; /* anti-loop */
-					cleaned = 1;
-					matchlen += m;
-					strlncat(buf, ptr, sizeof buf, pmatch[0].rm_so);
-					if (this_word->replace)
-						strlcat(buf, this_word->replace, sizeof buf); 
-					else
-						strlcat(buf, REPLACEWORD, sizeof buf);
-					ptr += pmatch[0].rm_eo;	/* Set pointer after the match pos */
-					memset(&pmatch, 0, sizeof(pmatch));
-				}
-
-				/* All the better to eat you with! */
-				strlcat(buf, ptr, sizeof buf);	
-				memcpy(cleanstr, buf, sizeof cleanstr);
-				memset(buf, 0, sizeof(buf));
-				if (matchlen == stringlen)
-					break;
-			}
-		}
-	}
-
-	cleanstr[511] = '\0'; /* cutoff, just to be sure */
-
-	return (cleaned) ? cleanstr : str;
-}
-
-#ifdef STRIPBADWORDS
-char *_stripbadwords_channel(char *str, int *blocked)
-{
-	return stripbadwords(str, conf_badword_channel, blocked);
-}
-
-char *_stripbadwords_message(char *str, int *blocked)
-{
-	return stripbadwords(str, conf_badword_message, blocked);
-}
-char *_stripbadwords_quit(char *str, int *blocked)
-{
-	return stripbadwords(str, conf_badword_quit, blocked);
-}
-#else
-char *_stripbadwords_channel(char *str, int *blocked)
-{
-	return NULL;
-}
-
-char *_stripbadwords_message(char *str, int *blocked)
-{
-	return NULL;
-}
-char *_stripbadwords_quit(char *str, int *blocked)
-{
-	return NULL;
-}
-#endif
 
 /* Taken from xchat by Peter Zelezny
  * changed very slightly by codemastr

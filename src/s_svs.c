@@ -28,7 +28,7 @@
 #ifdef __hpux
 #include "inet.h"
 #endif
-#if defined(PCS) || defined(AIX) || defined(SVR3)
+#if defined(AIX)
 #include <time.h>
 #endif
 #include <string.h>
@@ -75,7 +75,6 @@ MODVAR int oper_access[] = {
 	OFLAG_UMODEQ, 'q',
 	OFLAG_DCCDENY, 'd',
 	OFLAG_ADDLINE, 'X',
-        OFLAG_TSCTL, 'T',
 	0, 0
 };
 

@@ -108,7 +108,6 @@
 #define MSG_RULES       "RULES"	/* RULES */
 #define MSG_MAP         "MAP"	/* MAP */
 #define MSG_SVS2MODE    "SVS2MODE"	/* SVS2MODE */
-#define MSG_DALINFO     "DALINFO"	/* dalinfo */
 #define MSG_ADMINCHAT   "ADCHAT"	/* Admin chat */
 #define MSG_MKPASSWD	"MKPASSWD"	/* MKPASSWD */
 #define MSG_ADDLINE     "ADDLINE"	/* ADDLINE */
@@ -121,8 +120,6 @@
 #define MSG_LAG		"LAG"	/* Lag detect */
 #define MSG_STATSERV	"STATSERV"	/* alias */
 #define MSG_KNOCK	"KNOCK"
-#define MSG_CREDITS 	"CREDITS"
-#define MSG_LICENSE 	"LICENSE"
 #define MSG_CHGHOST 	"CHGHOST"
 #define MSG_RPING   	"RPING"
 #define MSG_RPONG   	"RPONG"
@@ -133,7 +130,6 @@
 #define MSG_SVSMOTD	"SVSMOTD"
 #define MSG_SMO 	"SMO"
 #define MSG_OPERMOTD 	"OPERMOTD"
-#define MSG_TSCTL 	"TSCTL"
 #define MSG_SVSJOIN 	"SVSJOIN"
 #define MSG_SAJOIN 	"SAJOIN"
 #define MSG_SVSPART 	"SVSPART"
@@ -177,9 +173,6 @@ extern int m_error();
 extern int m_dns();
 extern int m_info(), m_summon();
 extern int m_users(), m_version();
-extern int m_dalinfo();
-extern int m_credits();
-extern int m_license();
 extern int m_module(), m_alias();
 extern int m_rehash(), m_die(), m_restart();
 #endif

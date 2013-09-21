@@ -46,9 +46,6 @@ Cmode *Channelmode_Table = NULL;
 unsigned short Channelmode_highest = 0;
 
 Cmode_t EXTMODE_NONOTICE = 0L;
-#ifdef STRIPBADWORDS
-Cmode_t EXTMODE_STRIPBADWORDS = 0L;
-#endif
 
 #ifdef JOINTHROTTLE
 /* cmode j stuff... */
@@ -62,9 +59,6 @@ CmodeParam *cmodej_dup_struct(CmodeParam *r_in);
 int cmodej_sjoin_check(aChannel *chptr, CmodeParam *ourx, CmodeParam *theirx);
 #endif
 int extcmode_cmodeT_requirechop(aClient *cptr, aChannel *chptr, char *para, int checkt, int what);
-#ifdef STRIPBADWORDS
-int extcmode_cmodeG_requirechop(aClient *cptr, aChannel *chptr, char *para, int checkt, int what);
-#endif
 
 void make_extcmodestr()
 {
@@ -103,11 +97,6 @@ static void load_extendedchanmodes(void)
 	req.is_ok = extcmode_cmodeT_requirechop;
 	req.flag = 'T';
 	CmodeAdd(NULL, req, &EXTMODE_NONOTICE);
-#ifdef STRIPBADWORDS
-	req.flag = 'G';
-	req.is_ok = extcmode_cmodeG_requirechop;
-	CmodeAdd(NULL, req, &EXTMODE_STRIPBADWORDS);
-#endif
 	
 #ifdef JOINTHROTTLE
 	/* +j */
