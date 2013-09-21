@@ -102,8 +102,8 @@ AC_DEFINE(STATIC_LINKING)
 ])])
 
 hold_cflags=$CFLAGS
-CFLAGS="$CFLAGS -export-dynamic"
-AC_CACHE_CHECK(if we need the -export-dynamic flag, ac_cv_export_dynamic, [
+CFLAGS="$CFLAGS -Wl,-export-dynamic"
+AC_CACHE_CHECK(if we need the -Wl,-export-dynamic flag, ac_cv_export_dynamic, [
 AC_TRY_LINK(, [int i];, ac_cv_export_dynamic=yes, ac_cv_export_dynamic=no)])
 if test "$ac_cv_export_dynamic" = "no"; then
 CFLAGS=$hold_cflags
