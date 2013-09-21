@@ -29,10 +29,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <assert.h>
-#if !defined(ULTRIX) && !defined(SGI) && !defined(__convex__)
-# include <sys/param.h>
-#endif
-#if defined(PCS) || defined(AIX) || defined(SVR3)
+#include <sys/param.h>
+#if defined(AIX)
 # include <time.h>
 #endif
 #ifdef HPUX
