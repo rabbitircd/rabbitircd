@@ -1611,6 +1611,8 @@ void config_setdefaultsettings(aConfiguration *i)
 	i->nicklen = NICKLEN;
 	i->warn_ts_delta = 5;
 	i->max_ts_delta = 30;
+	i->ratelimit_time_simple = 1;
+	i->ratelimit_time = 10;
 }
 
 /* 1: needed for set::options::allow-part-if-shunned,
@@ -7189,6 +7191,14 @@ int	_conf_set(ConfigFile *conf, ConfigEntry *ce)
 		else if (!strcmp(cep->ce_varname, "max-ts-delta")) {
 			int v = atoi(cep->ce_vardata);
 			tempiConf.max_ts_delta = v;
+		}
+		else if (!strcmp(cep->ce_varname, "ratelimit-time")) {
+			int v = atoi(cep->ce_vardata);
+			tempiConf.ratelimit_time = v;
+		}
+		else if (!strcmp(cep->ce_varname, "ratelimit-time-simple")) {
+			int v = atoi(cep->ce_vardata);
+			tempiConf.ratelimit_time_simple = v;
 		}
 		else if (!strcmp(cep->ce_varname, "ssl")) {
 #ifdef USE_SSL
