@@ -396,7 +396,8 @@ int  parse(aClient *cptr, char *buffer, char *bufend)
 				return -1;
 			}
 		}
-		else if (cmptr->flags & M_RATELIMIT_USER)
+
+		if (cmptr->flags & M_RATELIMIT_USER)
 		{
 			TS bias = (cmptr->flags & M_RATELIMIT_COMPLEX) ? RATELIMIT_TIME : RATELIMIT_TIME_SIMPLE;
 			if (TStime() < (from->last_cmd_run + bias))
