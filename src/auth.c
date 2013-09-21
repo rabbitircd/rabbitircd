@@ -62,10 +62,6 @@ struct auth_ops *auth_lookup_ops(const char *name)
 anAuthStruct MODVAR AuthTypes[] = {
 	{"plain",	AUTHTYPE_PLAINTEXT},
 	{"plaintext",   AUTHTYPE_PLAINTEXT},
-#ifdef AUTHENABLE_UNIXCRYPT
-	{"crypt",	AUTHTYPE_UNIXCRYPT},
-	{"unixcrypt",	AUTHTYPE_UNIXCRYPT},
-#endif
 	{"md5",	        AUTHTYPE_MD5},
 #ifdef AUTHENABLE_SHA1
 	{"sha1",	AUTHTYPE_SHA1},
@@ -132,24 +128,6 @@ int		Auth_CheckError(ConfigEntry *ce)
 				return ops->config_handle(ce);
 			else
 				return 1;
-
-#if 0
-			switch (type)
-			{
-#ifdef AUTHENABLE_UNIXCRYPT
-				case AUTHTYPE_UNIXCRYPT:
-					/* If our data is like 1 or none, we just let em through .. */
-					if (strlen(ce->ce_vardata) < 2)
-					{
-						config_error("%s:%i: authentication module failure: AUTHTYPE_UNIXCRYPT: no salt (crypt strings will always be >2 in length)",
-							ce->ce_fileptr->cf_filename, ce->ce_varlinenum);
-						return -1;
-					}
-					break;
-#endif
-				default: ;
-			}
-#endif
 		}
 	}
 	
@@ -419,10 +397,6 @@ char *saltstr, *hashstr;
 */
 int	Auth_Check(aClient *cptr, anAuthStruct *as, char *para)
 {
-#ifdef	AUTHENABLE_UNIXCRYPT
-	extern	char *crypt();
-#endif
-
 	if (!as)
 		return 1;
 		
@@ -443,19 +417,6 @@ int	Auth_Check(aClient *cptr, anAuthStruct *as, char *para)
 	{
 		case AUTHTYPE_PLAINTEXT:
 			break;
-#ifdef AUTHENABLE_UNIXCRYPT
-		case AUTHTYPE_UNIXCRYPT:
-			if (!para)
-				return -1;
-			/* If our data is like 1 or none, we just let em through .. */
-			if (!(as->data[0] && as->data[1]))
-				return 1;
-			if (!strcmp(crypt(para, as->data), as->data))
-				return 2;
-			else
-				return -1;
-			break;
-#endif
 		case AUTHTYPE_MD5:
 			return authcheck_md5(cptr, as, para);
 			break;
@@ -636,11 +597,6 @@ const char *Auth_Make(const char *type, char *para)
 {
 	struct auth_ops *ops = auth_lookup_ops(type);
 
-#ifdef	AUTHENABLE_UNIXCRYPT
-	char	salt[3];
-	extern	char *crypt();
-#endif
-
 	if (ops != NULL && ops->make_hash != NULL)
 	{
 		return ops->make_hash(para);
@@ -654,17 +610,6 @@ const char *Auth_Make(const char *type, char *para)
 		case AUTHTYPE_PLAINTEXT:
 			return (para);
 			break;
-#ifdef AUTHENABLE_UNIXCRYPT
-		case AUTHTYPE_UNIXCRYPT:
-			if (!para)
-				return NULL;
-			/* If our data is like 1 or none, we just let em through .. */
-			if (!(para[0] && para[1]))
-				return NULL;
-			snprintf(salt, sizeof(salt), "%02X", (unsigned int)getrandom8());
-			return(crypt(para, salt));
-			break;
-#endif
 
 		case AUTHTYPE_MD5:
 			return mkpass_md5(para);

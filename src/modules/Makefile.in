@@ -57,7 +57,7 @@ R_MODULES= \
 	 m_sasl.so cap_invitenotify.so
 
 MODES	= chm_permanent.so
-AUTH	= auth_clientcert.so auth_clientcertfp.so
+AUTH	= auth_clientcert.so auth_clientcertfp.so auth_crypt.so
 
 #note change of .c to .o
 COMMANDS=m_sethost.o m_chghost.o m_chgident.o m_setname.o m_setident.o \
@@ -539,6 +539,10 @@ auth_clientcert.so: auth_clientcert.c $(INCLUDES)
 auth_clientcertfp.so: auth_clientcertfp.c $(INCLUDES)
 	$(CC) $(CFLAGS) $(MODULEFLAGS) -DDYNAMIC_LINKING \
 		-o auth_clientcertfp.so auth_clientcertfp.c
+
+auth_crypt.so: auth_crypt.c $(INCLUDES)
+	$(CC) $(CFLAGS) $(MODULEFLAGS) -DDYNAMIC_LINKING \
+		-o auth_crypt.so auth_crypt.c
 
 #############################################################################
 #             and now the remaining modules...
