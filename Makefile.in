@@ -168,7 +168,7 @@ cleandir: clean
 distclean: cleandir
 	rm -rf extras/*.bak extras/regexp extras/*.tar extras/c-ares 
 	rm -rf extras/c-ares-* extras/tre-*
-	rm -rf config.log config.settings *.pem ircd.* unreal
+	rm -rf config.log config.settings *.pem ircd.*
 	rm -rf Makefile config.status
 	
 makex:
@@ -206,8 +206,7 @@ install: all
 	$(INSTALL) -m 0600 aliases/*.conf $(IRCDDIR)/aliases
 	$(INSTALL) -m 0600 doc/example.conf $(IRCDDIR)/unrealircd.conf
 	$(INSTALL) -m 0600 spamfilter.conf dccallow.conf $(IRCDDIR)
-	$(INSTALL) -m 0600 badwords.*.conf help.conf LICENSE Donation $(IRCDDIR)
-	$(INSTALL) -m 0700 unreal $(IRCDDIR)
+	$(INSTALL) -m 0600 badwords.*.conf help.conf LICENSE $(IRCDDIR)
 	$(INSTALL) -m 0700 -d $(IRCDDIR)/modules
 	$(INSTALL) -m 0700 src/modules/*.so $(IRCDDIR)/modules
 	$(INSTALL) -m 0700 -d $(IRCDDIR)/ircdcron
