@@ -58,7 +58,6 @@
 #  include <sys/syslog.h>
 # endif
 #endif
-#include "auth.h" 
 #include "tre/regex.h"
 
 #include "channel.h"
@@ -67,6 +66,8 @@
 /* needed to workaround a warning / prototype/dll inconsistency crap */
 #define vsnprintf unrl_vsnprintf
 #endif
+
+typedef struct auth_data anAuthStruct;
 
 extern MODVAR int sendanyways;
 
@@ -1821,3 +1822,4 @@ int	throttle_can_connect(aClient *, struct IN_ADDR *in);
 #endif /* __struct_include__ */
 
 #include "dynconf.h"
+#include "auth.h"
