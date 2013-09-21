@@ -202,11 +202,11 @@
  * these are only the recommened names and paths.  You must define PPATH if you 
  * want a pidfile written. Also, IRCDTUNE should be defined because it is needed for
  * operation. All of these options are runtime-configurable (except for CPATH and LPATH)
- * in the files block of unrealircd.conf. CPATH is runtime-configurable as a command-
+ * in the files block of ircd.conf. CPATH is runtime-configurable as a command-
  * line argument. These used as the default values for options absent from the user's
  * unrealircd.conf.
  */
-#define	CPATH		"unrealircd.conf"	/* server configuration file */
+#define	CPATH		"ircd.conf"	/* server configuration file */
 #define	MPATH		"ircd.motd"	/* server MOTD file */
 #define SMPATH          "ircd.smotd"    /* short MOTD file */
 #define RPATH   	"ircd.rules"	/* server rules file */
