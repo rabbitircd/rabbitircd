@@ -37,9 +37,6 @@
 #ifdef GLOBH
 #include <glob.h>
 #endif
-#ifdef STRIPBADWORDS
-#include "badwords.h"
-#endif
 #include "h.h"
 #include "inet.h"
 #include "proto.h"
@@ -85,9 +82,6 @@ static int	_conf_vhost		(ConfigFile *conf, ConfigEntry *ce);
 static int	_conf_link		(ConfigFile *conf, ConfigEntry *ce);
 static int	_conf_ban		(ConfigFile *conf, ConfigEntry *ce);
 static int	_conf_set		(ConfigFile *conf, ConfigEntry *ce);
-#ifdef STRIPBADWORDS
-static int	_conf_badword		(ConfigFile *conf, ConfigEntry *ce);
-#endif
 static int	_conf_deny		(ConfigFile *conf, ConfigEntry *ce);
 static int	_conf_deny_dcc		(ConfigFile *conf, ConfigEntry *ce);
 static int	_conf_deny_link		(ConfigFile *conf, ConfigEntry *ce);
@@ -123,9 +117,6 @@ static int	_test_vhost		(ConfigFile *conf, ConfigEntry *ce);
 static int	_test_link		(ConfigFile *conf, ConfigEntry *ce);
 static int	_test_ban		(ConfigFile *conf, ConfigEntry *ce);
 static int	_test_set		(ConfigFile *conf, ConfigEntry *ce);
-#ifdef STRIPBADWORDS
-static int	_test_badword		(ConfigFile *conf, ConfigEntry *ce);
-#endif
 static int	_test_deny		(ConfigFile *conf, ConfigEntry *ce);
 static int	_test_allow_channel	(ConfigFile *conf, ConfigEntry *ce);
 static int	_test_allow_dcc		(ConfigFile *conf, ConfigEntry *ce);
@@ -142,9 +133,6 @@ static ConfigCommand _ConfigCommands[] = {
 	{ "admin", 		_conf_admin,		_test_admin 	},
 	{ "alias",		_conf_alias,		_test_alias	},
 	{ "allow",		_conf_allow,		_test_allow	},
-#ifdef STRIPBADWORDS
-	{ "badword",		_conf_badword,		_test_badword	},
-#endif
 	{ "ban", 		_conf_ban,		_test_ban	},
 	{ "cgiirc", 	_conf_cgiirc,	_test_cgiirc	},
 	{ "class", 		_conf_class,		_test_class	},
@@ -370,11 +358,6 @@ ConfigItem_log		*conf_log = NULL;
 ConfigItem_alias	*conf_alias = NULL;
 ConfigItem_include	*conf_include = NULL;
 ConfigItem_help		*conf_help = NULL;
-#ifdef STRIPBADWORDS
-ConfigItem_badword	*conf_badword_channel = NULL;
-ConfigItem_badword      *conf_badword_message = NULL;
-ConfigItem_badword	*conf_badword_quit = NULL;
-#endif
 ConfigItem_offchans	*conf_offchans = NULL;
 
 aConfiguration		iConf;
@@ -2138,38 +2121,6 @@ void	config_rehash()
 		MyFree(vhost_ptr);
 	}
 
-#ifdef STRIPBADWORDS
-	for (badword_ptr = conf_badword_channel; badword_ptr;
-		badword_ptr = (ConfigItem_badword *) next) {
-		next = (ListStruct *)badword_ptr->next;
-		ircfree(badword_ptr->word);
-		if (badword_ptr->replace)
-			ircfree(badword_ptr->replace);
-		regfree(&badword_ptr->expr);
-		DelListItem(badword_ptr, conf_badword_channel);
-		MyFree(badword_ptr);
-	}
-	for (badword_ptr = conf_badword_message; badword_ptr;
-		badword_ptr = (ConfigItem_badword *) next) {
-		next = (ListStruct *)badword_ptr->next;
-		ircfree(badword_ptr->word);
-		if (badword_ptr->replace)
-			ircfree(badword_ptr->replace);
-		regfree(&badword_ptr->expr);
-		DelListItem(badword_ptr, conf_badword_message);
-		MyFree(badword_ptr);
-	}
-	for (badword_ptr = conf_badword_quit; badword_ptr;
-		badword_ptr = (ConfigItem_badword *) next) {
-		next = (ListStruct *)badword_ptr->next;
-		ircfree(badword_ptr->word);
-		if (badword_ptr->replace)
-			ircfree(badword_ptr->replace);
-		regfree(&badword_ptr->expr);
-		DelListItem(badword_ptr, conf_badword_quit);
-		MyFree(badword_ptr);
-	}
-#endif
 	/* Clean up local spamfilter entries... */
 	for (tk = tklines[tkl_hash('f')]; tk; tk = tk_next)
 	{
@@ -5686,212 +5637,6 @@ int	_test_vhost(ConfigFile *conf, ConfigEntry *ce)
 	}
 	return errors;
 }
-
-#ifdef STRIPBADWORDS
-
-static ConfigItem_badword *copy_badword_struct(ConfigItem_badword *ca, int regex, int regflags)
-{
-	ConfigItem_badword *x = MyMalloc(sizeof(ConfigItem_badword));
-	memcpy(x, ca, sizeof(ConfigItem_badword));
-	x->word = strdup(ca->word);
-	if (ca->replace)
-		x->replace = strdup(ca->replace);
-	if (regex) 
-	{
-		memset(&x->expr, 0, sizeof(regex_t));
-		regcomp(&x->expr, x->word, regflags);
-	}
-	return x;
-}
-
-int     _conf_badword(ConfigFile *conf, ConfigEntry *ce)
-{
-	ConfigEntry *cep, *word = NULL;
-	ConfigItem_badword *ca;
-	char *tmp;
-	short regex = 0;
-	int regflags = 0;
-	int ast_l = 0, ast_r = 0;
-
-	ca = MyMallocEx(sizeof(ConfigItem_badword));
-	ca->action = BADWORD_REPLACE;
-	regflags = REG_ICASE|REG_EXTENDED;
-
-	for (cep = ce->ce_entries; cep; cep = cep->ce_next)
-	{
-		if (!strcmp(cep->ce_varname, "action"))
-		{
-			if (!strcmp(cep->ce_vardata, "block"))
-			{
-				ca->action = BADWORD_BLOCK;
-				/* If it is set to just block, then we don't need to worry about
-				 * replacements 
-				 */
-				regflags |= REG_NOSUB;
-			}
-		}
-		else if (!strcmp(cep->ce_varname, "replace"))
-		{
-			ircstrdup(ca->replace, cep->ce_vardata);
-		}
-		else if (!strcmp(cep->ce_varname, "word"))
-			word = cep;
-	}
-	/* The fast badwords routine can do: "blah" "*blah" "blah*" and "*blah*",
-	 * in all other cases use regex.
-	 */
-	for (tmp = word->ce_vardata; *tmp; tmp++) {
-		if (!isalnum(*tmp) && !(*tmp >= 128)) {
-			if ((word->ce_vardata == tmp) && (*tmp == '*')) {
-				ast_l = 1; /* Asterisk at the left */
-				continue;
-			}
-			if ((*(tmp + 1) == '\0') && (*tmp == '*')) {
-				ast_r = 1; /* Asterisk at the right */
-				continue;
-			}
-			regex = 1;
-			break;
-		}
-	}
-	if (regex)
-	{
-		ca->type = BADW_TYPE_REGEX;
-		ircstrdup(ca->word, word->ce_vardata);
-		regcomp(&ca->expr, ca->word, regflags);
-	}
-	else
-	{
-		char *tmpw;
-		ca->type = BADW_TYPE_FAST;
-		ca->word = tmpw = MyMalloc(strlen(word->ce_vardata) - ast_l - ast_r + 1);
-		/* Copy except for asterisks */
-		for (tmp = word->ce_vardata; *tmp; tmp++)
-			if (*tmp != '*')
-				*tmpw++ = *tmp;
-		*tmpw = '\0';
-		if (ast_l)
-			ca->type |= BADW_TYPE_FAST_L;
-		if (ast_r)
-			ca->type |= BADW_TYPE_FAST_R;
-	}
-	if (!strcmp(ce->ce_vardata, "channel"))
-		AddListItem(ca, conf_badword_channel);
-	else if (!strcmp(ce->ce_vardata, "message"))
-		AddListItem(ca, conf_badword_message);
-	else if (!strcmp(ce->ce_vardata, "quit"))
-		AddListItem(ca, conf_badword_quit);
-	else if (!strcmp(ce->ce_vardata, "all"))
-	{
-		AddListItem(ca, conf_badword_channel);
-		AddListItem(copy_badword_struct(ca,regex,regflags), conf_badword_message);
-		AddListItem(copy_badword_struct(ca,regex,regflags), conf_badword_quit);
-	}
-	return 1;
-}
-
-int _test_badword(ConfigFile *conf, ConfigEntry *ce) 
-{ 
-	int errors = 0;
-	ConfigEntry *cep;
-	char has_word = 0, has_replace = 0, has_action = 0, action = 'r';
-
-	if (!ce->ce_vardata)
-	{
-		config_error("%s:%i: badword without type",
-			ce->ce_fileptr->cf_filename, ce->ce_varlinenum);
-		return 1;
-	}
-	else if (strcmp(ce->ce_vardata, "channel") && strcmp(ce->ce_vardata, "message") && 
-	         strcmp(ce->ce_vardata, "quit") && strcmp(ce->ce_vardata, "all")) {
-			config_error("%s:%i: badword with unknown type",
-				ce->ce_fileptr->cf_filename, ce->ce_varlinenum);
-		return 1;
-	}
-	for (cep = ce->ce_entries; cep; cep = cep->ce_next)
-	{
-		if (config_is_blankorempty(cep, "badword"))
-		{
-			errors++;
-			continue;
-		}
-		if (!strcmp(cep->ce_varname, "word"))
-		{
-			char *errbuf;
-			if (has_word)
-			{
-				config_warn_duplicate(cep->ce_fileptr->cf_filename, 
-					cep->ce_varlinenum, "badword::word");
-				continue;
-			}
-			has_word = 1;
-			if ((errbuf = unreal_checkregex(cep->ce_vardata,1,1)))
-			{
-				config_error("%s:%i: badword::%s contains an invalid regex: %s",
-					cep->ce_fileptr->cf_filename,
-					cep->ce_varlinenum,
-					cep->ce_varname, errbuf);
-				errors++;
-			}
-		}
-		else if (!strcmp(cep->ce_varname, "replace"))
-		{
-			if (has_replace)
-			{
-				config_warn_duplicate(cep->ce_fileptr->cf_filename, 
-					cep->ce_varlinenum, "badword::replace");
-				continue;
-			}
-			has_replace = 1;
-		}
-		else if (!strcmp(cep->ce_varname, "action"))
-		{
-			if (has_action)
-			{
-				config_warn_duplicate(cep->ce_fileptr->cf_filename, 
-					cep->ce_varlinenum, "badword::action");
-				continue;
-			}
-			has_action = 1;
-			if (!strcmp(cep->ce_vardata, "replace"))
-				action = 'r';
-			else if (!strcmp(cep->ce_vardata, "block"))
-				action = 'b';
-			else
-			{
-				config_error("%s:%d: Unknown badword::action '%s'",
-					cep->ce_fileptr->cf_filename, cep->ce_varlinenum,
-					cep->ce_vardata);
-				errors++;
-			}
-				
-		}
-		else
-		{
-			config_error_unknown(cep->ce_fileptr->cf_filename, cep->ce_varlinenum,
-				"badword", cep->ce_varname);
-			errors++;
-		}
-	}
-
-	if (!has_word)
-	{
-		config_error_missing(ce->ce_fileptr->cf_filename, ce->ce_varlinenum,
-			"badword::word");
-		errors++;
-	}
-	if (has_action)
-	{
-		if (has_replace && action == 'b')
-		{
-			config_error("%s:%i: badword::action is block but badword::replace exists",
-				ce->ce_fileptr->cf_filename, ce->ce_varlinenum);
-			errors++;
-		}
-	}
-	return errors; 
-}
-#endif
 
 int _conf_spamfilter(ConfigFile *conf, ConfigEntry *ce)
 {

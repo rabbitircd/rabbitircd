@@ -120,16 +120,6 @@
 #define REMOTE_REHASH
 
 /*
-  Stripbadwords patch
-*/
-#define STRIPBADWORDS
-
-/*
- * Always strip badwords in channels? (channel does not have to be +G)
-*/
-#undef STRIPBADWORDS_CHAN_ALWAYS
-
-/*
  * No spoof code
  *
  * This enables the spoof protection.

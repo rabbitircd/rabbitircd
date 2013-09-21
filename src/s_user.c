@@ -42,9 +42,6 @@ Computing Center and Jarkko Oikarinen";
 #include <fcntl.h>
 #include "h.h"
 #include "proto.h"
-#ifdef STRIPBADWORDS
-#include "badwords.h"
-#endif
 
 void send_umode_out(aClient *, aClient *, long);
 void send_umode_out_nickv2(aClient *, aClient *, long);

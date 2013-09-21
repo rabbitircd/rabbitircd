@@ -44,7 +44,7 @@ short	 Usermode_highest = 0;
 Snomask *Snomask_Table = NULL;
 short	 Snomask_highest = 0;
 
-/* cptr->umodes (32 bits): 26 used, 6 free */
+/* cptr->umodes (32 bits): 25 used, 7 free */
 long UMODE_INVISIBLE = 0L;     /* makes user invisible */
 long UMODE_OPER = 0L;          /* Operator */
 long UMODE_WALLOP = 0L;        /* send wallops to them */
@@ -68,7 +68,6 @@ long UMODE_VICTIM = 0L;        /* Intentional Victim */
 long UMODE_DEAF = 0L;          /* Deaf */
 long UMODE_HIDEOPER = 0L;      /* Hide oper mode */
 long UMODE_SETHOST = 0L;       /* Used sethost */
-long UMODE_STRIPBADWORDS = 0L; /* Strip badwords */
 long UMODE_HIDEWHOIS = 0L;     /* Hides channels in /whois */
 long UMODE_NOCTCP = 0L;	       /* Blocks ctcp (except dcc and action) */
 long UMODE_HIDLE = 0L;         /* Hides the idle time of opers */
@@ -146,7 +145,6 @@ void	umode_init(void)
 	UmodeAdd(NULL, 'd', UMODE_GLOBAL, NULL, &UMODE_DEAF);
 	UmodeAdd(NULL, 'H', UMODE_GLOBAL, umode_allow_opers, &UMODE_HIDEOPER);
 	UmodeAdd(NULL, 't', UMODE_GLOBAL, NULL, &UMODE_SETHOST);
-	UmodeAdd(NULL, 'G', UMODE_GLOBAL, NULL, &UMODE_STRIPBADWORDS);
 	UmodeAdd(NULL, 'p', UMODE_GLOBAL, NULL, &UMODE_HIDEWHOIS);
 	UmodeAdd(NULL, 'I', UMODE_GLOBAL, umode_allow_opers, &UMODE_HIDLE);
 	SnomaskAdd(NULL, 'k', umode_allow_all, &SNO_KILLS);

@@ -36,9 +36,6 @@
 #include <fcntl.h>
 #include "h.h"
 #include "proto.h"
-#ifdef STRIPBADWORDS
-#include "badwords.h"
-#endif
 
 /* NOTE: it is guaranteed that char is unsigned by compiling options
  *       (-funsigned-char @ gcc, /J @ MSVC)

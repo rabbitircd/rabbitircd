@@ -403,7 +403,7 @@ extern MODVAR long UMODE_VICTIM;    /* 0x8000000	 Intentional Victim */
 extern MODVAR long UMODE_DEAF;      /* 0x10000000       Deaf */
 extern MODVAR long UMODE_HIDEOPER;  /* 0x20000000	 Hide oper mode */
 extern MODVAR long UMODE_SETHOST;   /* 0x40000000	 used sethost */
-extern MODVAR long UMODE_STRIPBADWORDS; /* 0x80000000	 */
+//UNUSED 0x80000000 was STRIPBADWORDS
 extern MODVAR long UMODE_HIDEWHOIS; /* hides channels in /whois */
 extern MODVAR long UMODE_NOCTCP;    /* blocks all ctcp (except dcc and action) */
 extern MODVAR long UMODE_HIDLE;     /* hides oper idle times */
@@ -426,9 +426,6 @@ extern MODVAR long SNO_OPER;
 
 /* Extended chanmodes... */
 extern MODVAR Cmode_t EXTMODE_NONOTICE;
-#ifdef STRIPBADWORDS
-extern MODVAR Cmode_t EXTMODE_STRIPBADWORDS;
-#endif
 extern MODVAR Cmode_t EXTMODE_JOINTHROTTLE;
 
 #ifndef HAVE_STRLCPY

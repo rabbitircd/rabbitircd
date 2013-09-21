@@ -103,7 +103,6 @@ typedef struct _configitem_except ConfigItem_except;
 typedef struct _configitem_link	ConfigItem_link;
 typedef struct _configitem_cgiirc ConfigItem_cgiirc;
 typedef struct _configitem_ban ConfigItem_ban;
-typedef struct _configitem_badword ConfigItem_badword;
 typedef struct _configitem_deny_dcc ConfigItem_deny_dcc;
 typedef struct _configitem_deny_link ConfigItem_deny_link;
 typedef struct _configitem_deny_channel ConfigItem_deny_channel;
@@ -351,10 +350,6 @@ typedef unsigned int u_int32_t;	/* XXX Hope this works! */
 #define IsKix(x)		((x)->umodes & UMODE_KIX)
 #define IsHelpOp(x)		((x)->umodes & UMODE_HELPOP)
 #define IsAdmin(x)		((x)->umodes & UMODE_ADMIN)
-
-#ifdef STRIPBADWORDS
-#define IsFilteringWords(x)	((x)->umodes & UMODE_STRIPBADWORDS)
-#endif
 #define IsNetAdmin(x)		((x)->umodes & UMODE_NETADMIN)
 #define IsCoAdmin(x)		((x)->umodes & UMODE_COADMIN)
 #define IsSAdmin(x)		((x)->umodes & UMODE_SADMIN)
@@ -1227,24 +1222,6 @@ struct _iplist {
 	IPList *prev, *next;
 	char *mask;
 /*	struct irc_netmask  *netmask; */
-};
-
-#define BADW_TYPE_INVALID 0x0
-#define BADW_TYPE_FAST    0x1
-#define BADW_TYPE_FAST_L  0x2
-#define BADW_TYPE_FAST_R  0x4
-#define BADW_TYPE_REGEX   0x8
-
-#define BADWORD_REPLACE 1
-#define BADWORD_BLOCK 2
-
-struct _configitem_badword {
-	ConfigItem      *prev, *next;
-	ConfigFlag	flag;
-	char		*word, *replace;
-	unsigned short	type;
-	char		action;
-	regex_t 	expr;
 };
 
 struct _configitem_deny_dcc {

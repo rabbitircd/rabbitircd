@@ -61,9 +61,6 @@ MODVAR char serveropts[] = {
 #ifdef INET6
 	'6',
 #endif
-#ifdef STRIPBADWORDS
-	'X',
-#endif
 #ifdef USE_SSL
 	'e',
 #endif

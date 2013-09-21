@@ -55,9 +55,6 @@ Computing Center and Jarkko Oikarinen";
 #endif
 #include "h.h"
 #include "fdlist.h"
-#ifdef STRIPBADWORDS
-#include "badwords.h"
-#endif
 #include "version.h"
 #include "proto.h"
 ID_Copyright
