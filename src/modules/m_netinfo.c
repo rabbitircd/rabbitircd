@@ -127,8 +127,26 @@ DLLFUNC CMD_FUNC(m_netinfo)
 	}
 
 	deltat = abs(endsync - TStime());
-	if (deltat > 5)
+	if (deltat > WARN_TS_DELTA)
 	{
+		if (deltat > MAX_TS_DELTA)
+		{
+			char squitreason[BUFSIZE];
+
+			sendto_realops("Link %s has an excessive TS delta, link dropped [my TS=%ld, their TS=%ld, delta=%ld]",
+				cptr->name, TStime(), endsync, deltat);
+			sendto_server(&me, 0, 0,
+				      "%s SMO o :\2(sync)\2 Link %s has an excessive TS delta, link dropped [my TS=%ld, their TS=%ld, delta=%ld]",
+				      me.name, cptr->name, TStime(), endsync, deltat);
+
+			ircsnprintf(squitreason, sizeof squitreason, "Excessive TS delta [my TS=%ld, their TS=%ld, delta=%ld]",
+				TStime(), endsync, deltat);
+
+			exit_client(cptr, cptr, cptr, squitreason);
+
+			return FLUSH_BUFFER;
+		}
+
 		sendto_realops
 		    ("Link %s has a notable TS delta [my TS=%ld, their TS=%ld, delta=%ld]",
 		    cptr->name, TStime(), endsync, deltat);

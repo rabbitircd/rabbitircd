@@ -1626,6 +1626,8 @@ void config_setdefaultsettings(aConfiguration *i)
 	i->default_ipv6_clone_mask = 64;
 #endif /* INET6 */
 	i->nicklen = NICKLEN;
+	i->warn_ts_delta = 5;
+	i->max_ts_delta = 30;
 }
 
 /* 1: needed for set::options::allow-part-if-shunned,
@@ -7451,6 +7453,14 @@ int	_conf_set(ConfigFile *conf, ConfigEntry *ce)
 			tempiConf.nicklen = v;
 			if (loop.ircd_booted)
 				IsupportSetValue(IsupportFind("NICKLEN"), cep->ce_vardata);
+		}
+		else if (!strcmp(cep->ce_varname, "warn-ts-delta")) {
+			int v = atoi(cep->ce_vardata);
+			tempiConf.warn_ts_delta = v;
+		}
+		else if (!strcmp(cep->ce_varname, "max-ts-delta")) {
+			int v = atoi(cep->ce_vardata);
+			tempiConf.max_ts_delta = v;
 		}
 		else if (!strcmp(cep->ce_varname, "ssl")) {
 #ifdef USE_SSL
