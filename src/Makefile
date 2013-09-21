@@ -28,7 +28,7 @@ OBJS=res.o s_bsd.o auth.o aln.o channel.o cloak.o crule.o dbuf.o \
 	s_misc.o s_numeric.o s_serv.o s_svs.o $(STRTOUL) socket.o \
 	ssl.o s_user.o charsys.o scache.o send.o support.o umodes.o \
 	version.o whowas.o cidr.o random.o extcmodes.o uid.o \
-	extbans.o md5.o api-isupport.o api-command.o
+	extbans.o api-isupport.o api-command.o
 
 SRC=$(OBJS:%.o=%.c)
 
@@ -46,8 +46,7 @@ MY_MAKE = $(MAKE) $(MAKEARGS)
 INCLUDES = ../include/auth.h ../include/badwords.h ../include/channel.h \
 	../include/class.h ../include/common.h ../include/config.h ../include/dbuf.h \
 	../include/dynconf.h ../include/events.h ../include/fdlist.h ../include/h.h \
-	../include/hash.h ../include/inet.h ../include/ircsprintf.h \
-	../include/macros.h ../include/md5.h \
+	../include/hash.h ../include/inet.h ../include/ircsprintf.h ../include/macros.h \
 	../include/modules.h ../include/modversion.h ../include/msg.h \
 	../include/numeric.h ../include/proto.h \
 	../include/resource.h ../include/setup.h ../include/sjoin.h \

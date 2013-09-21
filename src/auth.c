@@ -234,9 +234,9 @@ char *saltstr, *hashstr;
 	r = parsepass(as->data, &saltstr, &hashstr);
 	if (r == 0) /* Old method without salt: b64(MD5(<pass>)) */
 	{
-		char result[16];
+		char result[MD5_DIGEST_LENGTH];
 		
-		DoMD5(result, para, strlen(para));
+		MD5(para, strlen(para), result);
 		if ((i = b64_encode(result, sizeof(result), buf, sizeof(buf))))
 		{
 			if (!strcmp(buf, as->data))
@@ -247,8 +247,8 @@ char *saltstr, *hashstr;
 			return -1;
 	} else {
 		/* New method with salt: b64(MD5(MD5(<pass>)+salt)) */
-		char result1[MAXSALTLEN+16+1];
-		char result2[16];
+		char result1[MD5_DIGEST_LENGTH*2];
+		char result2[MD5_DIGEST_LENGTH];
 		char rsalt[MAXSALTLEN+1];
 		int rsaltlen;
 		
@@ -258,13 +258,13 @@ char *saltstr, *hashstr;
 			return -1;
 		
 		/* Then hash the password (1st round)... */
-		DoMD5(result1, para, strlen(para));
+		MD5(para, strlen(para), result1);
 
 		/* Add salt to result */
-		memcpy(result1+16, rsalt, rsaltlen); /* b64_decode already made sure bounds are ok */
+		memcpy(result1+MD5_DIGEST_LENGTH, rsalt, MD5_DIGEST_LENGTH); //excess bytes will be ignored
 
 		/* Then hash it all together again (2nd round)... */
-		DoMD5(result2, result1, rsaltlen+16);
+		MD5(result1, rsaltlen+MD5_DIGEST_LENGTH, result2);
 		
 		/* Then base64 encode it all and we are done... */
 		if ((i = b64_encode(result2, sizeof(result2), buf, sizeof(buf))))

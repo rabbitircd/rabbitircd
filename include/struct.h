@@ -51,7 +51,6 @@
 #ifdef STDDEFH
 # include <stddef.h>
 #endif
-#include "md5.h"
 
 #ifdef HAVE_SYSLOG
 # include <syslog.h>

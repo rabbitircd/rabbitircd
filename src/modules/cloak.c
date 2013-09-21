@@ -196,7 +196,7 @@ int errors = 0;
 DLLFUNC int cloak_config_run(ConfigFile *cf, ConfigEntry *ce, int type)
 {
 ConfigEntry *cep;
-char buf[512], result[16];
+char buf[512], result[MD5_DIGEST_LENGTH];
 
 	if (type != CONFIG_CLOAKKEYS)
 		return 0;
@@ -211,7 +211,7 @@ char buf[512], result[16];
 
 	/* Calculate checksum */
 	ircsnprintf(buf, sizeof(buf), "%s:%s:%s", KEY1, KEY2, KEY3);
-	DoMD5(result, buf, strlen(buf));
+	MD5(buf, strlen(buf), result);
 	ircsnprintf(cloak_checksum, sizeof(cloak_checksum),
 		"MD5:%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x",
 		(u_int)(result[0] & 0xf), (u_int)(result[0] >> 4),
@@ -294,7 +294,7 @@ unsigned int alpha, beta, gamma;
 
 	/* ALPHA... */
 	ircsnprintf(buf, sizeof(buf), "%s:%s:%s", KEY2, host, KEY3);
-	DoMD5(res, buf, strlen(buf));
+	MD5(buf, strlen(buf), res);
 	strlcpy(res+16, KEY1, sizeof(res)-16); /* first 16 bytes are filled, append our key.. */
 	n = strlen(res+16) + 16;
 	DoMD5(res2, res, n);
@@ -302,18 +302,18 @@ unsigned int alpha, beta, gamma;
 
 	/* BETA... */
 	ircsnprintf(buf, sizeof(buf), "%s:%d.%d.%d:%s", KEY3, a, b, c, KEY1);
-	DoMD5(res, buf, strlen(buf));
+	MD5(buf, strlen(buf), res);
 	strlcpy(res+16, KEY2, sizeof(res)-16); /* first 16 bytes are filled, append our key.. */
 	n = strlen(res+16) + 16;
-	DoMD5(res2, res, n);
+	MD5(res, n, res2);
 	beta = downsample(res2);
 
 	/* GAMMA... */
 	ircsnprintf(buf, sizeof(buf), "%s:%d.%d:%s", KEY1, a, b, KEY2);
-	DoMD5(res, buf, strlen(buf));
+	MD5(buf, strlen(buf), res);
 	strlcpy(res+16, KEY3, sizeof(res)-16); /* first 16 bytes are filled, append our key.. */
 	n = strlen(res+16) + 16;
-	DoMD5(res2, res, n);
+	MD5(res, n, res2);
 	gamma = downsample(res2);
 
 	ircsnprintf(result, sizeof(result), "%X.%X.%X.IP", alpha, beta, gamma);
@@ -342,26 +342,26 @@ unsigned int alpha, beta, gamma;
 
 	/* ALPHA... */
 	ircsnprintf(buf, sizeof(buf), "%s:%s:%s", KEY2, host, KEY3);
-	DoMD5(res, buf, strlen(buf));
+	MD5(buf, strlen(buf), res);
 	strlcpy(res+16, KEY1, sizeof(res)-16); /* first 16 bytes are filled, append our key.. */
 	n = strlen(res+16) + 16;
-	DoMD5(res2, res, n);
+	MD5(res, n, res2);
 	alpha = downsample(res2);
 
 	/* BETA... */
 	ircsnprintf(buf, sizeof(buf), "%s:%x:%x:%x:%x:%x:%x:%x:%s", KEY3, a, b, c, d, e, f, g, KEY1);
-	DoMD5(res, buf, strlen(buf));
+	MD5(buf, strlen(buf), res);
 	strlcpy(res+16, KEY2, sizeof(res)-16); /* first 16 bytes are filled, append our key.. */
 	n = strlen(res+16) + 16;
-	DoMD5(res2, res, n);
+	MD5(res, n, res2);
 	beta = downsample(res2);
 
 	/* GAMMA... */
 	ircsnprintf(buf, sizeof(buf), "%s:%x:%x:%x:%x:%s", KEY1, a, b, c, d, KEY2);
-	DoMD5(res, buf, strlen(buf));
+	MD5(buf, strlen(buf), res);
 	strlcpy(res+16, KEY3, sizeof(res)-16); /* first 16 bytes are filled, append our key.. */
 	n = strlen(res+16) + 16;
-	DoMD5(res2, res, n);
+	MD5(res, n, res2);
 	gamma = downsample(res2);
 
 	ircsnprintf(result, sizeof(result), "%X:%X:%X:IP", alpha, beta, gamma);
@@ -375,10 +375,10 @@ static char buf[512], res[512], res2[512], result[HOSTLEN+1];
 unsigned int alpha, n;
 
 	ircsnprintf(buf, sizeof(buf), "%s:%s:%s", KEY1, host, KEY2);
-	DoMD5(res, buf, strlen(buf));
+	MD5(buf, strlen(buf), res);
 	strlcpy(res+16, KEY3, sizeof(res)-16); /* first 16 bytes are filled, append our key.. */
 	n = strlen(res+16) + 16;
-	DoMD5(res2, res, n);
+	MD5(res, n, res2);
 	alpha = downsample(res2);
 
 	for (p = host; *p; p++)
