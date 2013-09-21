@@ -2,6 +2,8 @@
 
 PWD=`pwd`
 
+exit 1
+
 bash autogen.sh || exit 1
 ./configure \
 	--with-showlistmodes \
