@@ -312,7 +312,7 @@ char  *Module_Create(char *path_)
 
 	if (!file_exists(path))
 	{
-		snprintf(errorbuf, sizeof(errorbuf), "Cannot open module file: %s", strerror(errno));
+		snprintf(errorbuf, sizeof(errorbuf), "Cannot open module file %s: %s", path, strerror(errno));
 		return errorbuf;
 	}
 	/* For OpenBSD, do not do a hardlinkink attempt first because it checks inode
