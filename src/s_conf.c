@@ -246,6 +246,7 @@ static OperFlag _LinkFlags[] = {
 static OperFlag _LogFlags[] = {
 	{ LOG_CHGCMDS, "chg-commands" },
 	{ LOG_CLIENT, "connects" },
+	{ LOG_DEBUG, "debug" },
 	{ LOG_ERROR, "errors" },
 	{ LOG_KILL, "kills" },
 	{ LOG_KLINE, "kline" },
