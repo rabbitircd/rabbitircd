@@ -264,6 +264,20 @@ char *chm_badwords_pre_local_part(aClient *cptr, aChannel *chptr, char *text)
 	return stripbadwords(text, conf_badword_channel, &blocked);
 }
 
+char *chm_badwords_pre_local_quit(aClient *cptr, char *text)
+{
+	Membership *lp;
+	int blocked = 0;
+
+	for (lp = cptr->user->channel; lp; lp = lp->next)
+	{
+		if ((lp->chptr->mode.extmode & EXTMODE_BADWORDS))
+			return stripbadwords(text, conf_badword_quit, &blocked);
+	}
+
+	return text;
+}
+
 /************************************************************************************
  * module initialization                                                            *
  ************************************************************************************/
@@ -296,6 +310,7 @@ DLLFUNC int MOD_INIT(chm_badwords)(ModuleInfo *modinfo)
 	HookAddPCharEx(modinfo->handle, HOOKTYPE_USERMSG, chm_badwords_usermsg);
 	HookAddPCharEx(modinfo->handle, HOOKTYPE_CHANMSG, chm_badwords_chanmsg);
 	HookAddPCharEx(modinfo->handle, HOOKTYPE_PRE_LOCAL_PART, chm_badwords_pre_local_part);
+	HookAddPCharEx(modinfo->handle, HOOKTYPE_PRE_LOCAL_QUIT, chm_badwords_pre_local_quit);
 
         return MOD_SUCCESS;
 }
