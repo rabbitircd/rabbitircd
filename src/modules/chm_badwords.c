@@ -189,12 +189,58 @@ int chm_badwords_config_run(ConfigFile *cf, ConfigEntry *ce, int type)
 	return 1;
 }
 
+int chm_badwords_config_test(ConfigFile *cf, ConfigEntry *ce, int type, int *errors)
+{
+	ConfigEntry *cep;
+	bool has_word = false;
+
+	if (type != CONFIG_MAIN)
+		return 1;
+
+	if (!ce->ce_vardata)
+	{
+		config_error("%s:%i: badword without type",
+			ce->ce_fileptr->cf_filename, ce->ce_varlinenum);
+		return 1;
+	}
+	else if (strcmp(ce->ce_vardata, "channel") && strcmp(ce->ce_vardata, "message") &&
+		strcmp(ce->ce_vardata, "quit") && strcmp(ce->ce_vardata, "all"))
+	{
+		config_error("%s:%i: badword with unknown type",
+			ce->ce_fileptr->cf_filename, ce->ce_varlinenum);
+		return 1;
+	}
+
+	for (cep = ce->ce_entries; cep; cep = cep->ce_next)
+	{
+		if (config_is_blankorempty(cep, "badword"))
+		{
+			*errors++;
+			continue;
+		}
+
+		if (!strcmp(cep->ce_varname, "word"))
+			has_word = true;
+	}
+
+	if (!has_word)
+	{
+		config_error("%s:%i: badword::word is missing",
+			ce->ce_fileptr->cf_filename, ce->ce_varlinenum);
+		*errors++;
+	}
+
+	return *errors;
+}
+
 DLLFUNC int MOD_TEST(chm_badwords)(ModuleInfo* modinfo) {
         MARK_AS_OFFICIAL_MODULE(modinfo);
 
         EfunctionAddPChar(modinfo->handle, EFUNC_STRIPBADWORDS_CHANNEL, _stripbadwords_channel);
         EfunctionAddPChar(modinfo->handle, EFUNC_STRIPBADWORDS_MESSAGE, _stripbadwords_message);
         EfunctionAddPChar(modinfo->handle, EFUNC_STRIPBADWORDS_QUIT, _stripbadwords_quit);
+
+	HookAddEx(modinfo->handle, HOOKTYPE_CONFIGTEST, chm_badwords_config_test);
 
 	return MOD_SUCCESS;
 }
