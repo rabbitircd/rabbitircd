@@ -18,6 +18,7 @@
  */
 
 #include <stdio.h>
+#include <stdbool.h>
 #include <string.h>
 #include <assert.h>
 #include "struct.h"
@@ -46,9 +47,9 @@ struct _configitem_badword {
 };
 typedef struct _configitem_badword ConfigItem_badword;
 
-ConfigItem_badword* conf_badword_channel = 0;
-ConfigItem_badword* conf_badword_message = 0;
-ConfigItem_badword* conf_badword_quit = 0;
+static ConfigItem_badword *conf_badword_channel = NULL;
+static ConfigItem_badword *conf_badword_message = NULL;
+static ConfigItem_badword *conf_badword_quit = NULL;
 
 static Cmode_t EXTMODE_BADWORDS = 0L;
 
@@ -63,9 +64,64 @@ static int chm_badwords_is_ok(aClient *cptr, aChannel *chptr, char *para, int ch
 	return EX_ALLOW;
 }
 
-char* stripbadwords(char *str, ConfigItem_badword *start_bw, int *blocked) {
-        *blocked = 0;
-        return str;
+static bool replace_one_word(const char *origstr, char *outstr, size_t outlen,
+	const char *search, const char *replacement)
+{
+	const char *source_p;
+	char *target_p;
+	int slen, dlen;
+
+	/* Check for NULL */
+	if (search == NULL)
+		return false;
+	if (replacement == NULL)
+		replacement = "<censored>";
+
+	outstr[0] = '\0';
+	source_p = origstr;
+	target_p = outstr;
+	slen = strlen(search);
+	dlen = strlen(replacement);
+
+	while (*source_p != '\0')
+	{
+		if (strncasecmp(source_p, search, slen) == 0)
+		{
+			*target_p = '\0';
+			memcpy(target_p, replacement, MIN(dlen, outlen - (ptrdiff_t)(target_p - outstr)));
+			target_p += dlen;
+			source_p += slen;
+		}
+		else if ((target_p - outstr) < outlen)
+		{
+			*target_p = *source_p;
+			target_p++;
+			source_p++;
+		}
+		else
+			break;
+	}
+
+	*target_p = '\0';
+	return true;
+}
+
+char *stripbadwords(char *str, ConfigItem_badword *start_bw, int *blocked)
+{
+	static char workbuf[BUFSIZE], outbuf[BUFSIZE];
+
+	*blocked = 0;
+
+	strlcpy(workbuf, str, sizeof workbuf);
+	memset(outbuf, 0, sizeof outbuf);
+
+	for (; start_bw != NULL; start_bw = (ConfigItem_badword *) start_bw->next)
+	{
+		if (replace_one_word(workbuf, outbuf, sizeof outbuf, start_bw->word, start_bw->replace))
+			*blocked = 1;
+	}
+
+	return outbuf;
 }
 
 char *_stripbadwords_channel(char *str, int *blocked)
