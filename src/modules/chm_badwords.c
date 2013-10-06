@@ -41,9 +41,6 @@ struct _configitem_badword {
         ConfigItem      *prev, *next;
         ConfigFlag      flag;
         char            *word, *replace;
-        unsigned short  type;
-        char            action;
-        regex_t         expr;
 };
 typedef struct _configitem_badword ConfigItem_badword;
 
@@ -142,6 +139,56 @@ extern MODVAR char *(*stripbadwords_channel)(char *str, int *blocked);
 extern MODVAR char *(*stripbadwords_message)(char *str, int *blocked);
 extern MODVAR char *(*stripbadwords_quit)(char *str, int *blocked);
 
+static ConfigItem_badword *copy_badword_struct(ConfigItem_badword *ca)
+{
+	ConfigItem_badword *out = MyMalloc(sizeof(ConfigItem_badword));
+
+	memcpy(out, ca, sizeof(ConfigItem_badword));
+	out->word = strdup(ca->word);
+
+	if (ca->replace)
+		out->replace = strdup(ca->replace);
+
+	return out;
+}
+
+int chm_badwords_config_run(ConfigFile *cf, ConfigEntry *ce, int type)
+{
+	ConfigItem_badword *ca;
+	ConfigEntry *cep;
+
+	if (type != CONFIG_MAIN)
+		return 1;
+
+	if (strcasecmp(ce->ce_varname, "badword"))
+		return 1;
+
+	ca = MyMallocEx(sizeof(ConfigItem_badword));
+
+	for (cep = ce->ce_entries; cep != NULL; cep = cep->ce_next)
+	{
+		if (!strcasecmp(cep->ce_varname, "replace"))
+			ca->replace = strdup(cep->ce_vardata);
+		else if (!strcasecmp(cep->ce_varname, "word"))
+			ca->word = strdup(cep->ce_vardata);
+	}
+
+	if (!strcasecmp(ce->ce_vardata, "channel"))
+		AddListItem(ca, conf_badword_channel);
+	else if (!strcasecmp(ce->ce_vardata, "message"))
+		AddListItem(ca, conf_badword_message);
+	else if (!strcasecmp(ce->ce_vardata, "quit"))
+		AddListItem(ca, conf_badword_quit);
+	else if (!strcasecmp(ce->ce_vardata, "all"))
+	{
+		AddListItem(ca, conf_badword_channel);
+		AddListItem(copy_badword_struct(ca), conf_badword_message);
+		AddListItem(copy_badword_struct(ca), conf_badword_quit);
+	}
+
+	return 1;
+}
+
 DLLFUNC int MOD_TEST(chm_badwords)(ModuleInfo* modinfo) {
         MARK_AS_OFFICIAL_MODULE(modinfo);
 
@@ -161,6 +208,8 @@ DLLFUNC int MOD_INIT(chm_badwords)(ModuleInfo *modinfo)
 	chm_badwords.flag = 'G';
 	chm_badwords.is_ok = chm_badwords_is_ok;
 	CmodeAdd(modinfo->handle, chm_badwords, &EXTMODE_BADWORDS);
+
+	HookAddEx(modinfo->handle, HOOKTYPE_CONFIGRUN, chm_badwords_config_run);
 
         return MOD_SUCCESS;
 }
