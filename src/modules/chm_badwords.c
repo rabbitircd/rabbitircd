@@ -26,7 +26,6 @@
 #include "numeric.h"
 #include "sys.h"
 #include "h.h"
-#include "m_cap.h"
 
 ModuleHeader MOD_HEADER(chm_badwords)
   = {
@@ -49,6 +48,7 @@ static ConfigItem_badword *conf_badword_message = NULL;
 static ConfigItem_badword *conf_badword_quit = NULL;
 
 static Cmode_t EXTMODE_BADWORDS = 0L;
+static long UMODE_STRIPBADWORDS = 0L;
 
 static int chm_badwords_is_ok(aClient *cptr, aChannel *chptr, char *para, int checkt, int what)
 {
@@ -60,6 +60,10 @@ static int chm_badwords_is_ok(aClient *cptr, aChannel *chptr, char *para, int ch
 
 	return EX_ALLOW;
 }
+
+/************************************************************************************
+ * stripbadwords()                                                                  *
+ ************************************************************************************/
 
 static bool replace_one_word(const char *origstr, char *outstr, size_t outlen,
 	const char *search, const char *replacement)
@@ -135,9 +139,9 @@ char *_stripbadwords_quit(char *str, int *blocked)
         return stripbadwords(str, conf_badword_quit, blocked);
 }
 
-extern MODVAR char *(*stripbadwords_channel)(char *str, int *blocked);
-extern MODVAR char *(*stripbadwords_message)(char *str, int *blocked);
-extern MODVAR char *(*stripbadwords_quit)(char *str, int *blocked);
+/************************************************************************************
+ * config management                                                                *
+ ************************************************************************************/
 
 static ConfigItem_badword *copy_badword_struct(ConfigItem_badword *ca)
 {
@@ -213,12 +217,6 @@ int chm_badwords_config_test(ConfigFile *cf, ConfigEntry *ce, int type, int *err
 
 	for (cep = ce->ce_entries; cep; cep = cep->ce_next)
 	{
-		if (config_is_blankorempty(cep, "badword"))
-		{
-			*errors++;
-			continue;
-		}
-
 		if (!strcmp(cep->ce_varname, "word"))
 			has_word = true;
 	}
@@ -233,12 +231,29 @@ int chm_badwords_config_test(ConfigFile *cf, ConfigEntry *ce, int type, int *err
 	return *errors;
 }
 
-DLLFUNC int MOD_TEST(chm_badwords)(ModuleInfo* modinfo) {
-        MARK_AS_OFFICIAL_MODULE(modinfo);
+/************************************************************************************
+ * message hooks                                                                    *
+ ************************************************************************************/
+char *chm_badwords_usermsg(aClient *cptr, aClient *sptr, aClient *acptr, char *text, int notice)
+{
+	int blocked = 0;
 
-        EfunctionAddPChar(modinfo->handle, EFUNC_STRIPBADWORDS_CHANNEL, _stripbadwords_channel);
-        EfunctionAddPChar(modinfo->handle, EFUNC_STRIPBADWORDS_MESSAGE, _stripbadwords_message);
-        EfunctionAddPChar(modinfo->handle, EFUNC_STRIPBADWORDS_QUIT, _stripbadwords_quit);
+	if (!(acptr->umodes & UMODE_STRIPBADWORDS))
+		return text;
+
+	return stripbadwords(text, conf_badword_quit, &blocked);
+}
+
+/************************************************************************************
+ * module initialization                                                            *
+ ************************************************************************************/
+
+DLLFUNC int MOD_TEST(chm_badwords)(ModuleInfo* modinfo) {
+	MARK_AS_OFFICIAL_MODULE(modinfo);
+
+	EfunctionAddPChar(modinfo->handle, EFUNC_STRIPBADWORDS_CHANNEL, _stripbadwords_channel);
+	EfunctionAddPChar(modinfo->handle, EFUNC_STRIPBADWORDS_MESSAGE, _stripbadwords_message);
+	EfunctionAddPChar(modinfo->handle, EFUNC_STRIPBADWORDS_QUIT, _stripbadwords_quit);
 
 	HookAddEx(modinfo->handle, HOOKTYPE_CONFIGTEST, chm_badwords_config_test);
 
@@ -254,8 +269,11 @@ DLLFUNC int MOD_INIT(chm_badwords)(ModuleInfo *modinfo)
 	chm_badwords.flag = 'G';
 	chm_badwords.is_ok = chm_badwords_is_ok;
 	CmodeAdd(modinfo->handle, chm_badwords, &EXTMODE_BADWORDS);
+	UmodeAdd(modinfo->handle, 'G', UMODE_GLOBAL, NULL, &UMODE_STRIPBADWORDS);
 
 	HookAddEx(modinfo->handle, HOOKTYPE_CONFIGRUN, chm_badwords_config_run);
+
+	HookAddPCharEx(modinfo->handle, HOOKTYPE_USERMSG, chm_badwords_usermsg);
 
         return MOD_SUCCESS;
 }
