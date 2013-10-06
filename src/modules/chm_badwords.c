@@ -107,36 +107,19 @@ static bool replace_one_word(const char *origstr, char *outstr, size_t outlen,
 	return true;
 }
 
-char *stripbadwords(char *str, ConfigItem_badword *start_bw, int *blocked)
+static inline char *stripbadwords(char *str, ConfigItem_badword *start_bw)
 {
 	static char workbuf[BUFSIZE], outbuf[BUFSIZE];
-
-	*blocked = 0;
 
 	strlcpy(workbuf, str, sizeof workbuf);
 	memset(outbuf, 0, sizeof outbuf);
 
 	for (; start_bw != NULL; start_bw = (ConfigItem_badword *) start_bw->next)
 	{
-		if (replace_one_word(workbuf, outbuf, sizeof outbuf, start_bw->word, start_bw->replace))
-			*blocked = 1;
+		replace_one_word(workbuf, outbuf, sizeof outbuf, start_bw->word, start_bw->replace);
 	}
 
 	return outbuf;
-}
-
-char *_stripbadwords_channel(char *str, int *blocked)
-{
-        return stripbadwords(str, conf_badword_channel, blocked);
-}
-
-char *_stripbadwords_message(char *str, int *blocked)
-{
-        return stripbadwords(str, conf_badword_message, blocked);
-}
-char *_stripbadwords_quit(char *str, int *blocked)
-{
-        return stripbadwords(str, conf_badword_quit, blocked);
 }
 
 /************************************************************************************
@@ -236,43 +219,36 @@ int chm_badwords_config_test(ConfigFile *cf, ConfigEntry *ce, int type, int *err
  ************************************************************************************/
 char *chm_badwords_usermsg(aClient *cptr, aClient *sptr, aClient *acptr, char *text, int notice)
 {
-	int blocked = 0;
-
 	if (!(acptr->umodes & UMODE_STRIPBADWORDS))
 		return text;
 
-	return stripbadwords(text, conf_badword_quit, &blocked);
+	return stripbadwords(text, conf_badword_message);
 }
 
 char *chm_badwords_chanmsg(aClient *cptr, aClient *sptr, aChannel *chptr, char *text, int notice)
 {
-	int blocked = 0;
-
 	if (!(chptr->mode.extmode & EXTMODE_BADWORDS))
 		return text;
 
-	return stripbadwords(text, conf_badword_channel, &blocked);
+	return stripbadwords(text, conf_badword_channel);
 }
 
 char *chm_badwords_pre_local_part(aClient *cptr, aChannel *chptr, char *text)
 {
-	int blocked = 0;
-
 	if (!(chptr->mode.extmode & EXTMODE_BADWORDS))
 		return text;
 
-	return stripbadwords(text, conf_badword_channel, &blocked);
+	return stripbadwords(text, conf_badword_channel);
 }
 
 char *chm_badwords_pre_local_quit(aClient *cptr, char *text)
 {
 	Membership *lp;
-	int blocked = 0;
 
 	for (lp = cptr->user->channel; lp; lp = lp->next)
 	{
 		if ((lp->chptr->mode.extmode & EXTMODE_BADWORDS))
-			return stripbadwords(text, conf_badword_quit, &blocked);
+			return stripbadwords(text, conf_badword_quit);
 	}
 
 	return text;
@@ -284,10 +260,6 @@ char *chm_badwords_pre_local_quit(aClient *cptr, char *text)
 
 DLLFUNC int MOD_TEST(chm_badwords)(ModuleInfo* modinfo) {
 	MARK_AS_OFFICIAL_MODULE(modinfo);
-
-	EfunctionAddPChar(modinfo->handle, EFUNC_STRIPBADWORDS_CHANNEL, _stripbadwords_channel);
-	EfunctionAddPChar(modinfo->handle, EFUNC_STRIPBADWORDS_MESSAGE, _stripbadwords_message);
-	EfunctionAddPChar(modinfo->handle, EFUNC_STRIPBADWORDS_QUIT, _stripbadwords_quit);
 
 	HookAddEx(modinfo->handle, HOOKTYPE_CONFIGTEST, chm_badwords_config_test);
 

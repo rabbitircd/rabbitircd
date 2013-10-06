@@ -99,9 +99,6 @@ int (*dospamfilter)(aClient *sptr, char *str_in, int type, char *target, int fla
 int (*dospamfilter_viruschan)(aClient *sptr, aTKline *tk, int type);
 int  (*find_tkline_match_zap_ex)(aClient *cptr, aTKline **rettk);
 void (*send_list)(aClient *cptr, int numsend);
-char *(*stripbadwords_channel)(char *str, int *blocked);
-char *(*stripbadwords_message)(char *str, int *blocked);
-char *(*stripbadwords_quit)(char *str, int *blocked);
 unsigned char *(*StripColors)(unsigned char *text);
 const char *(*StripControlCodes)(unsigned char *text);
 void (*spamfilter_build_user_string)(char *buf, char *nick, aClient *acptr);
@@ -139,9 +136,9 @@ static const EfunctionsList efunction_table[MAXEFUNCTIONS] = {
 /* 25 */	{"dospamfilter_viruschan", (void *)&dospamfilter_viruschan},
 /* 26 */	{"find_tkline_match_zap_ex", (void *)&find_tkline_match_zap_ex},
 /* 27 */	{"send_list", (void *)&send_list},
-/* 28 */	{"stripbadwords_channel", (void *)&stripbadwords_channel},
-/* 29 */	{"stripbadwords_message", (void *)&stripbadwords_message},
-/* 30 */	{"stripbadwords_quit", (void *)&stripbadwords_quit},
+/* 28 */	{NULL, NULL},
+/* 29 */	{NULL, NULL},
+/* 30 */	{NULL, NULL},
 /* 31 */	{"StripColors", (void *)&StripColors},
 /* 32 */	{"StripControlCodes", (void *)&StripControlCodes},
 /* 33 */	{"spamfilter_build_user_string", (void *)&spamfilter_build_user_string},
