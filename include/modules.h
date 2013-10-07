@@ -610,8 +610,6 @@ int CallCmdoverride(Cmdoverride *ovr, aClient *cptr, aClient *sptr, int parc, ch
 #define HOOKTYPE_SERVER_QUIT 12
 #define HOOKTYPE_STATS 13
 #define HOOKTYPE_LOCAL_JOIN 14
-#define HOOKTYPE_CONFIGTEST 15
-#define HOOKTYPE_CONFIGRUN 16
 /* If you ever change the number of usermsg & chanmsg, notify Syzop first, kthx! ;p */
 #define HOOKTYPE_USERMSG 17
 #define HOOKTYPE_CHANMSG 18

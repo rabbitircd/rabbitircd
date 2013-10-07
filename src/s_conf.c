@@ -4196,17 +4196,6 @@ int	_conf_allow(ConfigFile *conf, ConfigEntry *ce)
 			return (_conf_allow_channel(conf, ce));
 		else if (!strcmp(ce->ce_vardata, "dcc"))
 			return (_conf_allow_dcc(conf, ce));
-		else
-		{
-			int value;
-			for (h = Hooks[HOOKTYPE_CONFIGRUN]; h; h = h->next)
-			{
-				value = (*(h->func.intfunc))(conf,ce,CONFIG_ALLOW);
-				if (value == 1)
-					break;
-			}
-			return 0;
-		}
 	}
 	allow = MyMallocEx(sizeof(ConfigItem_allow));
 	
@@ -4289,42 +4278,6 @@ int	_test_allow(ConfigFile *conf, ConfigEntry *ce)
 			return (_test_allow_channel(conf, ce));
 		else if (!strcmp(ce->ce_vardata, "dcc"))
 			return (_test_allow_dcc(conf, ce));
-		else
-		{
-			int used = 0;
-			for (h = Hooks[HOOKTYPE_CONFIGTEST]; h; h = h->next) 
-			{
-				int value, errs = 0;
-				if (h->owner && !(h->owner->flags & MODFLAG_TESTING)
-				    && !(h->owner->options & MOD_OPT_PERM))
-					continue;
-				value = (*(h->func.intfunc))(conf,ce,CONFIG_ALLOW,&errs);
-				if (value == 2)
-					used = 1;
-				if (value == 1)
-				{
-					used = 1;
-					break;
-				}
-				if (value == -1)
-				{
-					used = 1;
-					errors += errs;
-					break;
-				}
-				if (value == -2)
-				{
-					used = 1;
-					errors += errs;
-				}
-			}
-			if (!used) {
-				config_error("%s:%i: allow item with unknown type",
-					ce->ce_fileptr->cf_filename, ce->ce_varlinenum);
-				return 1;
-			}
-			return errors;
-		}
 	}
 
 	for (cep = ce->ce_entries; cep; cep = cep->ce_next)
@@ -4739,15 +4692,6 @@ int     _conf_except(ConfigFile *conf, ConfigEntry *ce)
 				create_tkl_except(mask->ce_vardata, cepp->ce_varname);
 		}
 	}
-	else {
-		int value;
-		for (h = Hooks[HOOKTYPE_CONFIGRUN]; h; h = h->next)
-		{
-			value = (*(h->func.intfunc))(conf,ce,CONFIG_EXCEPT);
-			if (value == 1)
-				break;
-		}
-	}
 	return 1;
 }
 
@@ -4951,41 +4895,6 @@ int     _test_except(ConfigFile *conf, ConfigEntry *ce)
 			return 1;
 		}
 		return errors;
-	}
-	else {
-		int used = 0;
-		for (h = Hooks[HOOKTYPE_CONFIGTEST]; h; h = h->next) 
-		{
-			int value, errs = 0;
-			if (h->owner && !(h->owner->flags & MODFLAG_TESTING)
-			    && !(h->owner->options & MOD_OPT_PERM))
-				continue;
-			value = (*(h->func.intfunc))(conf,ce,CONFIG_EXCEPT,&errs);
-			if (value == 2)
-				used = 1;
-			if (value == 1)
-			{
-				used = 1;
-				break;
-			}
-			if (value == -1)
-			{
-				used = 1;
-				errors += errs;
-				break;
-			}
-			if (value == -2)
-			{
-				used = 1;
-				errors += errs;
-			}
-		}
-		if (!used) {
-			config_error("%s:%i: unknown except type %s",
-				ce->ce_fileptr->cf_filename, ce->ce_varlinenum, 
-				ce->ce_vardata);
-			return 1;
-		}
 	}
 	return errors;
 }
@@ -6227,17 +6136,6 @@ int     _conf_ban(ConfigFile *conf, ConfigEntry *ce)
 		ca->flag.type = CONF_BAN_VERSION;
 		tempiConf.use_ban_version = 1;
 	}
-	else {
-		int value;
-		free(ca); /* ca isn't used, modules have their own list. */
-		for (h = Hooks[HOOKTYPE_CONFIGRUN]; h; h = h->next)
-		{
-			value = (*(h->func.intfunc))(conf,ce,CONFIG_BAN);
-			if (value == 1)
-				break;
-		}
-		return 0;
-	}
 	for (cep = ce->ce_entries; cep; cep = cep->ce_next)
 	{
 		if (!strcmp(cep->ce_varname, "mask"))
@@ -6289,44 +6187,7 @@ int     _test_ban(ConfigFile *conf, ConfigEntry *ce)
 	{}
 	else if (!strcmp(ce->ce_vardata, "version"))
 		type = 'v';
-	else
-	{
-		int used = 0;
-		for (h = Hooks[HOOKTYPE_CONFIGTEST]; h; h = h->next) 
-		{
-			int value, errs = 0;
-			if (h->owner && !(h->owner->flags & MODFLAG_TESTING)
-			    && !(h->owner->options & MOD_OPT_PERM))
-				continue;
-			value = (*(h->func.intfunc))(conf,ce,CONFIG_BAN, &errs);
-			if (value == 2)
-				used = 1;
-			if (value == 1)
-			{
-				used = 1;
-				break;
-			}
-			if (value == -1)
-			{
-				used = 1;
-				errors += errs;
-				break;
-			}
-			if (value == -2)
-			{
-				used = 1;
-				errors += errs;
-			}
-		}
-		if (!used) {
-			config_error("%s:%i: unknown ban type %s",
-				ce->ce_fileptr->cf_filename, ce->ce_varlinenum,
-				ce->ce_vardata);
-			return 1;
-		}
-		return errors;
-	}
-	
+
 	for (cep = ce->ce_entries; cep; cep = cep->ce_next)
 	{
 		if (config_is_blankorempty(cep, "ban"))
@@ -6852,16 +6713,6 @@ int	_conf_set(ConfigFile *conf, ConfigEntry *ce)
 #ifdef INET6
 			tempiConf.default_ipv6_clone_mask = atoi(cep->ce_vardata);
 #endif /* INET6 */
-		}
-		else 
-		{
-			int value;
-			for (h = Hooks[HOOKTYPE_CONFIGRUN]; h; h = h->next)
-			{
-				value = (*(h->func.intfunc))(conf,cep,CONFIG_SET);
-				if (value == 1)
-					break;
-			}
 		}
 	}
 	return 0;
@@ -7801,42 +7652,6 @@ int	_test_set(ConfigFile *conf, ConfigEntry *ce)
 					    cep->ce_fileptr->cf_filename, cep->ce_varlinenum);
 			}
 		}
-		else
-		{
-			int used = 0;
-			for (h = Hooks[HOOKTYPE_CONFIGTEST]; h; h = h->next) 
-			{
-				int value, errs = 0;
-				if (h->owner && !(h->owner->flags & MODFLAG_TESTING) &&
-				                !(h->owner->options & MOD_OPT_PERM))
-					continue;
-				value = (*(h->func.intfunc))(conf,cep,CONFIG_SET, &errs);
-				if (value == 2)
-					used = 1;
-				if (value == 1)
-				{
-					used = 1;
-					break;
-				}
-				if (value == -1)
-				{
-					used = 1;
-					errors += errs;
-					break;
-				}
-				if (value == -2)
-				{
-					used = 1;
-					errors += errs;
-				}
-			}
-			if (!used) {
-				config_error("%s:%i: unknown directive set::%s",
-					cep->ce_fileptr->cf_filename, cep->ce_varlinenum,
-					cep->ce_varname);
-				errors++;
-			}
-		}
 	}
 	return errors;
 }
@@ -8255,17 +8070,7 @@ Hook *h;
 		_conf_deny_link(conf, ce);
 	else if (!strcmp(ce->ce_vardata, "version"))
 		_conf_deny_version(conf, ce);
-	else
-	{
-		int value;
-		for (h = Hooks[HOOKTYPE_CONFIGRUN]; h; h = h->next)
-		{
-			value = (*(h->func.intfunc))(conf,ce,CONFIG_DENY);
-			if (value == 1)
-				break;
-		}
-		return 0;
-	}
+
 	return 0;
 }
 
@@ -8689,43 +8494,6 @@ int     _test_deny(ConfigFile *conf, ConfigEntry *ce)
 				"deny version::flags");
 			errors++;
 		}
-	}
-	else
-	{
-		int used = 0;
-		for (h = Hooks[HOOKTYPE_CONFIGTEST]; h; h = h->next) 
-		{
-			int value, errs = 0;
-			if (h->owner && !(h->owner->flags & MODFLAG_TESTING)
-			    && !(h->owner->options & MOD_OPT_PERM))
-				continue;
-			value = (*(h->func.intfunc))(conf,ce,CONFIG_DENY, &errs);
-			if (value == 2)
-				used = 1;
-			if (value == 1)
-			{
-				used = 1;
-				break;
-			}
-			if (value == -1)
-			{
-				used = 1;
-				errors += errs;
-				break;
-			}
-			if (value == -2)
-			{
-				used = 1;
-				errors += errs;
-			}
-		}
-		if (!used) {
-			config_error("%s:%i: unknown deny type %s",
-				ce->ce_fileptr->cf_filename, ce->ce_varlinenum,
-				ce->ce_vardata);
-			return 1;
-		}
-		return errors;
 	}
 
 	return errors;	
