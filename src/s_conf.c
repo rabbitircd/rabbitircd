@@ -56,6 +56,7 @@ struct _conf_operflag
 };
 
 struct patricia_tree *config_root_ops_tree = NULL;
+struct patricia_tree *config_set_ops_tree = NULL;
 
 /* Config commands */
 static int	_conf_admin		(ConfigFile *conf, ConfigEntry *ce);
@@ -1138,6 +1139,7 @@ struct config_ops *config_lookup_ops(struct patricia_tree *ops_tree, const char 
 static void config_init_ops(void)
 {
 	config_root_ops_tree = patricia_create(patricia_strcasecanon);
+	config_set_ops_tree = patricia_create(patricia_strcasecanon);
 }
 
 static void config_register_builtin_ops(void)
@@ -6399,7 +6401,13 @@ int	_conf_set(ConfigFile *conf, ConfigEntry *ce)
 
 	for (cep = ce->ce_entries; cep; cep = cep->ce_next)
 	{
-		if (!strcmp(cep->ce_varname, "kline-address")) {
+		struct config_ops *ops = config_lookup_ops(config_set_ops_tree, cep->ce_varname);
+
+		if (ops != NULL) {
+			if (ops->config_run != NULL)
+				ops->config_run(conf, ce);
+		}
+		else if (!strcmp(cep->ce_varname, "kline-address")) {
 			ircstrdup(tempiConf.kline_address, cep->ce_vardata);
 		}
 		if (!strcmp(cep->ce_varname, "gline-address")) {
@@ -6699,16 +6707,6 @@ int	_conf_set(ConfigFile *conf, ConfigEntry *ce)
 				}
 			}
 		}
-		else if (!strcmp(cep->ce_varname, "cloak-keys"))
-		{
-			for (h = Hooks[HOOKTYPE_CONFIGRUN]; h; h = h->next)
-			{
-				int value;
-				value = (*(h->func.intfunc))(conf, cep, CONFIG_CLOAKKEYS);
-				if (value == 1)
-					break;
-			}
-		}
 		else if (!strcmp(cep->ce_varname, "ident"))
 		{
 			for (cepp = cep->ce_entries; cepp; cepp = cepp->ce_next)
@@ -6881,6 +6879,8 @@ int	_test_set(ConfigFile *conf, ConfigEntry *ce)
 
 	for (cep = ce->ce_entries; cep; cep = cep->ce_next)
 	{
+		struct config_ops *ops;
+
 		if (!cep->ce_varname)
 		{
 			config_error_blank(cep->ce_fileptr->cf_filename,
@@ -6888,7 +6888,12 @@ int	_test_set(ConfigFile *conf, ConfigEntry *ce)
 			errors++;
 			continue;
 		}
-		if (!strcmp(cep->ce_varname, "kline-address")) {
+
+		if ((ops = config_lookup_ops(config_set_ops_tree, cep->ce_varname)) != NULL) {
+			if (ops->config_test != NULL)
+				errors += ops->config_test(conf, ce);
+			continue;
+		} else if (!strcmp(cep->ce_varname, "kline-address")) {
 			CheckNull(cep);
 			CheckDuplicate(cep, kline_address, "kline-address");
 			if (!strchr(cep->ce_vardata, '@') && !strchr(cep->ce_vardata, ':'))
@@ -7548,28 +7553,6 @@ int	_test_set(ConfigFile *conf, ConfigEntry *ce)
 						continue;
 					}
 				}
-			}
-		}
-		else if (!strcmp(cep->ce_varname, "cloak-keys"))
-		{
-			CheckDuplicate(cep, cloak_keys, "cloak-keys");
-			for (h = Hooks[HOOKTYPE_CONFIGTEST]; h; h = h->next)
-			{
-				int value, errs = 0;
-				if (h->owner && !(h->owner->flags & MODFLAG_TESTING)
-				    && !(h->owner->options & MOD_OPT_PERM))
-					continue;
-				value = (*(h->func.intfunc))(conf, cep, CONFIG_CLOAKKEYS, &errs);
-
-				if (value == 1)
-					break;
-				if (value == -1)
-				{
-					errors += errs;
-					break;
-				}
-				if (value == -2) 
-					errors += errs;
 			}
 		}
 		else if (!strcmp(cep->ce_varname, "scan")) {
