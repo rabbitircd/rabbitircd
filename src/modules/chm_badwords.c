@@ -259,7 +259,7 @@ char *chm_badwords_pre_local_quit(aClient *cptr, char *text)
 DLLFUNC int MOD_TEST(chm_badwords)(ModuleInfo* modinfo) {
 	MARK_AS_OFFICIAL_MODULE(modinfo);
 
-	config_ops_register(config_root_ops_tree, &chm_badwords_config_badword_ops);
+	config_register_ops(config_root_ops_tree, &chm_badwords_config_badword_ops);
 
 	return MOD_SUCCESS;
 }
