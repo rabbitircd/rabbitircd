@@ -1308,7 +1308,7 @@ static int parse_client_queued(aClient *cptr)
 	time_t now = TStime();
 	char buf[BUFSIZE];
 
-	while (DBufLength(&cptr->recvQ) && (cptr->status < STAT_UNKNOWN))
+	while (DBufLength(&cptr->recvQ))
 	{
 		dolen = dbuf_getmsg(&cptr->recvQ, buf);
 
