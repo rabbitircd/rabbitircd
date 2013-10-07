@@ -6405,7 +6405,7 @@ int	_conf_set(ConfigFile *conf, ConfigEntry *ce)
 
 		if (ops != NULL) {
 			if (ops->config_run != NULL)
-				ops->config_run(conf, ce);
+				ops->config_run(conf, cep);
 		}
 		else if (!strcmp(cep->ce_varname, "kline-address")) {
 			ircstrdup(tempiConf.kline_address, cep->ce_vardata);
@@ -6891,7 +6891,7 @@ int	_test_set(ConfigFile *conf, ConfigEntry *ce)
 
 		if ((ops = config_lookup_ops(config_set_ops_tree, cep->ce_varname)) != NULL) {
 			if (ops->config_test != NULL)
-				errors += ops->config_test(conf, ce);
+				errors += ops->config_test(conf, cep);
 			continue;
 		} else if (!strcmp(cep->ce_varname, "kline-address")) {
 			CheckNull(cep);
