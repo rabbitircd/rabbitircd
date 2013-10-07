@@ -48,8 +48,8 @@ static int nokeys = 1;
 
 DLLFUNC char *hidehost(char *host);
 DLLFUNC char *cloakcsum();
-DLLFUNC int cloak_config_test(ConfigFile *, ConfigEntry *, int, int *);
-DLLFUNC int cloak_config_run(ConfigFile *, ConfigEntry *, int);
+DLLFUNC int cloak_config_test(ConfigFile *, ConfigEntry *);
+DLLFUNC int cloak_config_run(ConfigFile *, ConfigEntry *);
 DLLFUNC int cloak_config_posttest(int *);
 
 static char *hidehost_ipv4(char *host);
@@ -68,6 +68,12 @@ ModuleHeader MOD_HEADER(cloak)
   NULL
   };
 
+static struct config_ops cloak_config_ops = {
+	.name = "cloak-keys",
+	.config_run = cloak_config_run,
+	.config_test = cloak_config_test,
+};
+
 DLLFUNC int MOD_TEST(cloak)(ModuleInfo *modinfo)
 {
 	cloak = CallbackAddPCharEx(modinfo->handle, CALLBACKTYPE_CLOAK, hidehost);
@@ -82,7 +88,8 @@ DLLFUNC int MOD_TEST(cloak)(ModuleInfo *modinfo)
 		config_error("cloak: Error while trying to install cloaking checksum callback!");
 		return MOD_FAILED;
 	}
-	HookAddEx(modinfo->handle, HOOKTYPE_CONFIGTEST, cloak_config_test);
+	config_register_ops(config_set_ops_tree, &cloak_config_ops);
+
 	HookAddEx(modinfo->handle, HOOKTYPE_CONFIGPOSTTEST, cloak_config_posttest);
 	return MOD_SUCCESS;
 }
@@ -90,7 +97,6 @@ DLLFUNC int MOD_TEST(cloak)(ModuleInfo *modinfo)
 DLLFUNC int MOD_INIT(cloak)(ModuleInfo *modinfo)
 {
 	MARK_AS_OFFICIAL_MODULE(modinfo);
-	HookAddEx(modinfo->handle, HOOKTYPE_CONFIGRUN, cloak_config_run);
 	return MOD_SUCCESS;
 }
 
@@ -128,14 +134,11 @@ char *p;
 }
 
 
-DLLFUNC int cloak_config_test(ConfigFile *cf, ConfigEntry *ce, int type, int *errs)
+DLLFUNC int cloak_config_test(ConfigFile *cf, ConfigEntry *ce)
 {
 ConfigEntry *cep;
 int keycnt = 0, errors = 0;
 char *keys[3];
-
-	if (type != CONFIG_CLOAKKEYS)
-		return 0;
 
 	nokeys = 0;
 	for (cep = ce->ce_entries; cep; cep = cep->ce_next)
@@ -175,8 +178,8 @@ char *keys[3];
 			ce->ce_fileptr->cf_filename, ce->ce_varlinenum);
 		errors++;
 	}
-	*errs = errors;
-	return errors ? -1 : 1;
+
+	return errors;
 }
 
 DLLFUNC int cloak_config_posttest(int *errs)
@@ -193,13 +196,10 @@ int errors = 0;
 	return errors ? -1 : 1;
 }
 
-DLLFUNC int cloak_config_run(ConfigFile *cf, ConfigEntry *ce, int type)
+DLLFUNC int cloak_config_run(ConfigFile *cf, ConfigEntry *ce)
 {
 ConfigEntry *cep;
 char buf[512], result[MD5_DIGEST_LENGTH];
-
-	if (type != CONFIG_CLOAKKEYS)
-		return 0;
 
 	/* config test should ensure this goes fine... */
 	cep = ce->ce_entries;

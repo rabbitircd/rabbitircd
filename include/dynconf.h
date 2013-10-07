@@ -41,7 +41,8 @@ extern bool config_traverse_run(ConfigFile *cf, ConfigEntry *ce, struct patricia
 extern bool config_traverse_test(ConfigFile *cf, ConfigEntry *ce, struct patricia_tree *ops_tree);
 
 /* builtin ops_trees */
-extern struct patricia_tree *config_root_ops_tree;
+extern MODVAR struct patricia_tree *config_root_ops_tree;
+extern MODVAR struct patricia_tree *config_set_ops_tree;
 
 typedef struct zNetwork aNetwork;
 struct zNetwork {
