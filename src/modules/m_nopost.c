@@ -64,13 +64,20 @@ struct {
 
 static void free_config(void);
 static void init_config(void);
-DLLFUNC int m_nopost_config_test(ConfigFile *, ConfigEntry *, int, int *);
-DLLFUNC int m_nopost_config_run(ConfigFile *, ConfigEntry *, int);
+DLLFUNC int m_nopost_config_test(ConfigFile *, ConfigEntry *);
+DLLFUNC int m_nopost_config_run(ConfigFile *, ConfigEntry *);
 static int is_except_host(aClient *sptr);
+
+static struct config_ops m_nopost_config_ops = {
+	.name = "nopost",
+	.config_run = m_nopost_config_run,
+	.config_test = m_nopost_config_test,
+};
 
 DLLFUNC int MOD_TEST(m_nopost)(ModuleInfo *modinfo)
 {
-	HookAddEx(modinfo->handle, HOOKTYPE_CONFIGTEST, m_nopost_config_test);
+	config_register_ops(config_set_ops_tree, &m_nopost_config_ops);
+
 	return MOD_SUCCESS;
 }
 
@@ -79,7 +86,6 @@ DLLFUNC int MOD_INIT(m_nopost)(ModuleInfo *modinfo)
 	CommandAdd(modinfo->handle, "GET", m_nopost, MAXPARA, M_UNREGISTERED);
 	CommandAdd(modinfo->handle, "POST", m_nopost, MAXPARA, M_UNREGISTERED);
 	CommandAdd(modinfo->handle, "PUT", m_nopost, MAXPARA, M_UNREGISTERED);
-	HookAddEx(modinfo->handle, HOOKTYPE_CONFIGRUN, m_nopost_config_run);
 	MARK_AS_OFFICIAL_MODULE(modinfo);
 	init_config();
 	return MOD_SUCCESS;
@@ -120,14 +126,11 @@ DynList *d, *d_next;
 	memset(&cfg, 0, sizeof(cfg)); /* needed! */
 }
 
-DLLFUNC int m_nopost_config_test(ConfigFile *cf, ConfigEntry *ce, int type, int *errs)
+DLLFUNC int m_nopost_config_test(ConfigFile *cf, ConfigEntry *ce)
 {
 int errors = 0;
 ConfigEntry *cep;
 
-	if (type != CONFIG_SET)
-		return 0;
-	
 	/* We are only interrested in set::nopost... */
 	if (!ce || !ce->ce_varname || strcmp(ce->ce_varname, "nopost"))
 		return 0;
@@ -170,22 +173,19 @@ ConfigEntry *cep;
 			errors++;
 		}
 	}
-	*errs = errors;
-	return errors ? -1 : 1;
+
+	return errors;
 }
 
-DLLFUNC int m_nopost_config_run(ConfigFile *cf, ConfigEntry *ce, int type)
+DLLFUNC int m_nopost_config_run(ConfigFile *cf, ConfigEntry *ce)
 {
 ConfigEntry *cep, *cep2;
 DynList *d;
 
-	if (type != CONFIG_SET)
-		return 0;
-	
 	/* We are only interrested in set::nopost... */
 	if (!ce || !ce->ce_varname || strcmp(ce->ce_varname, "nopost"))
 		return 0;
-	
+
 	for (cep = ce->ce_entries; cep; cep = cep->ce_next)
 	{
 		if (!strcmp(cep->ce_varname, "except-hosts"))
@@ -212,6 +212,7 @@ DynList *d;
 			cfg.ban_time = config_checkval(cep->ce_vardata, CFG_TIME);
 		}
 	}
+
 	return 1;
 }
 
