@@ -145,10 +145,10 @@ int chm_badwords_config_run(ConfigFile *cf, ConfigEntry *ce, int type)
 	ConfigEntry *cep;
 
 	if (type != CONFIG_MAIN)
-		return 1;
+		return 0;
 
 	if (strcasecmp(ce->ce_varname, "badword"))
-		return 1;
+		return 0;
 
 	ca = MyMallocEx(sizeof(ConfigItem_badword));
 
@@ -182,7 +182,7 @@ int chm_badwords_config_test(ConfigFile *cf, ConfigEntry *ce, int type, int *err
 	bool has_word = false;
 
 	if (type != CONFIG_MAIN)
-		return 1;
+		return 0;
 
 	if (!ce->ce_vardata)
 	{
@@ -211,7 +211,7 @@ int chm_badwords_config_test(ConfigFile *cf, ConfigEntry *ce, int type, int *err
 		*errors++;
 	}
 
-	return *errors;
+	return *errors ? -1 : 1;
 }
 
 /************************************************************************************
