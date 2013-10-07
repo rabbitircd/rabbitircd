@@ -40,6 +40,9 @@ extern struct config_ops *config_lookup_ops(struct patricia_tree *ops_tree, cons
 extern bool config_traverse_run(ConfigFile *cf, ConfigEntry *ce, struct patricia_tree *ops_tree);
 extern bool config_traverse_test(ConfigFile *cf, ConfigEntry *ce, struct patricia_tree *ops_tree);
 
+/* builtin ops_trees */
+extern struct patricia_tree *config_root_ops_tree;
+
 typedef struct zNetwork aNetwork;
 struct zNetwork {
 	unsigned x_inah:1;

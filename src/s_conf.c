@@ -55,7 +55,7 @@ struct _conf_operflag
 	char	*name;
 };
 
-static struct patricia_tree *config_root_ops_tree = NULL;
+struct patricia_tree *config_root_ops_tree = NULL;
 
 /* Config commands */
 static int	_conf_admin		(ConfigFile *conf, ConfigEntry *ce);

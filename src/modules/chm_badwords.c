@@ -139,16 +139,10 @@ static ConfigItem_badword *copy_badword_struct(ConfigItem_badword *ca)
 	return out;
 }
 
-int chm_badwords_config_run(ConfigFile *cf, ConfigEntry *ce, int type)
+int chm_badwords_config_badword_run(ConfigFile *cf, ConfigEntry *ce)
 {
 	ConfigItem_badword *ca;
 	ConfigEntry *cep;
-
-	if (type != CONFIG_MAIN)
-		return 0;
-
-	if (strcasecmp(ce->ce_varname, "badword"))
-		return 0;
 
 	ca = MyMallocEx(sizeof(ConfigItem_badword));
 
@@ -176,13 +170,11 @@ int chm_badwords_config_run(ConfigFile *cf, ConfigEntry *ce, int type)
 	return 1;
 }
 
-int chm_badwords_config_test(ConfigFile *cf, ConfigEntry *ce, int type, int *errors)
+int chm_badwords_config_badword_test(ConfigFile *cf, ConfigEntry *ce)
 {
 	ConfigEntry *cep;
 	bool has_word = false;
-
-	if (type != CONFIG_MAIN)
-		return 0;
+	int errors = 0;
 
 	if (!ce->ce_vardata)
 	{
@@ -208,11 +200,17 @@ int chm_badwords_config_test(ConfigFile *cf, ConfigEntry *ce, int type, int *err
 	{
 		config_error("%s:%i: badword::word is missing",
 			ce->ce_fileptr->cf_filename, ce->ce_varlinenum);
-		*errors++;
+		errors++;
 	}
 
-	return *errors ? -1 : 1;
+	return errors;
 }
+
+static struct config_ops chm_badwords_config_badword_ops = {
+	.name = "badword",
+	.config_run = chm_badwords_config_badword_run,
+	.config_test = chm_badwords_config_badword_test,
+};
 
 /************************************************************************************
  * message hooks                                                                    *
@@ -261,7 +259,7 @@ char *chm_badwords_pre_local_quit(aClient *cptr, char *text)
 DLLFUNC int MOD_TEST(chm_badwords)(ModuleInfo* modinfo) {
 	MARK_AS_OFFICIAL_MODULE(modinfo);
 
-	HookAddEx(modinfo->handle, HOOKTYPE_CONFIGTEST, chm_badwords_config_test);
+	config_ops_register(config_root_ops_tree, &chm_badwords_config_badword_ops);
 
 	return MOD_SUCCESS;
 }
@@ -276,8 +274,6 @@ DLLFUNC int MOD_INIT(chm_badwords)(ModuleInfo *modinfo)
 	chm_badwords.is_ok = chm_badwords_is_ok;
 	CmodeAdd(modinfo->handle, chm_badwords, &EXTMODE_BADWORDS);
 	UmodeAdd(modinfo->handle, 'G', UMODE_GLOBAL, NULL, &UMODE_STRIPBADWORDS);
-
-	HookAddEx(modinfo->handle, HOOKTYPE_CONFIGRUN, chm_badwords_config_run);
 
 	HookAddPCharEx(modinfo->handle, HOOKTYPE_USERMSG, chm_badwords_usermsg);
 	HookAddPCharEx(modinfo->handle, HOOKTYPE_CHANMSG, chm_badwords_chanmsg);
