@@ -1152,6 +1152,49 @@ static void config_register_builtin_ops(void)
 		config_register_ops(config_root_ops_tree, &config_builtin_ops[iter]);
 }
 
+bool config_traverse_run(ConfigFile *cf, ConfigEntry *ce, struct patricia_tree *ops_tree)
+{
+	int errors = 0;
+
+	for (; ce != NULL; ce = ce->ce_next)
+	{
+		struct config_ops *ops = config_lookup_ops(ops_tree, ce->ce_varname);
+
+		if (ops == NULL || ops->config_run == NULL)
+			continue;
+
+		if (ops->config_run(cf, ce) < 0)
+			errors++;
+	}
+
+	return (errors == 0);
+}
+
+bool config_traverse_test(ConfigFile *cf, ConfigEntry *ce, struct patricia_tree *ops_tree)
+{
+	int errors = 0;
+
+	for (; ce != NULL; ce = ce->ce_next)
+	{
+		struct config_ops *ops = config_lookup_ops(ops_tree, ce->ce_varname);
+
+		if (ops == NULL)
+		{
+			config_status("%s:%i: unknown directive %s",
+				ce->ce_fileptr->cf_filename, ce->ce_varlinenum,
+				ce->ce_varname);
+			continue;
+		}
+
+		if (ops->config_test == NULL)
+			continue;
+
+		errors += ops->config_test(cf, ce);
+	}
+
+	return (errors == 0);
+}
+
 void	free_iConf(aConfiguration *i)
 {
 	ircfree(i->name_server);
@@ -1989,7 +2032,7 @@ int	config_run()
 {
 	ConfigEntry 	*ce;
 	ConfigFile	*cfptr;
-	struct config_ops	*cc;
+	struct config_ops	*ops;
 	int		errors = 0;
 	Hook *h;
 #ifdef INET6
@@ -1999,23 +2042,8 @@ int	config_run()
 	{
 		if (config_verbose > 1)
 			config_status("Running %s", cfptr->cf_filename);
-		for (ce = cfptr->cf_entries; ce; ce = ce->ce_next)
-		{
-			if ((cc = config_lookup_ops(config_root_ops_tree, ce->ce_varname))) {
-				if ((cc->config_run) && (cc->config_run(cfptr, ce) < 0))
-					errors++;
-			}
-			else
-			{
-				int value;
-				for (h = Hooks[HOOKTYPE_CONFIGRUN]; h; h = h->next)
-				{
-					value = (*(h->func.intfunc))(cfptr,ce,CONFIG_MAIN);
-					if (value == 1)
-						break;
-				}
-			}
-		}
+
+		config_traverse_run(cfptr, cfptr->cf_entries, config_root_ops_tree);
 	}
 #ifdef INET6
 	/*
@@ -2098,58 +2126,9 @@ int	config_test()
 	{
 		if (config_verbose > 1)
 			config_status("Testing %s", cfptr->cf_filename);
-		for (ce = cfptr->cf_entries; ce; ce = ce->ce_next)
-		{
-			if (!ce->ce_varname)
-			{
-				config_error("%s:%i: %s:%i: null ce->ce_varname",
-					ce->ce_fileptr->cf_filename, ce->ce_varlinenum,
-					__FILE__, __LINE__);
-				return -1;
-			}
-			if ((cc = config_lookup_ops(config_root_ops_tree, ce->ce_varname))) {
-				if (cc->config_test)
-					errors += (cc->config_test(cfptr, ce));
-			}
-			else 
-			{
-				int used = 0;
-				for (h = Hooks[HOOKTYPE_CONFIGTEST]; h; h = h->next) 
-				{
-					int value, errs = 0;
-					if (h->owner && !(h->owner->flags & MODFLAG_TESTING)
-					    && !(h->owner->options & MOD_OPT_PERM))
-
-
-						continue;
-					value = (*(h->func.intfunc))(cfptr,ce,CONFIG_MAIN,&errs);
-					if (value == 2)
-						used = 1;
-					if (value == 1)
-					{
-						used = 1;
-						break;
-					}
-					if (value == -1)
-					{
-						used = 1;
-						errors += errs;
-						break;
-					}
-					if (value == -2) 
-					{
-						used = 1;
-						errors += errs;
-					}
-						
-				}
-				if (!used)
-					config_status("%s:%i: unknown directive %s", 
-						ce->ce_fileptr->cf_filename, ce->ce_varlinenum,
-						ce->ce_varname);
-			}
-		}
+		config_traverse_test(cfptr, cfptr->cf_entries, config_root_ops_tree);
 	}
+
 	errors += config_post_test();
 	if (errors > 0)
 	{
