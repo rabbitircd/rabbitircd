@@ -25,6 +25,12 @@
 #define DYNCONF_CONF_VERSION "1.5"
 #define DYNCONF_NETWORK_VERSION "2.2"
 
+struct config_ops {
+	char *name;
+	int (*config_run)(ConfigFile *conf, ConfigEntry *ce);
+	int (*config_test)(ConfigFile *conf, ConfigEntry *ce);
+};
+
 typedef struct zNetwork aNetwork;
 struct zNetwork {
 	unsigned x_inah:1;

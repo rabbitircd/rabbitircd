@@ -46,15 +46,7 @@
 
 /* 
  * Some typedefs..
-*/
-typedef struct _confcommand ConfigCommand;
-struct	_confcommand
-{
-	char	*name;
-	int	(*conffunc)(ConfigFile *conf, ConfigEntry *ce);
-	int 	(*testfunc)(ConfigFile *conf, ConfigEntry *ce);
-};
-
+ */
 typedef struct _conf_operflag OperFlag;
 struct _conf_operflag
 {
@@ -128,12 +120,12 @@ static int	_test_spamfilter	(ConfigFile *conf, ConfigEntry *ce);
 static int	_test_cgiirc	(ConfigFile *conf, ConfigEntry *ce);
  
 /* This MUST be alphabetized */
-static ConfigCommand _ConfigCommands[] = {
+static struct config_ops builtin_config_ops[] = {
 	{ "admin", 		_conf_admin,		_test_admin 	},
 	{ "alias",		_conf_alias,		_test_alias	},
 	{ "allow",		_conf_allow,		_test_allow	},
 	{ "ban", 		_conf_ban,		_test_ban	},
-	{ "cgiirc", 	_conf_cgiirc,	_test_cgiirc	},
+	{ "cgiirc",		_conf_cgiirc,		_test_cgiirc	},
 	{ "class", 		_conf_class,		_test_class	},
 	{ "deny",		_conf_deny,		_test_deny	},
 	{ "drpass",		_conf_drpass,		_test_drpass	},
@@ -146,10 +138,10 @@ static ConfigCommand _ConfigCommands[] = {
 	{ "loadmodule",		NULL,		 	_test_loadmodule},
 	{ "log",		_conf_log,		_test_log	},
 	{ "me", 		_conf_me,		_test_me	},
-	{ "official-channels", 		_conf_offchans,		_test_offchans	},
+	{ "official-channels", 	_conf_offchans,		_test_offchans	},
 	{ "oper", 		_conf_oper,		_test_oper	},
 	{ "set",		_conf_set,		_test_set	},
-	{ "spamfilter",	_conf_spamfilter,	_test_spamfilter	},
+	{ "spamfilter",		_conf_spamfilter,	_test_spamfilter},
 	{ "tld",		_conf_tld,		_test_tld	},
 	{ "ulines",		_conf_ulines,		_test_ulines	},
 	{ "vhost", 		_conf_vhost,		_test_vhost	},
@@ -319,6 +311,7 @@ int			init_conf(char *rootconf, int rehash);
 int			load_conf(char *filename, const char *original_path);
 void			config_rehash();
 int			config_run();
+
 /*
  * Configuration linked lists
 */
@@ -1125,17 +1118,17 @@ static int inline config_is_blankorempty(ConfigEntry *cep, const char *block)
 	return 0;
 }
 
-ConfigCommand *config_binary_search(char *cmd) {
+struct config_ops *config_binary_search(char *cmd) {
 	int start = 0;
-	int stop = ARRAY_SIZEOF(_ConfigCommands)-1;
+	int stop = ARRAY_SIZEOF(builtin_config_ops)-1;
 	int mid;
 	while (start <= stop) {
 		mid = (start+stop)/2;
-		if (smycmp(cmd,_ConfigCommands[mid].name) < 0) {
+		if (smycmp(cmd, builtin_config_ops[mid].name) < 0) {
 			stop = mid-1;
 		}
-		else if (strcmp(cmd,_ConfigCommands[mid].name) == 0) {
-			return &_ConfigCommands[mid];
+		else if (strcmp(cmd, builtin_config_ops[mid].name) == 0) {
+			return &builtin_config_ops[mid];
 		}
 		else
 			start = mid+1;
@@ -1977,7 +1970,7 @@ int	config_run()
 {
 	ConfigEntry 	*ce;
 	ConfigFile	*cfptr;
-	ConfigCommand	*cc;
+	struct config_ops	*cc;
 	int		errors = 0;
 	Hook *h;
 #ifdef INET6
@@ -1990,7 +1983,7 @@ int	config_run()
 		for (ce = cfptr->cf_entries; ce; ce = ce->ce_next)
 		{
 			if ((cc = config_binary_search(ce->ce_varname))) {
-				if ((cc->conffunc) && (cc->conffunc(cfptr, ce) < 0))
+				if ((cc->config_run) && (cc->config_run(cfptr, ce) < 0))
 					errors++;
 			}
 			else
@@ -2078,7 +2071,7 @@ int	config_test()
 {
 	ConfigEntry 	*ce;
 	ConfigFile	*cfptr;
-	ConfigCommand	*cc;
+	struct config_ops	*cc;
 	int		errors = 0;
 	Hook *h;
 
@@ -2096,8 +2089,8 @@ int	config_test()
 				return -1;
 			}
 			if ((cc = config_binary_search(ce->ce_varname))) {
-				if (cc->testfunc)
-					errors += (cc->testfunc(cfptr, ce));
+				if (cc->config_test)
+					errors += (cc->config_test(cfptr, ce));
 			}
 			else 
 			{
