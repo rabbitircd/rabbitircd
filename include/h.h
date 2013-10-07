@@ -731,3 +731,7 @@ extern MODVAR char serveropts[];
 extern MODVAR char *IsupportStrings[];
 extern void finish_auth(aClient *acptr);
 extern void read_packet(int fd, int revents, void *data);
+
+extern ConfigFile *config_load(char *filename);
+extern void config_free(ConfigFile *cfptr);
+extern ConfigEntry *config_find_entry(ConfigEntry *ce, char *name);

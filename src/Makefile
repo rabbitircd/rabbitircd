@@ -21,7 +21,7 @@
 
 CC = danger will robinson
 
-OBJS=res.o s_bsd.o auth.o aln.o channel.o cloak.o crule.o dbuf.o \
+OBJS=res.o s_bsd.o auth.o aln.o confparse.o channel.o cloak.o crule.o dbuf.o \
 	events.o fdlist.o hash.o help.o ircd.o ircsprintf.o list.o \
 	match.o modules.o packet.o parse.o s_auth.o mempool.o \
 	s_conf.o s_debug.o s_dispatch.o s_err.o s_extra.o s_kline.o \
@@ -92,6 +92,9 @@ version.o: version.c $(INCLUDES)
 
 parse.o: parse.c $(INCLUDES)
 	$(CC) $(CFLAGS) -c parse.c
+
+confparse.o: confparse.c $(INCLUDES)
+	$(CC) $(CFLAGS) -c confparse.c
 
 socket.o: socket.c $(INCLUDES)
 	$(CC) $(CFLAGS) -c socket.c
