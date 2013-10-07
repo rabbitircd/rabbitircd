@@ -40,6 +40,7 @@
 #include "h.h"
 #include "inet.h"
 #include "proto.h"
+#include "patricia.h"
 
 #define ircstrdup(x,y) do { if (x) MyFree(x); if (!y) x = NULL; else x = strdup(y); } while(0)
 #define ircfree(x) do { if (x) MyFree(x); x = NULL; } while(0)
@@ -54,9 +55,9 @@ struct _conf_operflag
 	char	*name;
 };
 
+static struct patricia_tree *config_ops_tree = NULL;
 
 /* Config commands */
-
 static int	_conf_admin		(ConfigFile *conf, ConfigEntry *ce);
 static int	_conf_me		(ConfigFile *conf, ConfigEntry *ce);
 static int	_conf_files		(ConfigFile *conf, ConfigEntry *ce);
@@ -1118,22 +1119,26 @@ static int inline config_is_blankorempty(ConfigEntry *cep, const char *block)
 	return 0;
 }
 
-struct config_ops *config_binary_search(char *cmd) {
-	int start = 0;
-	int stop = ARRAY_SIZEOF(builtin_config_ops)-1;
-	int mid;
-	while (start <= stop) {
-		mid = (start+stop)/2;
-		if (smycmp(cmd, builtin_config_ops[mid].name) < 0) {
-			stop = mid-1;
-		}
-		else if (strcmp(cmd, builtin_config_ops[mid].name) == 0) {
-			return &builtin_config_ops[mid];
-		}
-		else
-			start = mid+1;
-	}
-	return NULL;
+bool config_register_ops(struct config_ops *ops) {
+	if (!config_ops_tree)
+		config_ops_tree = patricia_create(patricia_strcasecanon);
+
+	return patricia_add(config_ops_tree, ops->name, ops);
+}
+
+bool config_unregister_ops(struct config_ops *ops) {
+	if (!config_ops_tree)
+		config_ops_tree = patricia_create(patricia_strcasecanon);
+
+	patricia_delete(config_ops_tree, ops->name);
+	return true;
+}
+
+struct config_ops *config_lookup_ops(const char *cmd) {
+	if (!config_ops_tree)
+		config_ops_tree = patricia_create(patricia_strcasecanon);
+
+	return patricia_retrieve(config_ops_tree, cmd);
 }
 
 void	free_iConf(aConfiguration *i)
@@ -1324,7 +1329,7 @@ void applymeblock(void)
 int	init_conf(char *rootconf, int rehash)
 {
 	char *old_pid_file = NULL;
-  
+
 	config_status("Loading IRCd configuration ..");
 	if (conf)
 	{
@@ -1982,7 +1987,7 @@ int	config_run()
 			config_status("Running %s", cfptr->cf_filename);
 		for (ce = cfptr->cf_entries; ce; ce = ce->ce_next)
 		{
-			if ((cc = config_binary_search(ce->ce_varname))) {
+			if ((cc = config_lookup_ops(ce->ce_varname))) {
 				if ((cc->config_run) && (cc->config_run(cfptr, ce) < 0))
 					errors++;
 			}
@@ -2088,7 +2093,7 @@ int	config_test()
 					__FILE__, __LINE__);
 				return -1;
 			}
-			if ((cc = config_binary_search(ce->ce_varname))) {
+			if ((cc = config_lookup_ops(ce->ce_varname))) {
 				if (cc->config_test)
 					errors += (cc->config_test(cfptr, ce));
 			}

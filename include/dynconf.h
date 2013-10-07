@@ -31,6 +31,10 @@ struct config_ops {
 	int (*config_test)(ConfigFile *conf, ConfigEntry *ce);
 };
 
+extern bool config_register_ops(struct config_ops *ops);
+extern bool config_unregister_ops(struct config_ops *ops);
+extern struct config_ops *config_lookup_ops(const char *name);
+
 typedef struct zNetwork aNetwork;
 struct zNetwork {
 	unsigned x_inah:1;
