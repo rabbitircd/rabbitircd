@@ -121,7 +121,7 @@ static int	_test_spamfilter	(ConfigFile *conf, ConfigEntry *ce);
 static int	_test_cgiirc	(ConfigFile *conf, ConfigEntry *ce);
  
 /* This MUST be alphabetized */
-static struct config_ops builtin_config_ops[] = {
+static struct config_ops config_builtin_ops[] = {
 	{ "admin", 		_conf_admin,		_test_admin 	},
 	{ "alias",		_conf_alias,		_test_alias	},
 	{ "allow",		_conf_allow,		_test_allow	},
@@ -1119,14 +1119,16 @@ static int inline config_is_blankorempty(ConfigEntry *cep, const char *block)
 	return 0;
 }
 
-bool config_register_ops(struct config_ops *ops) {
+bool config_register_ops(struct config_ops *ops)
+{
 	if (!config_ops_tree)
 		config_ops_tree = patricia_create(patricia_strcasecanon);
 
 	return patricia_add(config_ops_tree, ops->name, ops);
 }
 
-bool config_unregister_ops(struct config_ops *ops) {
+bool config_unregister_ops(struct config_ops *ops)
+{
 	if (!config_ops_tree)
 		config_ops_tree = patricia_create(patricia_strcasecanon);
 
@@ -1134,11 +1136,24 @@ bool config_unregister_ops(struct config_ops *ops) {
 	return true;
 }
 
-struct config_ops *config_lookup_ops(const char *cmd) {
+struct config_ops *config_lookup_ops(const char *cmd)
+{
 	if (!config_ops_tree)
 		config_ops_tree = patricia_create(patricia_strcasecanon);
 
 	return patricia_retrieve(config_ops_tree, cmd);
+}
+
+void config_register_builtin_ops(void)
+{
+	static bool registered_ops = false;
+	size_t iter;
+
+	if (registered_ops)
+		return;
+
+	for (iter = 0; iter < ARRAY_SIZEOF(config_builtin_ops); iter++)
+		config_register_ops(&config_builtin_ops[iter]);
 }
 
 void	free_iConf(aConfiguration *i)
