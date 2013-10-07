@@ -55,7 +55,7 @@ struct _conf_operflag
 	char	*name;
 };
 
-static struct patricia_tree *config_ops_tree = NULL;
+static struct patricia_tree *config_root_ops_tree = NULL;
 
 /* Config commands */
 static int	_conf_admin		(ConfigFile *conf, ConfigEntry *ce);
@@ -1119,32 +1119,28 @@ static int inline config_is_blankorempty(ConfigEntry *cep, const char *block)
 	return 0;
 }
 
-bool config_register_ops(struct config_ops *ops)
+bool config_register_ops(struct patricia_tree *ops_tree, struct config_ops *ops)
 {
-	if (!config_ops_tree)
-		config_ops_tree = patricia_create(patricia_strcasecanon);
-
-	return patricia_add(config_ops_tree, ops->name, ops);
+	return patricia_add(ops_tree, ops->name, ops);
 }
 
-bool config_unregister_ops(struct config_ops *ops)
+bool config_unregister_ops(struct patricia_tree *ops_tree, struct config_ops *ops)
 {
-	if (!config_ops_tree)
-		config_ops_tree = patricia_create(patricia_strcasecanon);
-
-	patricia_delete(config_ops_tree, ops->name);
+	patricia_delete(ops_tree, ops->name);
 	return true;
 }
 
-struct config_ops *config_lookup_ops(const char *cmd)
+struct config_ops *config_lookup_ops(struct patricia_tree *ops_tree, const char *cmd)
 {
-	if (!config_ops_tree)
-		config_ops_tree = patricia_create(patricia_strcasecanon);
-
-	return patricia_retrieve(config_ops_tree, cmd);
+	return patricia_retrieve(ops_tree, cmd);
 }
 
-void config_register_builtin_ops(void)
+static void config_init_ops(void)
+{
+	config_root_ops_tree = patricia_create(patricia_strcasecanon);
+}
+
+static void config_register_builtin_ops(void)
 {
 	static bool registered_ops = false;
 	size_t iter;
@@ -1153,7 +1149,7 @@ void config_register_builtin_ops(void)
 		return;
 
 	for (iter = 0; iter < ARRAY_SIZEOF(config_builtin_ops); iter++)
-		config_register_ops(&config_builtin_ops[iter]);
+		config_register_ops(config_root_ops_tree, &config_builtin_ops[iter]);
 }
 
 void	free_iConf(aConfiguration *i)
@@ -1344,6 +1340,9 @@ void applymeblock(void)
 int	init_conf(char *rootconf, int rehash)
 {
 	char *old_pid_file = NULL;
+
+	config_init_ops();
+	config_register_builtin_ops();
 
 	config_status("Loading IRCd configuration ..");
 	if (conf)
@@ -2002,7 +2001,7 @@ int	config_run()
 			config_status("Running %s", cfptr->cf_filename);
 		for (ce = cfptr->cf_entries; ce; ce = ce->ce_next)
 		{
-			if ((cc = config_lookup_ops(ce->ce_varname))) {
+			if ((cc = config_lookup_ops(config_root_ops_tree, ce->ce_varname))) {
 				if ((cc->config_run) && (cc->config_run(cfptr, ce) < 0))
 					errors++;
 			}
@@ -2108,7 +2107,7 @@ int	config_test()
 					__FILE__, __LINE__);
 				return -1;
 			}
-			if ((cc = config_lookup_ops(ce->ce_varname))) {
+			if ((cc = config_lookup_ops(config_root_ops_tree, ce->ce_varname))) {
 				if (cc->config_test)
 					errors += (cc->config_test(cfptr, ce));
 			}

@@ -25,15 +25,17 @@
 #define DYNCONF_CONF_VERSION "1.5"
 #define DYNCONF_NETWORK_VERSION "2.2"
 
+#include "patricia.h"
+
 struct config_ops {
 	char *name;
 	int (*config_run)(ConfigFile *conf, ConfigEntry *ce);
 	int (*config_test)(ConfigFile *conf, ConfigEntry *ce);
 };
 
-extern bool config_register_ops(struct config_ops *ops);
-extern bool config_unregister_ops(struct config_ops *ops);
-extern struct config_ops *config_lookup_ops(const char *name);
+extern bool config_register_ops(struct patricia_tree *ops_tree, struct config_ops *ops);
+extern bool config_unregister_ops(struct patricia_tree *ops_tree, struct config_ops *ops);
+extern struct config_ops *config_lookup_ops(struct patricia_tree *ops_tree, const char *name);
 
 typedef struct zNetwork aNetwork;
 struct zNetwork {
