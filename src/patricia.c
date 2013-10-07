@@ -167,7 +167,7 @@ first_leaf(union patricia_elem *delem)
 struct patricia_tree *
 patricia_create(void (*canonize_cb)(char *key))
 {
-	struct patricia_tree *dtree = (struct patricia_tree *) MyMalloc(sizeof(struct patricia_tree));
+	struct patricia_tree *dtree = (struct patricia_tree *) MyMallocEx(sizeof(struct patricia_tree));
 
 	dtree->canonize_cb = canonize_cb;
 
@@ -204,7 +204,7 @@ patricia_create(void (*canonize_cb)(char *key))
 struct patricia_tree *
 patricia_create_named(const char *name, void (*canonize_cb)(char *key))
 {
-	struct patricia_tree *dtree = (struct patricia_tree *) MyMalloc(sizeof(struct patricia_tree));
+	struct patricia_tree *dtree = (struct patricia_tree *) MyMallocEx(sizeof(struct patricia_tree));
 
 	dtree->canonize_cb = canonize_cb;
 	dtree->id = strdup(name);
