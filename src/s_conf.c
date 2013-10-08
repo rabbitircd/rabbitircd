@@ -55,73 +55,76 @@ struct _conf_operflag
 	char	*name;
 };
 
+struct patricia_tree *config_base_ops_tree = NULL;
 struct patricia_tree *config_root_ops_tree = NULL;
 struct patricia_tree *config_set_ops_tree = NULL;
 
 /* Config commands */
-static int	_conf_admin		(ConfigFile *conf, ConfigEntry *ce);
-static int	_conf_me		(ConfigFile *conf, ConfigEntry *ce);
-static int	_conf_files		(ConfigFile *conf, ConfigEntry *ce);
-static int	_conf_oper		(ConfigFile *conf, ConfigEntry *ce);
-static int	_conf_class		(ConfigFile *conf, ConfigEntry *ce);
-static int	_conf_drpass		(ConfigFile *conf, ConfigEntry *ce);
-static int	_conf_ulines		(ConfigFile *conf, ConfigEntry *ce);
-static int	_conf_include		(ConfigFile *conf, ConfigEntry *ce);
-static int	_conf_tld		(ConfigFile *conf, ConfigEntry *ce);
-static int	_conf_listen		(ConfigFile *conf, ConfigEntry *ce);
-static int	_conf_allow		(ConfigFile *conf, ConfigEntry *ce);
-static int	_conf_except		(ConfigFile *conf, ConfigEntry *ce);
-static int	_conf_vhost		(ConfigFile *conf, ConfigEntry *ce);
-static int	_conf_link		(ConfigFile *conf, ConfigEntry *ce);
-static int	_conf_ban		(ConfigFile *conf, ConfigEntry *ce);
-static int	_conf_set		(ConfigFile *conf, ConfigEntry *ce);
-static int	_conf_deny		(ConfigFile *conf, ConfigEntry *ce);
-static int	_conf_deny_dcc		(ConfigFile *conf, ConfigEntry *ce);
-static int	_conf_deny_link		(ConfigFile *conf, ConfigEntry *ce);
-static int	_conf_deny_channel	(ConfigFile *conf, ConfigEntry *ce);
-static int	_conf_deny_version	(ConfigFile *conf, ConfigEntry *ce);
-static int	_conf_allow_channel	(ConfigFile *conf, ConfigEntry *ce);
-static int	_conf_allow_dcc		(ConfigFile *conf, ConfigEntry *ce);
-static int	_conf_loadmodule	(ConfigFile *conf, ConfigEntry *ce);
-static int	_conf_log		(ConfigFile *conf, ConfigEntry *ce);
-static int	_conf_alias		(ConfigFile *conf, ConfigEntry *ce);
-static int	_conf_help		(ConfigFile *conf, ConfigEntry *ce);
-static int	_conf_offchans		(ConfigFile *conf, ConfigEntry *ce);
-static int	_conf_spamfilter	(ConfigFile *conf, ConfigEntry *ce);
-static int	_conf_cgiirc	(ConfigFile *conf, ConfigEntry *ce);
+static int	_conf_admin		(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+static int	_conf_me		(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+static int	_conf_files		(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+static int	_conf_oper		(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+static int	_conf_class		(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+static int	_conf_drpass		(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+static int	_conf_ulines		(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+static int	_conf_tld		(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+static int	_conf_listen		(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+static int	_conf_allow		(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+static int	_conf_except		(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+static int	_conf_vhost		(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+static int	_conf_link		(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+static int	_conf_ban		(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+static int	_conf_set		(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+static int	_conf_deny		(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+static int	_conf_deny_dcc		(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+static int	_conf_deny_link		(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+static int	_conf_deny_channel	(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+static int	_conf_deny_version	(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+static int	_conf_allow_channel	(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+static int	_conf_allow_dcc		(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+static int	_conf_log		(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+static int	_conf_alias		(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+static int	_conf_help		(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+static int	_conf_offchans		(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+static int	_conf_spamfilter	(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+static int	_conf_cgiirc	(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
 
 /* 
  * Validation commands 
 */
 
-static int	_test_admin		(ConfigFile *conf, ConfigEntry *ce);
-static int	_test_me		(ConfigFile *conf, ConfigEntry *ce);
-static int	_test_files		(ConfigFile *conf, ConfigEntry *ce);
-static int	_test_oper		(ConfigFile *conf, ConfigEntry *ce);
-static int	_test_class		(ConfigFile *conf, ConfigEntry *ce);
-static int	_test_drpass		(ConfigFile *conf, ConfigEntry *ce);
-static int	_test_ulines		(ConfigFile *conf, ConfigEntry *ce);
-static int	_test_include		(ConfigFile *conf, ConfigEntry *ce);
-static int	_test_tld		(ConfigFile *conf, ConfigEntry *ce);
-static int	_test_listen		(ConfigFile *conf, ConfigEntry *ce);
-static int	_test_allow		(ConfigFile *conf, ConfigEntry *ce);
-static int	_test_except		(ConfigFile *conf, ConfigEntry *ce);
-static int	_test_vhost		(ConfigFile *conf, ConfigEntry *ce);
-static int	_test_link		(ConfigFile *conf, ConfigEntry *ce);
-static int	_test_ban		(ConfigFile *conf, ConfigEntry *ce);
-static int	_test_set		(ConfigFile *conf, ConfigEntry *ce);
-static int	_test_deny		(ConfigFile *conf, ConfigEntry *ce);
-static int	_test_allow_channel	(ConfigFile *conf, ConfigEntry *ce);
-static int	_test_allow_dcc		(ConfigFile *conf, ConfigEntry *ce);
-static int	_test_loadmodule	(ConfigFile *conf, ConfigEntry *ce);
-static int	_test_log		(ConfigFile *conf, ConfigEntry *ce);
-static int	_test_alias		(ConfigFile *conf, ConfigEntry *ce);
-static int	_test_help		(ConfigFile *conf, ConfigEntry *ce);
-static int	_test_offchans		(ConfigFile *conf, ConfigEntry *ce);
-static int	_test_spamfilter	(ConfigFile *conf, ConfigEntry *ce);
-static int	_test_cgiirc	(ConfigFile *conf, ConfigEntry *ce);
- 
-/* This MUST be alphabetized */
+static int	_test_admin		(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+static int	_test_me		(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+static int	_test_files		(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+static int	_test_oper		(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+static int	_test_class		(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+static int	_test_drpass		(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+static int	_test_ulines		(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+static int	_test_include		(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+static int	_test_tld		(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+static int	_test_listen		(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+static int	_test_allow		(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+static int	_test_except		(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+static int	_test_vhost		(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+static int	_test_link		(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+static int	_test_ban		(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+static int	_test_set		(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+static int	_test_deny		(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+static int	_test_allow_channel	(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+static int	_test_allow_dcc		(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+static int	_test_loadmodule	(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+static int	_test_log		(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+static int	_test_alias		(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+static int	_test_help		(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+static int	_test_offchans		(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+static int	_test_spamfilter	(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+static int	_test_cgiirc	(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+
+static struct config_ops config_base_ops[] = {
+	{ "include",		NULL,			_test_include	},
+	{ "loadmodule",		NULL,		 	_test_loadmodule},
+};
+
 static struct config_ops config_builtin_ops[] = {
 	{ "admin", 		_conf_admin,		_test_admin 	},
 	{ "alias",		_conf_alias,		_test_alias	},
@@ -134,10 +137,10 @@ static struct config_ops config_builtin_ops[] = {
 	{ "except",		_conf_except,		_test_except	},
 	{ "files",		_conf_files,		_test_files	},
 	{ "help",		_conf_help,		_test_help	},
-	{ "include",		NULL,	  		_test_include	},
+	{ "include",		NULL,			NULL		},
 	{ "link", 		_conf_link,		_test_link	},
 	{ "listen", 		_conf_listen,		_test_listen	},
-	{ "loadmodule",		NULL,		 	_test_loadmodule},
+	{ "loadmodule",		NULL,			NULL		},
 	{ "log",		_conf_log,		_test_log	},
 	{ "me", 		_conf_me,		_test_me	},
 	{ "official-channels", 	_conf_offchans,		_test_offchans	},
@@ -1138,6 +1141,7 @@ struct config_ops *config_lookup_ops(struct patricia_tree *ops_tree, const char 
 
 static void config_init_ops(void)
 {
+	config_base_ops_tree = patricia_create(patricia_strcasecanon);
 	config_root_ops_tree = patricia_create(patricia_strcasecanon);
 	config_set_ops_tree = patricia_create(patricia_strcasecanon);
 }
@@ -1149,6 +1153,9 @@ static void config_register_builtin_ops(void)
 
 	if (registered_ops)
 		return;
+
+	for (iter = 0; iter < ARRAY_SIZEOF(config_base_ops); iter++)
+		config_register_ops(config_base_ops_tree, &config_base_ops[iter]);
 
 	for (iter = 0; iter < ARRAY_SIZEOF(config_builtin_ops); iter++)
 		config_register_ops(config_root_ops_tree, &config_builtin_ops[iter]);
@@ -1165,7 +1172,7 @@ bool config_traverse_run(ConfigFile *cf, ConfigEntry *ce, struct patricia_tree *
 		if (ops == NULL || ops->config_run == NULL)
 			continue;
 
-		if (ops->config_run(cf, ce) < 0)
+		if (ops->config_run(ops, cf, ce) < 0)
 			errors++;
 	}
 
@@ -1182,6 +1189,9 @@ bool config_traverse_test(ConfigFile *cf, ConfigEntry *ce, struct patricia_tree 
 
 		if (ops == NULL)
 		{
+			if (ops_tree == config_base_ops_tree)
+				continue;
+
 			config_status("%s:%i: unknown directive %s",
 				ce->ce_fileptr->cf_filename, ce->ce_varlinenum,
 				ce->ce_varname);
@@ -1191,7 +1201,7 @@ bool config_traverse_test(ConfigFile *cf, ConfigEntry *ce, struct patricia_tree 
 		if (ops->config_test == NULL)
 			continue;
 
-		errors += ops->config_test(cf, ce);
+		errors += ops->config_test(ops, cf, ce);
 	}
 
 	return (errors == 0);
@@ -1588,24 +1598,7 @@ int	load_conf(char *filename, const char *original_path)
 		for (cfptr3 = &conf, cfptr2 = conf; cfptr2; cfptr2 = cfptr2->cf_next)
 			cfptr3 = &cfptr2->cf_next;
 		*cfptr3 = cfptr;
-		if (config_verbose > 1)
-			config_status("Loading modules in %s", filename);
-		for (ce = cfptr->cf_entries; ce; ce = ce->ce_next)
-			if (!strcmp(ce->ce_varname, "loadmodule"))
-			{
-				 ret = _conf_loadmodule(cfptr, ce);
-				 if (ret < 0) 
-					 	return ret;
-			}
-		if (config_verbose > 1)
-			config_status("Searching through %s for include files..", filename);
-		for (ce = cfptr->cf_entries; ce; ce = ce->ce_next)
-			if (!strcmp(ce->ce_varname, "include"))
-			{
-				 ret = _conf_include(cfptr, ce);
-				 if (ret < 0) 
-					 	return ret;
-			}
+		config_traverse_test(cfptr, cfptr->cf_entries, config_base_ops_tree);
 		my_inc->flag.type |= INCLUDE_USED;
 		return 1;
 	}
@@ -2086,7 +2079,7 @@ int	config_run()
 
 	/* initialize conf_files with defaults if the block isn't set: */
 	if(!conf_files)
-	  _conf_files(NULL, NULL);
+	  _conf_files(NULL, NULL, NULL);
 
 	if (errors > 0)
 	{
@@ -2604,7 +2597,7 @@ char *pretty_time_val(long timeval)
  * Actual config parser funcs
 */
 
-int	_conf_include(ConfigFile *conf, ConfigEntry *ce)
+int	_test_include(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 {
 	int	ret = 0;
 #ifdef GLOBH
@@ -2650,12 +2643,7 @@ int	_conf_include(ConfigFile *conf, ConfigEntry *ce)
 	return 1;
 }
 
-int	_test_include(ConfigFile *conf, ConfigEntry *ce)
-{
-	return 0;
-}
-
-int	_conf_admin(ConfigFile *conf, ConfigEntry *ce)
+int	_conf_admin(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 {
 	ConfigEntry *cep;
 	ConfigItem_admin *ca;
@@ -2671,7 +2659,7 @@ int	_conf_admin(ConfigFile *conf, ConfigEntry *ce)
 	return 1;
 }
 
-int	_test_admin(ConfigFile *conf, ConfigEntry *ce)
+int	_test_admin(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 {
 	ConfigEntry *cep;
 	int 	    errors = 0;
@@ -2697,7 +2685,7 @@ int	_test_admin(ConfigFile *conf, ConfigEntry *ce)
 	return errors;
 }
 
-int	_conf_me(ConfigFile *conf, ConfigEntry *ce)
+int	_conf_me(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 {
 	ConfigEntry *cep;
 
@@ -2722,7 +2710,7 @@ int	_conf_me(ConfigFile *conf, ConfigEntry *ce)
 	return 1;
 }
 
-int	_test_me(ConfigFile *conf, ConfigEntry *ce)
+int	_test_me(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 {
 	char has_name = 0, has_info = 0, has_sid = 0;
 	ConfigEntry *cep;
@@ -2861,7 +2849,7 @@ int	_test_me(ConfigFile *conf, ConfigEntry *ce)
 /*
  * The files {} block
  */
-int	_conf_files(ConfigFile *conf, ConfigEntry *ce)
+int	_conf_files(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 {
 	ConfigEntry *cep;
 
@@ -2910,7 +2898,7 @@ int	_conf_files(ConfigFile *conf, ConfigEntry *ce)
 	return 1;
 }
 
-int	_test_files(ConfigFile *conf, ConfigEntry *ce)
+int	_test_files(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 {
 	ConfigEntry *cep;
 	int	    errors = 0;
@@ -3023,7 +3011,7 @@ int	_test_files(ConfigFile *conf, ConfigEntry *ce)
  * The oper {} block parser
 */
 
-int	_conf_oper(ConfigFile *conf, ConfigEntry *ce)
+int	_conf_oper(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 {
 	ConfigEntry *cep;
 	ConfigEntry *cepp;
@@ -3119,7 +3107,7 @@ int	_conf_oper(ConfigFile *conf, ConfigEntry *ce)
 	return 1;
 }
 
-int	_test_oper(ConfigFile *conf, ConfigEntry *ce)
+int	_test_oper(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 {
 	char has_class = 0, has_password = 0, has_flags = 0, has_swhois = 0, has_snomask = 0;
 	char has_modes = 0, has_require_modes = 0, has_from = 0, has_maxlogins = 0;
@@ -3386,7 +3374,7 @@ int	_test_oper(ConfigFile *conf, ConfigEntry *ce)
 /*
  * The class {} block parser
 */
-int	_conf_class(ConfigFile *conf, ConfigEntry *ce)
+int	_conf_class(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 {
 	ConfigEntry *cep, *cep2;
 	ConfigItem_class *class;
@@ -3431,7 +3419,7 @@ int	_conf_class(ConfigFile *conf, ConfigEntry *ce)
 	return 1;
 }
 
-int	_test_class(ConfigFile *conf, ConfigEntry *ce)
+int	_test_class(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 {
 	ConfigEntry 	*cep, *cep2;
 	int		errors = 0;
@@ -3593,7 +3581,7 @@ int	_test_class(ConfigFile *conf, ConfigEntry *ce)
 	return errors;
 }
 
-int     _conf_drpass(ConfigFile *conf, ConfigEntry *ce)
+int     _conf_drpass(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 {
 	ConfigEntry *cep;
 
@@ -3622,7 +3610,7 @@ int     _conf_drpass(ConfigFile *conf, ConfigEntry *ce)
 	return 1;
 }
 
-int     _test_drpass(ConfigFile *conf, ConfigEntry *ce)
+int     _test_drpass(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 {
 	ConfigEntry *cep;
 	int errors = 0;
@@ -3678,7 +3666,7 @@ int     _test_drpass(ConfigFile *conf, ConfigEntry *ce)
 /*
  * The ulines {} block parser
 */
-int	_conf_ulines(ConfigFile *conf, ConfigEntry *ce)
+int	_conf_ulines(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 {
 	ConfigEntry *cep;
 	ConfigItem_ulines *ca;
@@ -3692,7 +3680,7 @@ int	_conf_ulines(ConfigFile *conf, ConfigEntry *ce)
 	return 1;
 }
 
-int	_test_ulines(ConfigFile *conf, ConfigEntry *ce)
+int	_test_ulines(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 {
 	ConfigEntry *cep;
 	int 	    errors = 0;
@@ -3709,7 +3697,7 @@ int	_test_ulines(ConfigFile *conf, ConfigEntry *ce)
 	return errors;
 }
 
-int     _conf_tld(ConfigFile *conf, ConfigEntry *ce)
+int     _conf_tld(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 {
 	ConfigEntry *cep;
 	ConfigItem_tld *ca;
@@ -3763,7 +3751,7 @@ int     _conf_tld(ConfigFile *conf, ConfigEntry *ce)
 	return 1;
 }
 
-int     _test_tld(ConfigFile *conf, ConfigEntry *ce)
+int     _test_tld(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 {
 	ConfigEntry *cep;
 	int	    errors = 0;
@@ -3967,7 +3955,7 @@ int     _test_tld(ConfigFile *conf, ConfigEntry *ce)
 	return errors;
 }
 
-int	_conf_listen(ConfigFile *conf, ConfigEntry *ce)
+int	_conf_listen(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 {
 	ConfigEntry *cep;
 	ConfigEntry *cepp;
@@ -4037,7 +4025,7 @@ int	_conf_listen(ConfigFile *conf, ConfigEntry *ce)
 	return 1;
 }
 
-int	_test_listen(ConfigFile *conf, ConfigEntry *ce)
+int	_test_listen(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 {
 	ConfigEntry *cep;
 	ConfigEntry *cepp;
@@ -4184,7 +4172,7 @@ int	_test_listen(ConfigFile *conf, ConfigEntry *ce)
 }
 
 
-int	_conf_allow(ConfigFile *conf, ConfigEntry *ce)
+int	_conf_allow(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 {
 	ConfigEntry *cep, *cepp;
 	ConfigItem_allow *allow;
@@ -4193,9 +4181,9 @@ int	_conf_allow(ConfigFile *conf, ConfigEntry *ce)
 	if (ce->ce_vardata)
 	{
 		if (!strcmp(ce->ce_vardata, "channel"))
-			return (_conf_allow_channel(conf, ce));
+			return (_conf_allow_channel(ops, conf, ce));
 		else if (!strcmp(ce->ce_vardata, "dcc"))
-			return (_conf_allow_dcc(conf, ce));
+			return (_conf_allow_dcc(ops, conf, ce));
 	}
 	allow = MyMallocEx(sizeof(ConfigItem_allow));
 	
@@ -4264,7 +4252,7 @@ int	_conf_allow(ConfigFile *conf, ConfigEntry *ce)
 	return 1;
 }
 
-int	_test_allow(ConfigFile *conf, ConfigEntry *ce)
+int	_test_allow(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 {
 	ConfigEntry *cep, *cepp;
 	int		errors = 0;
@@ -4275,9 +4263,9 @@ int	_test_allow(ConfigFile *conf, ConfigEntry *ce)
 	if (ce->ce_vardata)
 	{
 		if (!strcmp(ce->ce_vardata, "channel"))
-			return (_test_allow_channel(conf, ce));
+			return (_test_allow_channel(ops, conf, ce));
 		else if (!strcmp(ce->ce_vardata, "dcc"))
-			return (_test_allow_dcc(conf, ce));
+			return (_test_allow_dcc(ops, conf, ce));
 	}
 
 	for (cep = ce->ce_entries; cep; cep = cep->ce_next)
@@ -4447,7 +4435,7 @@ int	_test_allow(ConfigFile *conf, ConfigEntry *ce)
 	return errors;
 }
 
-int	_conf_allow_channel(ConfigFile *conf, ConfigEntry *ce)
+int	_conf_allow_channel(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 {
 	ConfigItem_allow_channel 	*allow = NULL;
 	ConfigEntry 	    	*cep;
@@ -4475,7 +4463,7 @@ int	_conf_allow_channel(ConfigFile *conf, ConfigEntry *ce)
 	return 1;
 }
 
-int	_test_allow_channel(ConfigFile *conf, ConfigEntry *ce)
+int	_test_allow_channel(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 {
 	ConfigEntry		*cep;
 	int			errors = 0;
@@ -4519,7 +4507,7 @@ int	_test_allow_channel(ConfigFile *conf, ConfigEntry *ce)
 	return errors;
 }
 
-int	_conf_allow_dcc(ConfigFile *conf, ConfigEntry *ce)
+int	_conf_allow_dcc(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 {
 	ConfigItem_allow_dcc *allow = NULL;
 	ConfigEntry *cep;
@@ -4541,7 +4529,7 @@ int	_conf_allow_dcc(ConfigFile *conf, ConfigEntry *ce)
 	return 1;
 }
 
-int	_test_allow_dcc(ConfigFile *conf, ConfigEntry *ce)
+int	_test_allow_dcc(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 {
 	ConfigEntry *cep;
 	int errors = 0, has_filename = 0, has_soft = 0;
@@ -4627,7 +4615,7 @@ void create_tkl_except(char *mask, char *type)
 		create_tkl_except_ii(mask, type);
 }
 
-int     _conf_except(ConfigFile *conf, ConfigEntry *ce)
+int     _conf_except(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 {
 
 	ConfigEntry *cep;
@@ -4695,7 +4683,7 @@ int     _conf_except(ConfigFile *conf, ConfigEntry *ce)
 	return 1;
 }
 
-int     _test_except(ConfigFile *conf, ConfigEntry *ce)
+int     _test_except(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 {
 	ConfigEntry *cep;
 	int	    errors = 0;
@@ -4902,7 +4890,7 @@ int     _test_except(ConfigFile *conf, ConfigEntry *ce)
 /*
  * vhost {} block parser
 */
-int	_conf_vhost(ConfigFile *conf, ConfigEntry *ce)
+int	_conf_vhost(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 {
 	ConfigItem_vhost *vhost;
 	ConfigItem_oper_from *from;
@@ -4947,7 +4935,7 @@ int	_conf_vhost(ConfigFile *conf, ConfigEntry *ce)
 	return 1;
 }
 
-int	_test_vhost(ConfigFile *conf, ConfigEntry *ce)
+int	_test_vhost(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 {
 	int errors = 0;
 	ConfigEntry *cep;
@@ -5130,7 +5118,7 @@ int	_test_vhost(ConfigFile *conf, ConfigEntry *ce)
 	return errors;
 }
 
-int _conf_spamfilter(ConfigFile *conf, ConfigEntry *ce)
+int _conf_spamfilter(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 {
 	ConfigEntry *cep;
 	ConfigEntry *cepp;
@@ -5198,7 +5186,7 @@ int _conf_spamfilter(ConfigFile *conf, ConfigEntry *ce)
 	return 1;
 }
 
-int _test_spamfilter(ConfigFile *conf, ConfigEntry *ce)
+int _test_spamfilter(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 {
 	ConfigEntry *cep, *cepp;
 	int errors = 0;
@@ -5364,7 +5352,7 @@ int _test_spamfilter(ConfigFile *conf, ConfigEntry *ce)
 	return errors;
 }
 
-int     _conf_help(ConfigFile *conf, ConfigEntry *ce)
+int     _conf_help(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 {
 	ConfigEntry *cep;
 	ConfigItem_help *ca;
@@ -5392,7 +5380,7 @@ int     _conf_help(ConfigFile *conf, ConfigEntry *ce)
 
 }
 
-int _test_help(ConfigFile *conf, ConfigEntry *ce) { 
+int _test_help(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce) { 
 	int errors = 0;
 	ConfigEntry *cep;
 	if (!ce->ce_entries)
@@ -5414,7 +5402,7 @@ int _test_help(ConfigFile *conf, ConfigEntry *ce) {
 	return errors; 
 }
 
-int     _conf_log(ConfigFile *conf, ConfigEntry *ce)
+int     _conf_log(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 {
 	ConfigEntry *cep, *cepp;
 	ConfigItem_log *ca;
@@ -5444,7 +5432,7 @@ int     _conf_log(ConfigFile *conf, ConfigEntry *ce)
 
 }
 
-int _test_log(ConfigFile *conf, ConfigEntry *ce) { 
+int _test_log(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce) { 
 	int fd, errors = 0;
 	ConfigEntry *cep, *cepp;
 	char has_flags = 0, has_maxsize = 0;
@@ -5546,7 +5534,7 @@ int _test_log(ConfigFile *conf, ConfigEntry *ce) {
 	return errors;
 }
 
-int	_conf_link(ConfigFile *conf, ConfigEntry *ce)
+int	_conf_link(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 {
 	ConfigEntry *cep;
 	ConfigEntry *cepp;
@@ -5607,7 +5595,7 @@ int	_conf_link(ConfigFile *conf, ConfigEntry *ce)
 	return 0;
 }
 
-int	_test_link(ConfigFile *conf, ConfigEntry *ce)
+int	_test_link(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 {
 	ConfigEntry	*cep, *cepp;
 	OperFlag 	*ofp;
@@ -5930,7 +5918,7 @@ int	_test_link(ConfigFile *conf, ConfigEntry *ce)
 		
 }
 
-int	_conf_cgiirc(ConfigFile *conf, ConfigEntry *ce)
+int	_conf_cgiirc(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 {
 ConfigEntry *cep;
 ConfigEntry *cepp;
@@ -5960,7 +5948,7 @@ ConfigItem_cgiirc *cgiirc = NULL;
 	return 0;
 }
 
-int	_test_cgiirc(ConfigFile *conf, ConfigEntry *ce)
+int	_test_cgiirc(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 {
 	ConfigEntry	*cep, *cepp;
 	OperFlag 	*ofp;
@@ -6099,7 +6087,7 @@ int	_test_cgiirc(ConfigFile *conf, ConfigEntry *ce)
 	return errors;
 }
 
-int     _conf_ban(ConfigFile *conf, ConfigEntry *ce)
+int     _conf_ban(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 {
 
 	ConfigEntry *cep;
@@ -6161,7 +6149,7 @@ int     _conf_ban(ConfigFile *conf, ConfigEntry *ce)
 	return 0;
 }
 
-int     _test_ban(ConfigFile *conf, ConfigEntry *ce)
+int     _test_ban(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 {
 	ConfigEntry *cep;
 	int	    errors = 0;
@@ -6254,7 +6242,7 @@ int     _test_ban(ConfigFile *conf, ConfigEntry *ce)
 	return errors;	
 }
 
-int	_conf_set(ConfigFile *conf, ConfigEntry *ce)
+int	_conf_set(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 {
 	ConfigEntry *cep, *cepp, *ceppp;
 	OperFlag 	*ofl = NULL;
@@ -6266,7 +6254,7 @@ int	_conf_set(ConfigFile *conf, ConfigEntry *ce)
 
 		if (ops != NULL) {
 			if (ops->config_run != NULL)
-				ops->config_run(conf, cep);
+				ops->config_run(ops, conf, cep);
 		}
 		else if (!strcmp(cep->ce_varname, "kline-address")) {
 			ircstrdup(tempiConf.kline_address, cep->ce_vardata);
@@ -6718,7 +6706,7 @@ int	_conf_set(ConfigFile *conf, ConfigEntry *ce)
 	return 0;
 }
 
-int	_test_set(ConfigFile *conf, ConfigEntry *ce)
+int	_test_set(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 {
 	ConfigEntry *cep, *cepp, *ceppp;
 	long		templong;
@@ -6742,7 +6730,7 @@ int	_test_set(ConfigFile *conf, ConfigEntry *ce)
 
 		if ((ops = config_lookup_ops(config_set_ops_tree, cep->ce_varname)) != NULL) {
 			if (ops->config_test != NULL)
-				errors += ops->config_test(conf, cep);
+				errors += ops->config_test(ops, conf, cep);
 			continue;
 		} else if (!strcmp(cep->ce_varname, "kline-address")) {
 			CheckNull(cep);
@@ -7656,7 +7644,7 @@ int	_test_set(ConfigFile *conf, ConfigEntry *ce)
 	return errors;
 }
 
-int	_conf_loadmodule(ConfigFile *conf, ConfigEntry *ce)
+int	_test_loadmodule(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 {
 	char *ret;
 	if (!ce->ce_vardata)
@@ -7672,11 +7660,6 @@ int	_conf_loadmodule(ConfigFile *conf, ConfigEntry *ce)
 		return -1;
 	}
 	return 1;
-}
-
-int	_test_loadmodule(ConfigFile *conf, ConfigEntry *ce)
-{
-	return 0;
 }
 
 /*
@@ -7702,7 +7685,7 @@ void	run_configuration(void)
 	}
 }
 
-int	_conf_offchans(ConfigFile *conf, ConfigEntry *ce)
+int	_conf_offchans(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 {
 	ConfigEntry *cep, *cepp;
 
@@ -7720,7 +7703,7 @@ int	_conf_offchans(ConfigFile *conf, ConfigEntry *ce)
 	return 0;
 }
 
-int	_test_offchans(ConfigFile *conf, ConfigEntry *ce)
+int	_test_offchans(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 {
 	int errors = 0;
 	ConfigEntry *cep, *cep2;
@@ -7781,7 +7764,7 @@ int	_test_offchans(ConfigFile *conf, ConfigEntry *ce)
 	return errors;
 }
 
-int	_conf_alias(ConfigFile *conf, ConfigEntry *ce)
+int	_conf_alias(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 {
 	ConfigItem_alias *alias = NULL;
 	ConfigItem_alias_format *format;
@@ -7860,7 +7843,7 @@ int	_conf_alias(ConfigFile *conf, ConfigEntry *ce)
 }
 
 
-int _test_alias(ConfigFile *conf, ConfigEntry *ce) { 
+int _test_alias(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce) { 
 	int errors = 0;
 	ConfigEntry *cep, *cepp;
 	char has_type = 0, has_target = 0, has_format = 0;
@@ -8058,23 +8041,23 @@ int _test_alias(ConfigFile *conf, ConfigEntry *ce) {
 	return errors; 
 }
 
-int	_conf_deny(ConfigFile *conf, ConfigEntry *ce)
+int	_conf_deny(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 {
 Hook *h;
 
 	if (!strcmp(ce->ce_vardata, "dcc"))
-		_conf_deny_dcc(conf, ce);
+		_conf_deny_dcc(ops, conf, ce);
 	else if (!strcmp(ce->ce_vardata, "channel"))
-		_conf_deny_channel(conf, ce);
+		_conf_deny_channel(ops, conf, ce);
 	else if (!strcmp(ce->ce_vardata, "link"))
-		_conf_deny_link(conf, ce);
+		_conf_deny_link(ops, conf, ce);
 	else if (!strcmp(ce->ce_vardata, "version"))
-		_conf_deny_version(conf, ce);
+		_conf_deny_version(ops, conf, ce);
 
 	return 0;
 }
 
-int	_conf_deny_dcc(ConfigFile *conf, ConfigEntry *ce)
+int	_conf_deny_dcc(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 {
 	ConfigItem_deny_dcc 	*deny = NULL;
 	ConfigEntry 	    	*cep;
@@ -8108,7 +8091,7 @@ int	_conf_deny_dcc(ConfigFile *conf, ConfigEntry *ce)
 	return 0;
 }
 
-int	_conf_deny_channel(ConfigFile *conf, ConfigEntry *ce)
+int	_conf_deny_channel(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 {
 	ConfigItem_deny_channel 	*deny = NULL;
 	ConfigEntry 	    	*cep;
@@ -8140,7 +8123,7 @@ int	_conf_deny_channel(ConfigFile *conf, ConfigEntry *ce)
 	AddListItem(deny, conf_deny_channel);
 	return 0;
 }
-int	_conf_deny_link(ConfigFile *conf, ConfigEntry *ce)
+int	_conf_deny_link(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 {
 	ConfigItem_deny_link 	*deny = NULL;
 	ConfigEntry 	    	*cep;
@@ -8168,7 +8151,7 @@ int	_conf_deny_link(ConfigFile *conf, ConfigEntry *ce)
 	return 0;
 }
 
-int	_conf_deny_version(ConfigFile *conf, ConfigEntry *ce)
+int	_conf_deny_version(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 {
 	ConfigItem_deny_version *deny = NULL;
 	ConfigEntry 	    	*cep;
@@ -8193,7 +8176,7 @@ int	_conf_deny_version(ConfigFile *conf, ConfigEntry *ce)
 	return 0;
 }
 
-int     _test_deny(ConfigFile *conf, ConfigEntry *ce)
+int     _test_deny(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 {
 	ConfigEntry *cep;
 	int	    errors = 0;

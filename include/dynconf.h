@@ -29,8 +29,9 @@
 
 struct config_ops {
 	char *name;
-	int (*config_run)(ConfigFile *conf, ConfigEntry *ce);
-	int (*config_test)(ConfigFile *conf, ConfigEntry *ce);
+	int (*config_run)(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+	int (*config_test)(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce);
+	void *opaque;
 };
 
 extern bool config_register_ops(struct patricia_tree *ops_tree, struct config_ops *ops);

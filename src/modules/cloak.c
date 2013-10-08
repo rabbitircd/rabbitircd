@@ -48,8 +48,8 @@ static int nokeys = 1;
 
 DLLFUNC char *hidehost(char *host);
 DLLFUNC char *cloakcsum();
-DLLFUNC int cloak_config_test(ConfigFile *, ConfigEntry *);
-DLLFUNC int cloak_config_run(ConfigFile *, ConfigEntry *);
+static int cloak_config_test(struct config_ops *, ConfigFile *, ConfigEntry *);
+static int cloak_config_run(struct config_ops *, ConfigFile *, ConfigEntry *);
 DLLFUNC int cloak_config_posttest(int *);
 
 static char *hidehost_ipv4(char *host);
@@ -88,6 +88,7 @@ DLLFUNC int MOD_TEST(cloak)(ModuleInfo *modinfo)
 		config_error("cloak: Error while trying to install cloaking checksum callback!");
 		return MOD_FAILED;
 	}
+
 	config_register_ops(config_set_ops_tree, &cloak_config_ops);
 
 	HookAddEx(modinfo->handle, HOOKTYPE_CONFIGPOSTTEST, cloak_config_posttest);
@@ -134,7 +135,7 @@ char *p;
 }
 
 
-DLLFUNC int cloak_config_test(ConfigFile *cf, ConfigEntry *ce)
+static int cloak_config_test(struct config_ops *ops, ConfigFile *cf, ConfigEntry *ce)
 {
 ConfigEntry *cep;
 int keycnt = 0, errors = 0;
@@ -196,7 +197,7 @@ int errors = 0;
 	return errors ? -1 : 1;
 }
 
-DLLFUNC int cloak_config_run(ConfigFile *cf, ConfigEntry *ce)
+static int cloak_config_run(struct config_ops *ops, ConfigFile *cf, ConfigEntry *ce)
 {
 ConfigEntry *cep;
 char buf[512], result[MD5_DIGEST_LENGTH];

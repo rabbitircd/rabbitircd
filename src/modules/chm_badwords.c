@@ -139,7 +139,7 @@ static ConfigItem_badword *copy_badword_struct(ConfigItem_badword *ca)
 	return out;
 }
 
-int chm_badwords_config_badword_run(ConfigFile *cf, ConfigEntry *ce)
+static int chm_badwords_config_badword_run(struct config_ops *ops, ConfigFile *cf, ConfigEntry *ce)
 {
 	ConfigItem_badword *ca;
 	ConfigEntry *cep;
@@ -170,7 +170,7 @@ int chm_badwords_config_badword_run(ConfigFile *cf, ConfigEntry *ce)
 	return 1;
 }
 
-int chm_badwords_config_badword_test(ConfigFile *cf, ConfigEntry *ce)
+static int chm_badwords_config_badword_test(struct config_ops *ops, ConfigFile *cf, ConfigEntry *ce)
 {
 	ConfigEntry *cep;
 	bool has_word = false;
