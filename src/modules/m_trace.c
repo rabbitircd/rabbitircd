@@ -131,7 +131,7 @@ DLLFUNC CMD_FUNC(m_trace)
 	wilds = !parv[1] || index(tname, '*') || index(tname, '?');
 	dow = wilds || doall;
 
-	for (i = 0; i < MAXCONNECTIONS; i++)
+	for (i = 0; i <= MAXCONNECTIONS; i++)
 		link_s[i] = 0, link_u[i] = 0;
 
 
