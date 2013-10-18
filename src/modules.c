@@ -1207,7 +1207,7 @@ Hooktype *HooktypeAdd(Module *module, char *string, int *type) {
 	}
 	for (hooktype = Hooktypes, i = 0; hooktype->string; hooktype++, i++) ;
 
-	if (i >= 39)
+	if (i >= MAXCUSTOMHOOKS)
 	{
 		if (module)
 			module->errorcode = MODERR_NOSPACE;
