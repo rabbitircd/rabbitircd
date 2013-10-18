@@ -55,7 +55,7 @@ int  do_numeric(int numeric, aClient *cptr, aClient *sptr, int parc, char *parv[
 {
 	aClient *acptr;
 	aChannel *chptr;
-	char *nick, *p;
+	char *nick, *p = NULL;
 	int  i;
 
 	/* Is this an outgoing connect, and we get a numeric 451 (not registered) back for the

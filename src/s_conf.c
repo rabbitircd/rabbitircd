@@ -6580,7 +6580,7 @@ int	_conf_set(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 					tempiConf.spamfilter_vchan_deny = config_checkval(cepp->ce_vardata,CFG_YESNO);
 				else if (!strcmp(cepp->ce_varname, "except"))
 				{
-					char *name, *p;
+					char *name, *p = NULL;
 					SpamExcept *e;
 					ircstrdup(tempiConf.spamexcept_line, cepp->ce_vardata);
 					for (name = strtok_r(cepp->ce_vardata, ",", &p); name; name = strtok_r(NULL, ",", &p))

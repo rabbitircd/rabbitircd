@@ -79,7 +79,7 @@ aParv pparv;
 aParv *mp2parv(char *xmbuf, char *parmbuf)
 {
 	int  c;
-	char *p, *s;
+	char *p = NULL, *s;
 
 	pparv.parv[0] = xmbuf;
 	c = 1;
