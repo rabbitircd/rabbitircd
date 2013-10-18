@@ -455,7 +455,7 @@ char tmp[512], *lang, *p;
 	}
 
 	strlcpy(tmp, l->code, sizeof(tmp));
-	for (lang = strtoken(&p, tmp, ","); lang; lang = strtoken(&p, NULL, ","))
+	for (lang = strtok_r(tmp, ",", &p); lang; lang = strtok_r(NULL, ",", &p))
 	{
 		/* Check if present... */
 		found=0;

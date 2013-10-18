@@ -88,12 +88,6 @@ extern int smycmp(const char *, const char *);
 extern int myncmp(const char *, const char *, int);
 #endif
 
-#ifdef NEED_STRTOK
-extern char *strtok2(char *, char *);
-#endif
-#ifdef NEED_STRTOKEN
-extern char *strtoken(char **, char *, char *);
-#endif
 #ifdef NEED_INET_ADDR
 extern unsigned long inet_addr(char *);
 #endif
@@ -119,7 +113,6 @@ int inet_pton(int af, const char *src, void *dst);
 
 MODVAR int  global_count, max_global_count;
 extern char *myctime(time_t);
-extern char *strtoken(char **, char *, char *);
 
 #define PRECISE_CHECK
 

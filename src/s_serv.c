@@ -981,7 +981,7 @@ char *p, *name;
 
 	/* Fill in */
 	num = 0;
-	for (name = strtoken(&p, str, ","); name; name = strtoken(&p, NULL, ","))
+	for (name = strtok_r(str, ",", &p); name; name = strtok_r(NULL, ",", &p))
 	{
 		if (!*name)
 			continue;

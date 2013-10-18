@@ -128,8 +128,8 @@ DLLFUNC int  m_kill(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	if (MyClient(sptr))
 		user = (char *)canonize(user);
 
-	for (p = NULL, nick = strtoken(&p, user, ","); nick;
-	    nick = strtoken(&p, NULL, ","))
+	for (p = NULL, nick = strtok_r(user, ",", &p); nick;
+	    nick = strtok_r(NULL, ",", &p))
 	{
 
 		chasing = 0;

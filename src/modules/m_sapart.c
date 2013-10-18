@@ -112,8 +112,7 @@ DLLFUNC CMD_FUNC(m_sapart)
 		/* Now works like m_join */
 		*jbuf = 0;
 
-		for (i = 0, name = strtoken(&p, parv[2], ","); name; name = strtoken(&p,
-			NULL, ","))
+		for (i = 0, name = strtok_r(parv[2], ",", &p); name; name = strtok_r(NULL, ",", &p))
 		{
 			if (!(chptr = get_channel(acptr, name, 0)))
 			{

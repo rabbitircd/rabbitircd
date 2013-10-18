@@ -1012,7 +1012,7 @@ char *p, *name;
 	{
 		strlcpy(buf, OPER_AUTO_JOIN_CHANS, sizeof(buf));
 
-		for (name = strtoken(&p, buf, ","); name; name = strtoken(&p, NULL, ","))
+		for (name = strtok_r(buf, ",", &p); name; name = strtok_r(NULL, ",", &p))
 			if (!strcasecmp(name, chname))
 				return 1;
 	}
@@ -1021,7 +1021,7 @@ char *p, *name;
 	{
 		strlcpy(buf, AUTO_JOIN_CHANS, sizeof(buf));
 
-		for (name = strtoken(&p, buf, ","); name; name = strtoken(&p, NULL, ","))
+		for (name = strtok_r(buf, ",", &p); name; name = strtok_r(NULL, ",", &p))
 			if (!strcasecmp(name, chname))
 				return 1;
 	}

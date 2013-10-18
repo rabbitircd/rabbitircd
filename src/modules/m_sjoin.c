@@ -84,8 +84,7 @@ aParv *mp2parv(char *xmbuf, char *parmbuf)
 	pparv.parv[0] = xmbuf;
 	c = 1;
 	
-	for (s = (char *)strtoken(&p, parmbuf, " "); s;
-		s = (char *)strtoken(&p, NULL, " "))
+	for (s = strtok_r(parmbuf, " ", &p); s; s = strtok_r(NULL, " ", &p))
 	{
 		pparv.parv[c] = s;
 		c++; /* in my dreams */
@@ -398,7 +397,7 @@ CMD_FUNC(m_sjoin)
 		ID(sptr), ts, sj3_parabuf);
 	uptr = uid_buf + buflen;
 
-	for (s = s0 = strtoken(&p, cbuf, " "); s; s = s0 = strtoken(&p, (char *)NULL, " "))
+	for (s = s0 = strtok_r(cbuf, " ", &p); s; s = s0 = strtok_r(NULL, " ", &p))
 	{
 		c = f = 0;
 		modeflags = 0;

@@ -124,8 +124,7 @@ DLLFUNC CMD_FUNC(m_watch)
 		parv[1] = def;
 	}
 
-	for (s = (char *)strtoken(&p, *++pav, " "); s;
-	    s = (char *)strtoken(&p, NULL, " "))
+	for (s = strtok_r(*++pav, " ", &p); s; s = strtok_r(NULL, " ", &p))
 	{
 		if ((user = (char *)index(s, '!')))
 			*user++ = '\0';	/* Not used */

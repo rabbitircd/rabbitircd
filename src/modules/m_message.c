@@ -224,8 +224,7 @@ DLLFUNC int m_message(aClient *cptr, aClient *sptr, int parc, char *parv[], int 
 	if (MyConnect(sptr))
 		parv[1] = (char *)canonize(parv[1]);
 		
-	for (p = NULL, nick = strtoken(&p, parv[1], ","); nick;
-	    nick = strtoken(&p, NULL, ","))
+	for (p = NULL, nick = strtok_r(parv[1], ",", &p); nick; nick = strtok_r(NULL, ",", &p))
 	{
 		if (IsVirus(sptr) && (!strcasecmp(nick, "ircd") || !strcasecmp(nick, "irc")))
 		{

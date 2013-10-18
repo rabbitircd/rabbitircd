@@ -96,7 +96,7 @@ DLLFUNC CMD_FUNC(m_ison) {
 	ircsnprintf(buf, sizeof(buf), rpl_str(RPL_ISON), me.name, *parv);
 	len = strlen(buf);
 
-	for (s = strtoken(&p, *++pav, " "); s; s = strtoken(&p, NULL, " ")) {
+	for (s = strtok_r(*++pav, " ", &p); s; s = strtok_r(NULL, " ", &p)) {
 		if ((user = index(s, '!')))
 			*user++ = '\0';
 		if ((acptr = find_person(s, NULL))) {

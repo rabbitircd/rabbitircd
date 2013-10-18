@@ -350,12 +350,12 @@ extern char *canonize(char *buffer)
 
 	*cp = '\0';
 
-	for (s = strtoken(&p, buffer, ","); s; s = strtoken(&p, NULL, ","))
+	for (s = strtok_r(buffer, ",", &p); s; s = strtok_r(NULL, ",", &p))
 	{
 		if (l)
 		{
-			for (p2 = NULL, t = strtoken(&p2, cbuf, ","); t;
-			    t = strtoken(&p2, NULL, ","))
+			for (p2 = NULL, t = strtok_r(cbuf, ",", &p2); t;
+			    t = strtok_r(NULL, ",", &p2))
 				if (!mycmp(s, t))
 					break;
 				else if (p2)

@@ -419,7 +419,6 @@ elif test "$ac_cv_sigtype" = "BSD"; then
 else
 	AC_DEFINE([SYSV_UNRELIABLE_SIGNALS], [], [Define if you have SYSV signals])
 fi 
-AC_CHECK_FUNCS(strtoken,,AC_DEFINE([NEED_STRTOKEN], [], [Define if you need the strtoken function.]))
 AC_CHECK_FUNCS(strtok,,AC_DEFINE([NEED_STRTOK], [], [Define if you need the strtok function.]))
 AC_CHECK_FUNCS(strerror,,AC_DEFINE([NEED_STRERROR], [], [Define if you need the strerror function.]))
 AC_CHECK_FUNCS(index,,AC_DEFINE([NOINDEX], [], [Define if you do not have the index function.]))

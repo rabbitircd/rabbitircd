@@ -474,8 +474,8 @@ DLLFUNC CMD_FUNC(_do_join)
 	   ** Rebuild list of channels joined to be the actual result of the
 	   ** JOIN.  Note that "JOIN 0" is the destructive problem.
 	 */
-	for (i = 0, name = strtoken(&p, parv[1], ","); name;
-	    name = strtoken(&p, NULL, ","))
+	for (i = 0, name = strtok_r(parv[1], ",", &p); name;
+	    name = strtok_r(NULL, ",", &p))
 	{
 		/* pathological case only on longest channel name.
 		   ** If not dealt with here, causes desynced channel ops
@@ -515,11 +515,11 @@ DLLFUNC CMD_FUNC(_do_join)
 
 	p = NULL;
 	if (parv[2])
-		key = strtoken(&p2, parv[2], ",");
+		key = strtok_r(parv[2], ",", &p2);
 	parv[2] = NULL;		/* for m_names call later, parv[parc] must == NULL */
-	for (name = strtoken(&p, jbuf, ","); name;
-	    key = (key) ? strtoken(&p2, NULL, ",") : NULL,
-	    name = strtoken(&p, NULL, ","))
+	for (name = strtok_r(jbuf, ",", &p); name;
+	    key = (key) ? strtok_r(NULL, ",", &p2) : NULL,
+	    name = strtok_r(NULL, ",", &p2))
 	{
 		/*
 		   ** JOIN 0 sends out a part for all channels a user

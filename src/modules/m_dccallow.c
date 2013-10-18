@@ -105,7 +105,7 @@ static char *dcc_help[] =
 		return 0;
 	}
 
-	for (p = NULL, s = strtoken(&p, parv[1], ", "); s; s = strtoken(&p, NULL, ", "))
+	for (p = NULL, s = strtok_r(parv[1], ", ", &p); s; s = strtok_r(NULL, ", ", &p))
 	{
 		if (*s == '+')
 		{

@@ -107,8 +107,7 @@ DLLFUNC CMD_FUNC(m_sajoin)
 		*jbuf = 0;
 
 		/* Now works like m_join */
-		for (i = 0, name = strtoken(&p, parv[2], ","); name; name = strtoken(&p,
-		     NULL, ","))
+		for (i = 0, name = strtok_r(parv[2], ",", &p); name; name = strtok_r(NULL, ",", &p))
 		{
 			aChannel *chptr;
 			Membership *lp;
@@ -148,7 +147,7 @@ DLLFUNC CMD_FUNC(m_sajoin)
 		i = 0;
 		strcpy(parv[2], jbuf);
 		*jbuf = 0;
-		for (name = strtoken(&p, parv[2], ","); name; name = strtoken(&p, NULL, ","))
+		for (name = strtok_r(parv[2], ",", &p); name; name = strtok_r(NULL, ",", &p))
 		{
 			int flags;
 			aChannel *chptr;

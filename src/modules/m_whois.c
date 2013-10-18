@@ -109,7 +109,7 @@ DLLFUNC int  m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
 	strcpy(querybuf, parv[1]);
 
-	for (tmp = canonize(parv[1]); (nick = strtoken(&p, tmp, ",")); tmp = NULL)
+	for (tmp = canonize(parv[1]); (nick = strtok_r(tmp, ",", &p)); tmp = NULL)
 	{
 		unsigned char invis, showchannel, member, wilds, hideoper; /* <- these are all boolean-alike */
 

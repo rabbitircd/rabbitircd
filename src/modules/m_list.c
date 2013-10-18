@@ -159,8 +159,8 @@ DLLFUNC CMD_FUNC(m_list)
 	usermin = 1;		/* Minimum of 1 */
 	usermax = -1;		/* No maximum */
 
-	for (name = strtoken(&p, parv[1], ","); name && !error;
-	    name = strtoken(&p, (char *)NULL, ","))
+	for (name = strtok_r(parv[1], ",", &p); name && !error;
+	    name = strtok_r(NULL, ",", &p))
 	{
 
 		switch (*name)

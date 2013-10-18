@@ -118,7 +118,7 @@ int advanced_check(char *userhost, int ipstat)
 	char *up = NULL, *p, *thisseg;
 	int  numdots = 0, segno = 0, numseg, i = 0;
 	char *ipseg[10 + 2];
-	char safebuffer[512] = "";	/* buffer strtoken() can mess up to its heart's content...;> */
+	char safebuffer[512] = "";	/* buffer strtok_r() can mess up to its heart's content...;> */
 
 	strlcpy(safebuffer, userhost, sizeof safebuffer);
 
@@ -147,8 +147,8 @@ int advanced_check(char *userhost, int ipstat)
 	/* fill in the segment set */
 	{
 		int  l = 0;
-		for (segno = 0, i = 0, thisseg = strtoken(&p, userhost, ".");
-		    thisseg; thisseg = strtoken(&p, NULL, "."), i++)
+		for (segno = 0, i = 0, thisseg = strtok_r(userhost, ".", &p);
+		    thisseg; thisseg = strtok_r(NULL, ".", &p), i++)
 		{
 
 			l = strlen(thisseg) + 2;

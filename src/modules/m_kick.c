@@ -102,7 +102,7 @@ CMD_FUNC(m_kick)
 	if (strlen(comment) > (size_t)TOPICLEN)
 		comment[TOPICLEN] = '\0';
 
-	for (; (name = strtoken(&p, parv[1], ",")); parv[1] = NULL)
+	for (; (name = strtok_r(parv[1], ",", &p)); parv[1] = NULL)
 	{
 		long sptr_flags = 0;
 		chptr = get_channel(sptr, name, !CREATE);
@@ -123,7 +123,7 @@ CMD_FUNC(m_kick)
 			continue;
 		}
 
-		for (; (user = strtoken(&p2, parv[2], ",")); parv[2] = NULL)
+		for (; (user = strtok_r(parv[2], ",", &p2)); parv[2] = NULL)
 		{
 			long who_flags;
 			if (!(who = find_chasing(sptr, user, &chasing)))

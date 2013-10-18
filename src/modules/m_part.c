@@ -110,7 +110,7 @@ DLLFUNC CMD_FUNC(m_part)
 		}
 	}
 
-	for (; (name = strtoken(&p, parv[1], ",")); parv[1] = NULL)
+	for (; (name = strtok_r(parv[1], ",", &p)); parv[1] = NULL)
 	{
 		chptr = get_channel(sptr, name, 0);
 		if (!chptr)

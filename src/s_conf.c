@@ -594,7 +594,7 @@ void set_channelmodes(char *modes, struct ChMode *store, int warn)
 		params++;
 		parambuf = MyMalloc(strlen(params)+1);
 		strcpy(parambuf, params);
-		param = strtoken(&save, parambuf, " ");
+		param = strtok_r(parambuf, " ", &save);
 	}		
 
 	for (; *modes && *modes != ' '; modes++)
@@ -622,7 +622,7 @@ void set_channelmodes(char *modes, struct ChMode *store, int warn)
 				if (!myparam)
 					break;
 				/* Go to next parameter */
-				param = strtoken(&save, NULL, " ");
+				param = strtok_r(NULL, " ", &save);
 
 				if (myparam[0] != '[')
 				{
@@ -792,7 +792,7 @@ void set_channelmodes(char *modes, struct ChMode *store, int warn)
 									break; /* invalid parameter fmt, do not set mode. */
 								store->extparams[i] = strdup(param);
 								/* Get next parameter */
-								param = strtoken(&save, NULL, " ");
+								param = strtok_r(NULL, " ", &save);
 							}
 							store->extmodes |= Channelmode_Table[i].mode;
 							break;
@@ -6583,7 +6583,7 @@ int	_conf_set(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 					char *name, *p;
 					SpamExcept *e;
 					ircstrdup(tempiConf.spamexcept_line, cepp->ce_vardata);
-					for (name = strtoken(&p, cepp->ce_vardata, ","); name; name = strtoken(&p, NULL, ","))
+					for (name = strtok_r(cepp->ce_vardata, ",", &p); name; name = strtok_r(NULL, ",", &p))
 					{
 						if (*name == ' ')
 							name++;
