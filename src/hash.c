@@ -373,7 +373,7 @@ aChannel *hash_find_channel(char *name, aChannel *chptr)
 }
 aChannel *hash_get_chan_bucket(unsigned int hashv)
 {
-	if (hashv > CH_MAX)
+	if (hashv >= CH_MAX)
 		return NULL;
 	return (aChannel *)channelTable[hashv].list;
 }
