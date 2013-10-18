@@ -423,8 +423,8 @@ int  crule_parseorexpr(crule_treeptr *orrootp, int *next_tokp, char **ruleptr)
 				return (errcode);
 			}
 		}
-		if ((errcode = crule_gettoken(next_tokp, ruleptr)) != CR_NOERR)
-			return (errcode);
+
+		errcode = crule_gettoken(next_tokp, ruleptr);
 	}
 	return (errcode);
 }
@@ -477,8 +477,8 @@ int  crule_parseandexpr(crule_treeptr *androotp, int *next_tokp, char **ruleptr)
 				return (errcode);
 			}
 		}
-		if ((errcode = crule_gettoken(next_tokp, ruleptr)) != CR_NOERR)
-			return (errcode);
+
+		errcode = crule_gettoken(next_tokp, ruleptr);
 	}
 	return (errcode);
 }
@@ -543,7 +543,6 @@ int  crule_parseprimary(crule_treeptr *primrootp, int *next_tokp, char **ruleptr
 				  errcode = CR_EXPCTPRIM;
 			  break;
 		}
-		return (errcode);
 	}
 	return (errcode);
 }
