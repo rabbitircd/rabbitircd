@@ -1550,6 +1550,7 @@ int unreal_copyfile(const char *src, const char *dest)
 	if (destfd < 0)
 	{
 		config_error("Unable to create file '%s': %s", dest, strerror(errno));
+		close(srcfd);
 		return 0;
 	}
 
