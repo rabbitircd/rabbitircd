@@ -299,14 +299,19 @@ CmodeParam *extcmode_duplicate_paramlist(CmodeParam *lst)
 				break;
 			}
 		}
-		n = tbl->dup_struct(lst);
-		n->next = n->prev = NULL; /* safety (required!) */
-		if (head)
+
+		if (tbl != NULL)
 		{
-			AddListItem(n, head);
-		} else {
-			head = n;
+			n = tbl->dup_struct(lst);
+			n->next = n->prev = NULL; /* safety (required!) */
+			if (head)
+			{
+				AddListItem(n, head);
+			} else {
+				head = n;
+			}
 		}
+
 		lst = lst->next;
 	}
 	return head;
@@ -333,7 +338,8 @@ void extcmode_free_paramlist(CmodeParam *lst)
 				break;
 			}
 		}
-		tbl->free_param(n);
+		if (tbl != NULL)
+			tbl->free_param(n);
 	}
 }
 
