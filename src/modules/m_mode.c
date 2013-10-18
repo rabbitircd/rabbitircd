@@ -1818,7 +1818,7 @@ DLLFUNC void _set_mode(aChannel *chptr, aClient *cptr, int parc, char *parv[], u
 	char *tmpo = NULL;
 #endif
 	aCtab *tab = &cFlagTab[0];
-	aCtab foundat;
+	aCtab foundat = {};
 	int  found = 0;
 	int  sent_mlock_warning = 0;
 	unsigned int htrig = 0;
