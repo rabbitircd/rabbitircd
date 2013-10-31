@@ -299,7 +299,6 @@ DLLFUNC CMD_FUNC(m_server)
  /*	char *password = NULL; */
 	char *ch = NULL;	/* */
 	char descbuf[BUFSIZE];
-	char *inpath = get_client_name(cptr, TRUE);
 	int  hop = 0;
 	char info[REALLEN + 61];
 	ConfigItem_link *aconf = NULL;
