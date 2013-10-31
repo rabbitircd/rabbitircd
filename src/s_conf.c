@@ -4035,7 +4035,6 @@ int	_test_listen(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 	int	    start, end;
 	int	    errors = 0;
 	char has_options = 0;
-	OperFlag    *ofp;
 
 	if (!ce->ce_vardata)
 	{
@@ -4142,20 +4141,13 @@ int	_test_listen(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 					errors++;
 					continue;
 				}
-				if (!(ofp = config_binary_flags_search(_ListenerFlags, cepp->ce_varname, ARRAY_SIZEOF(_ListenerFlags))))
+				if (!config_binary_flags_search(_ListenerFlags, cepp->ce_varname, ARRAY_SIZEOF(_ListenerFlags)))
 				{
 					config_error_unknownopt(cepp->ce_fileptr->cf_filename, 
 						cepp->ce_varlinenum, "class", cepp->ce_varname);
 					errors++;
 					continue;
 				}
-#ifndef USE_SSL
-				else if (ofp->flag & LISTENER_SSL)
-				{
-					config_warn("%s:%i: listen with SSL flag enabled on a non SSL compile",
-						cep->ce_fileptr->cf_filename, cep->ce_varlinenum);
-				}
-#endif
 			}
 		}
 		else
