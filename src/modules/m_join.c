@@ -629,7 +629,7 @@ DLLFUNC CMD_FUNC(_do_join)
 		}
 
 		chptr = get_channel(sptr, name, CREATE);
-		if (chptr && (lp = find_membership_link(sptr->user->channel, chptr)))
+		if (chptr && (find_membership_link(sptr->user->channel, chptr)))
 			continue;
 
 		if (!chptr)

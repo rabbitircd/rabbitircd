@@ -82,7 +82,6 @@ DLLFUNC CMD_FUNC(m_sapart)
 {
 	aClient *acptr;
 	aChannel *chptr;
-	Membership *lp;
 	char *name, *p = NULL;
 	int i;
 	char *comment = (parc > 3 && parv[3] ? parv[3] : NULL);
@@ -120,7 +119,7 @@ DLLFUNC CMD_FUNC(m_sapart)
 					name);
 				continue;
 			}
-			if (!(lp = find_membership_link(acptr->user->channel, chptr)))
+			if (!find_membership_link(acptr->user->channel, chptr))
 			{
 				sendto_one(sptr, err_str(ERR_USERNOTINCHANNEL), me.name, parv[0],
 					parv[1], name);

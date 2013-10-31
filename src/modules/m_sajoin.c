@@ -174,7 +174,7 @@ DLLFUNC CMD_FUNC(m_sajoin)
 			}
 			flags = (ChannelExists(name)) ? CHFL_DEOPPED : CHFL_CHANOP;
 			chptr = get_channel(acptr, name, CREATE);
-			if (chptr && (lp = find_membership_link(acptr->user->channel, chptr)))
+			if (chptr && (find_membership_link(acptr->user->channel, chptr)))
 				continue;
 			if ((chptr->mode.mode & MODE_ONLYSECURE) && !IsSecure(acptr))
 			{

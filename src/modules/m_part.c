@@ -74,7 +74,6 @@ DLLFUNC int MOD_UNLOAD(m_part)(int module_unload)
 DLLFUNC CMD_FUNC(m_part)
 {
 	aChannel *chptr;
-	Membership *lp;
 	char *p = NULL, *name;
 	char *commentx = (parc > 2 && parv[2]) ? parv[2] : NULL;
 	char *comment;
@@ -126,7 +125,7 @@ DLLFUNC CMD_FUNC(m_part)
 		 */
 		comment = commentx;
 
-		if (!(lp = find_membership_link(sptr->user->channel, chptr)))
+		if (!find_membership_link(sptr->user->channel, chptr))
 		{
 			/* Normal to get get when our client did a kick
 			   ** for a remote client (who sends back a PART),
