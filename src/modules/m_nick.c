@@ -99,7 +99,6 @@ static char spamfilter_user[NICKLEN + USERLEN + HOSTLEN + REALLEN + 64];
 */
 DLLFUNC CMD_FUNC(m_uid)
 {
-	aTKline *tklban;
 	int ishold;
 	aClient *acptr, *serv = NULL;
 	aClient *acptrs;
@@ -202,7 +201,7 @@ DLLFUNC CMD_FUNC(m_uid)
 		    "Reserved for internal IRCd purposes");
 		return 0;
 	}
-	if (!IsULine(sptr) && (tklban = find_qline(sptr, nick, &ishold)))
+	if (!IsULine(sptr) && (find_qline(sptr, nick, &ishold)))
 	{
 		if (IsServer(sptr) && !ishold) /* server introducing new client */
 		{
