@@ -265,7 +265,6 @@ static OperFlag ExceptTklFlags[] = {
 	{ TKL_GLOBAL|TKL_SHUN,	"shun" }
 };
 
-#ifdef USE_SSL
 /* This MUST be alphabetized */
 static OperFlag _SSLFlags[] = {
 	{ SSLFLAG_FAILIFNOCERT, "fail-if-no-clientcert" },
@@ -273,7 +272,6 @@ static OperFlag _SSLFlags[] = {
 	{ SSLFLAG_NOSTARTTLS, "no-starttls" },
 	{ SSLFLAG_VERIFYCERT, "verify-certificate" },
 };
-#endif
 
 struct {
 	unsigned conf_me : 1;
@@ -1220,12 +1218,10 @@ void	free_iConf(aConfiguration *i)
 	ircfree(i->user_snomask);
 	ircfree(i->egd_path);
 	ircfree(i->static_quit);
-#ifdef USE_SSL
 	ircfree(i->x_server_cert_pem);
 	ircfree(i->x_server_key_pem);
 	ircfree(i->x_server_cipher_list);
 	ircfree(i->trusted_ca_file);
-#endif	
 	ircfree(i->restrict_usermodes);
 	ircfree(i->restrict_channelmodes);
 	ircfree(i->restrict_extendedbans);
@@ -3999,9 +3995,6 @@ int	_conf_listen(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 			}
 		}
 	}
-#ifndef USE_SSL
-	tmpflags &= ~LISTENER_SSL;
-#endif
 	for (iport = start; iport < end; iport++)
 	{
 		if (!(listen = Find_listen(ip, iport)))
@@ -5578,10 +5571,8 @@ int	_conf_link(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 			link->leafmask = strdup(cep->ce_vardata);
 		else if (!strcmp(cep->ce_varname, "leafdepth"))
 			link->leafdepth = atol(cep->ce_vardata);
-#ifdef USE_SSL
 		else if (!strcmp(cep->ce_varname, "ciphers"))
 			link->ciphers = strdup(cep->ce_vardata);
-#endif
 	}
 	AddListItem(link, conf_link);
 	return 0;
@@ -5652,14 +5643,6 @@ int	_test_link(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 					errors++;
 					continue;
 				}
-#ifndef USE_SSL
-				if (ofp->flag == CONNECT_SSL)
-				{
-					config_error("%s:%i: link %s with SSL option enabled on a non-SSL compile",
-						cep->ce_fileptr->cf_filename, cep->ce_varlinenum, ce->ce_vardata);
-					errors++;
-				}
-#endif
 				if (ofp->flag == CONNECT_AUTO)
 				{
 					has_autoconnect = 1;
@@ -6636,7 +6619,6 @@ int	_conf_set(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 			tempiConf.ratelimit_time_simple = v;
 		}
 		else if (!strcmp(cep->ce_varname, "ssl")) {
-#ifdef USE_SSL
 			for (cepp = cep->ce_entries; cepp; cepp = cepp->ce_next) {
 				if (!strcmp(cepp->ce_varname, "egd")) {
 					tempiConf.use_egd = 1;
@@ -6686,7 +6668,6 @@ int	_conf_set(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 				}	
 				
 			}
-#endif /* USE_SSL */
 		}
 		else if (!strcmp(cep->ce_varname, "default-ipv6-clone-mask"))
 		{
@@ -7548,7 +7529,6 @@ int	_test_set(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 			}
 		}
 		else if (!strcmp(cep->ce_varname, "ssl")) {
-#ifdef USE_SSL
 			for (cepp = cep->ce_entries; cepp; cepp = cepp->ce_next) {
 				if (!strcmp(cepp->ce_varname, "egd")) {
 					CheckDuplicate(cep, ssl_egd, "ssl::egd");
@@ -7606,7 +7586,6 @@ int	_test_set(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 					errors++;
 				}
 			}
-#endif /* USE_SSL */
 		}
 		else if (!strcmp(cep->ce_varname, "default-ipv6-clone-mask"))
 		{
@@ -8507,9 +8486,7 @@ void	link_cleanup(ConfigItem_link *link_ptr)
 	ircfree(link_ptr->hubmask);
 	ircfree(link_ptr->leafmask);
 	ircfree(link_ptr->connpwd);
-#ifdef USE_SSL
 	ircfree(link_ptr->ciphers);
-#endif
 	Auth_DeleteAuthStruct(link_ptr->recvauth);
 	link_ptr->recvauth = NULL;
 }

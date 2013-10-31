@@ -546,12 +546,7 @@ EVENT(check_pings)
 					cptr->lasttime = currenttime;
 					continue;
 				}
-				if (IsServer(cptr) || IsConnecting(cptr) ||
-				    IsHandshake(cptr)
-#ifdef USE_SSL
-					|| IsSSLConnectHandshake(cptr)
-#endif	    
-				    ) {
+				if (IsServer(cptr) || IsConnecting(cptr) || IsHandshake(cptr) || IsSSLConnectHandshake(cptr)) {
 					sendto_realops
 					    ("No response from %s, closing link",
 					    get_client_name(cptr, FALSE));
@@ -560,11 +555,10 @@ EVENT(check_pings)
 					    me.name, get_client_name(cptr,
 					    FALSE));
 				}
-#ifdef USE_SSL
 				if (IsSSLAcceptHandshake(cptr))
 					Debug((DEBUG_DEBUG, "ssl accept handshake timeout: %s (%li-%li > %li)", cptr->sockhost,
 						currenttime, cptr->since, ping));
-#endif
+
 				(void)ircsnprintf(scratch, sizeof(scratch), "Ping timeout: %ld seconds",
 					(long) (TStime() - cptr->lasttime));
 				exit_client(cptr, cptr, &me, scratch);
@@ -644,7 +638,6 @@ static void do_version_check()
 const char *compiledfor, *runtime;
 int error = 0;
 
-#ifdef USE_SSL
 	compiledfor = OPENSSL_VERSION_TEXT;
 	runtime = SSLeay_version(SSLEAY_VERSION);
 	if (strcasecmp(compiledfor, runtime))
@@ -653,7 +646,6 @@ int error = 0;
 			compiledfor, runtime);
 		error=1;
 	}
-#endif
 
 	if (error)
 	{
@@ -1107,9 +1099,7 @@ int main(int argc, char *argv[])
 		return bad_command(myargv[0]);	/* This should exit out */
 	fprintf(stderr, "rabbitircd %s is starting.\n", VERSIONONLY);
 	fprintf(stderr, "     using %s\n", tre_version());
-#ifdef USE_SSL
 	fprintf(stderr, "     using %s\n", SSLeay_version(SSLEAY_VERSION));
-#endif
 	fprintf(stderr, "\n");
 	clear_client_hash_table();
 	clear_channel_hash_table();
@@ -1163,10 +1153,9 @@ int main(int argc, char *argv[])
 		exit(-4);
 	}
 
-#ifdef USE_SSL
 	fprintf(stderr, "* Initializing SSL.\n");
 	init_ssl();
-#endif
+
 	fprintf(stderr,
 	    "* Dynamic configuration initialized .. booting IRCd.\n");
 	fprintf(stderr,

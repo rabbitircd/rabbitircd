@@ -899,14 +899,13 @@ void close_connection(aClient *cptr)
 	if (cptr->fd >= 0)
 	{
 		send_queued(cptr);
-#ifdef USE_SSL
 		if (IsSSL(cptr) && cptr->ssl) {
 			SSL_set_shutdown((SSL *)cptr->ssl, SSL_RECEIVED_SHUTDOWN);
 			SSL_smart_shutdown((SSL *)cptr->ssl);
 			SSL_free((SSL *)cptr->ssl);
 			cptr->ssl = NULL;
 		}
-#endif
+
 		fd_close(cptr->fd);
 		cptr->fd = -2;
 		--OpenFiles;
@@ -1207,7 +1206,7 @@ add_con_refuse:
 	set_non_blocking(acptr->fd, acptr);
 	set_sock_opts(acptr->fd, acptr);
 	IRCstats.unknown++;
-#ifdef USE_SSL
+
 	if (cptr->options & LISTENER_SSL)
 	{
 		SetSSLAcceptHandshake(acptr);
@@ -1228,7 +1227,6 @@ add_con_refuse:
 	  	}
 	}
 	else
-#endif
 		start_of_normal_client_handshake(acptr);
 	return acptr;
 }
@@ -1333,7 +1331,6 @@ void read_packet(int fd, int revents, void *data)
 
 	while (1)
 	{
-#ifdef USE_SSL
 		if (IsSSL(cptr) && cptr->ssl != NULL)
 		{
 			fd_setselect(fd, FD_SELECT_READ, read_packet, cptr);
@@ -1368,7 +1365,6 @@ void read_packet(int fd, int revents, void *data)
 			}
 		}
 		else
-#endif
 			length = recv(cptr->fd, readbuf, sizeof(readbuf), 0);
 
 		if (length <= 0)
@@ -1547,14 +1543,12 @@ int  connect_server(ConfigItem_link *aconf, aClient *by, struct hostent *hp)
 	get_sockhost(cptr, aconf->hostname);
 	add_client_to_list(cptr);
 
-#ifdef USE_SSL
 	if (aconf->options & CONNECT_SSL)
 	{
 		SetSSLConnectHandshake(cptr);
 		fd_setselect(cptr->fd, FD_SELECT_WRITE | FD_SELECT_ONESHOT, ircd_SSL_client_handshake, cptr);
 	}
 	else
-#endif
 		fd_setselect(cptr->fd, FD_SELECT_WRITE | FD_SELECT_ONESHOT, completed_connection, cptr);
 
 	return 0;

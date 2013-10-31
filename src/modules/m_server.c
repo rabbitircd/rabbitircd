@@ -657,7 +657,6 @@ int	m_server_synch(aClient *cptr, ConfigItem_link *aconf)
 	if ((Find_uline(cptr->name)))
 		cptr->flags |= FLAGS_ULINE;
 	(void)find_or_add(cptr->name);
-#ifdef USE_SSL
 	if (IsSecure(cptr))
 	{
 		sendto_server(&me, 0, 0, ":%s SMO o :(\2link\2) Secure link %s -> %s established (%s)",
@@ -667,7 +666,6 @@ int	m_server_synch(aClient *cptr, ConfigItem_link *aconf)
 			me.name, inpath, (char *) ssl_get_cipher((SSL *)cptr->ssl));
 	}
 	else
-#endif
 	{
 		sendto_server(&me, 0, 0, ":%s SMO o :(\2link\2) Link %s -> %s established",
 			me.name,

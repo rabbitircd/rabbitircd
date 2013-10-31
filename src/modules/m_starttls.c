@@ -74,31 +74,20 @@ DLLFUNC int MOD_UNLOAD(m_starttls)(int module_unload)
 	return MOD_SUCCESS;
 }
 
-#ifdef USE_SSL
 static ClientCapability cap_tls = {
 	.name = "tls",
 	.cap = PROTO_STARTTLS,
 };
-#endif
 
 static void m_starttls_caplist(struct list_head *head)
 {
-#ifdef USE_SSL
 	clicap_append(head, &cap_tls);
-#endif
 }
 
 DLLFUNC CMD_FUNC(m_starttls)
 {
 	if (!MyConnect(sptr) || !IsUnknown(sptr))
 		return 0;
-#ifndef USE_SSL
-	/* sendnotice(sptr, "This server does not support SSL"); */
-	/* or numeric 691? */
-	/* actually... it's probably best to just act like we don't know this command...? */
-	sendto_one(sptr, err_str(ERR_NOTREGISTERED), me.name, "STARTTLS");
-	return 0;
-#else
 	if (iConf.ssl_options & SSLFLAG_NOSTARTTLS)
 	{
 		sendto_one(sptr, err_str(ERR_NOTREGISTERED), me.name, "STARTTLS");
@@ -137,5 +126,4 @@ fail:
 	sptr->flags &= ~FLAGS_SSL;
 	SetUnknown(sptr);
 	return 0;
-#endif
 }

@@ -312,11 +312,7 @@ void remove_client_from_list(aClient *cptr)
 		if (cptr->srvptr && cptr->srvptr->serv)
 			cptr->srvptr->serv->users--;
 	}
-	if (IsUnknown(cptr) || IsConnecting(cptr) || IsHandshake(cptr)
-#ifdef USE_SSL
-		|| IsSSLHandshake(cptr)
-#endif
-	)
+	if (IsUnknown(cptr) || IsConnecting(cptr) || IsHandshake(cptr) || IsSSLHandshake(cptr))
 		IRCstats.unknown--;
 
 	if (IsPerson(cptr))	/* Only persons can have been added before */

@@ -39,27 +39,24 @@
  *       but this prevents (most) binary incompatability problems
  *       making it easier for module coders to ship dll's.
  */
- #ifdef USE_SSL
-  #define MYTOKEN_SSL "/SSL"
- #else
-  #define MYTOKEN_SSL ""
- #endif
- #ifndef JOINTHROTTLE
-  #define MYTOKEN_JOINTHROTTLE "/NOJTHR"
- #else
-  #define MYTOKEN_JOINTHROTTLE ""
- #endif
- #ifndef NO_FLOOD_AWAY
-  #define MYTOKEN_NOFLDAWAY "/NONFA"
- #else
-  #define MYTOKEN_NOFLDAWAY ""
- #endif
- #define MYTOKEN_NEWCHF "/NOCHF"
- #ifdef INET6
-  #define MYTOKEN_INET6 "/IPV6"
- #else
-  #define MYTOKEN_INET6 ""
- #endif
+#define MYTOKEN_SSL "/SSL"
+
+#ifndef JOINTHROTTLE
+ #define MYTOKEN_JOINTHROTTLE "/NOJTHR"
+#else
+ #define MYTOKEN_JOINTHROTTLE ""
+#endif
+#ifndef NO_FLOOD_AWAY
+ #define MYTOKEN_NOFLDAWAY "/NONFA"
+#else
+ #define MYTOKEN_NOFLDAWAY ""
+#endif
+#define MYTOKEN_NEWCHF "/NOCHF"
+#ifdef INET6
+ #define MYTOKEN_INET6 "/IPV6"
+#else
+ #define MYTOKEN_INET6 ""
+#endif
 
 #ifdef __GNUC__
  #if defined(__GNUC_PATCHLEVEL__)
