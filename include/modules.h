@@ -502,7 +502,7 @@ extern MODVAR Callback *Callbacks[MAXCALLBACKS], *RCallbacks[MAXCALLBACKS];
 extern MODVAR Efunction *Efunctions[MAXEFUNCTIONS];
 
 void    Module_Init(void);
-char    *Module_Create(char *path);
+const char* Module_Create(char *path);
 void    Init_all_testing_modules(void);
 void    Unload_all_loaded_modules(void);
 void    Unload_all_testing_modules(void);

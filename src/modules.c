@@ -264,10 +264,9 @@ unsigned int maj, min, plevel;
 }
 
 /*
- * Returns an error if insucessful .. yes NULL is OK! 
+ * Returns an error if unsucessful or NULL on success
 */
-char  *Module_Create(char *path_)
-{
+const char* Module_Create(char *path_) {
 #ifndef STATIC_LINKING
 	void   		*Mod;
 	int		(*Mod_Test)();
@@ -277,7 +276,7 @@ char  *Module_Create(char *path_)
 	char    *Mod_Version;
 	unsigned int *compiler_version;
 	static char 	errorbuf[1024];
-	char		pathbuf[1024];
+        static char     *pathbuf = 0;
 	char 		*path, *tmppath;
 	ModuleHeader    *mod_header = NULL;
 	int		ret = 0;
@@ -289,23 +288,25 @@ char  *Module_Create(char *path_)
 	       path_));
 	path = path_;
 
-	if (!strstr(path, MODULE_SUFFIX))
-	{
+        if (strlen(path)+1<sizeof(MODULE_SUFFIX) || strncmp(path, MODULE_SUFFIX, sizeof(MODULE_SUFFIX)-1)) { //paths without the module suffix (eg. .so) get the basedir prepended and the suffix appended (this is the usual case)
 		char dirbase[1024];
 		unreal_getpathname(SPATH, dirbase);
-                ircsnprintf(pathbuf, sizeof(pathbuf), "%s/%s%s", dirbase, path, MODULE_SUFFIX);
+                size_t pathsize = (dirbase[0]=='/'?0:2)+strlen(dirbase)+strlen(path)+sizeof(MODULE_SUFFIX); //includes null termination
+                pathbuf = (char*)realloc(pathbuf, pathsize);
+                if (!pathbuf) return "Memory allocation failed!\n";
+                ircsnprintf(pathbuf, pathsize, "%s%s/%s%s", dirbase[0]=='/'? "": "./", dirbase, path, MODULE_SUFFIX);
 		path = pathbuf;
 	}
-	
-	tmppath = unreal_mktemp("tmp", unreal_getfilename(path));
-	if (!tmppath)
-		return "Unable to create temporary file!";
-	if(!strchr(path, '/'))
-	{
+	else if (path[0]!='/') { //paths with the module suffix and a relative path get "./" prepended
                 size_t pathsize = strlen(path)+3;
-		path = MyMalloc(pathsize);
-                ircsnprintf(path, pathsize, "./%s", path_);
+		path = pathbuf = (char*)realloc(pathbuf, pathsize);
+                if (!pathbuf) return "Memory allocation failed!\n";
+                ircsnprintf(pathbuf, pathsize, "./%s", path_);
 	}
+        //other paths are unmunged
+
+	tmppath = unreal_mktemp("tmp", unreal_getfilename(path));
+	if (!tmppath) return "Unable to create temporary file!";
 
 	if (!file_exists(path))
 	{
@@ -317,17 +318,12 @@ char  *Module_Create(char *path_)
 	 * EDIT (2009): Looks like Linux got smart too, from now on we always copy....
 	 */
 	ret = unreal_copyfileex(path, tmppath, 0);
-	if (!ret)
-	{
-		snprintf(errorbuf, sizeof(errorbuf), "Failed to copy module file.");
-		return errorbuf;
-	}
-	if ((Mod = irc_dlopen(tmppath, RTLD_NOW)))
-	{
+	if (!ret) return "Failed to copy module file.";
+
+	if ((Mod = irc_dlopen(tmppath, RTLD_NOW))) {
 		/* We have engaged the borg cube. Scan for lifesigns. */
 		irc_dlsym(Mod, "Mod_Version", Mod_Version);
-		if (Mod_Version && strcmp(Mod_Version, expectedmodversion))
-		{
+		if (Mod_Version && strcmp(Mod_Version, expectedmodversion)) {
 			snprintf(errorbuf, sizeof(errorbuf),
 			         "Module was compiled for '%s', we were configured for '%s'. SOLUTION: Recompile the module(s).",
 			         Mod_Version, expectedmodversion);
@@ -335,17 +331,13 @@ char  *Module_Create(char *path_)
 			remove(tmppath);
 			return errorbuf;
 		}
-		if (!Mod_Version)
-		{
-			snprintf(errorbuf, sizeof(errorbuf),
-				"Module is lacking Mod_Version. Perhaps a very old one you forgot to recompile?");
+		if (!Mod_Version) {
 			irc_dlclose(Mod);
 			remove(tmppath);
-			return errorbuf;
+			return "Module is lacking Mod_Version. Perhaps a very old one you forgot to recompile?";
 		}
 		irc_dlsym(Mod, "compiler_version", compiler_version);
-		if (compiler_version && ( ((*compiler_version) & 0xffff00) != (expectedcompilerversion & 0xffff00) ) )
-		{
+		if (compiler_version && ( ((*compiler_version) & 0xffff00u) != (expectedcompilerversion & 0xffff00u) ) ) {
 			char theyhad[64], wehave[64];
 			make_compiler_string(theyhad, sizeof(theyhad), *compiler_version);
 			make_compiler_string(wehave, sizeof(wehave), expectedcompilerversion);
@@ -357,38 +349,32 @@ char  *Module_Create(char *path_)
 			return errorbuf;
 		}
 		irc_dlsym(Mod, "Mod_Header", mod_header);
-		if (!mod_header)
-		{
+		if (!mod_header) {
 			irc_dlclose(Mod);
 			remove(tmppath);
-			return ("Unable to locate Mod_Header");
+			return "Unable to locate Mod_Header";
 		}
-		if (!mod_header->modversion)
-		{
+		if (!mod_header->modversion) {
 			irc_dlclose(Mod);
 			remove(tmppath);
-			return ("Lacking mod_header->modversion");
+			return "Lacking mod_header->modversion";
 		}
-		if (!(modsys_ver = parse_modsys_version(mod_header->modversion)))
-		{
+		if (!(modsys_ver = parse_modsys_version(mod_header->modversion))) {
 			snprintf(errorbuf, 1023, "Unsupported module system version '%s'",
 				   mod_header->modversion);
 			irc_dlclose(Mod);
 			remove(tmppath);
-			return(errorbuf);
+			return errorbuf;
 		}
-		if (!mod_header->name || !mod_header->version ||
-		    !mod_header->description)
-		{
+		if (!mod_header->name || !mod_header->version || !mod_header->description) {
 			irc_dlclose(Mod);
 			remove(tmppath);
-			return("Lacking sane header pointer");
+			return "Lacking sane header pointer";
 		}
-		if (Module_Find(mod_header->name))
-		{
+		if (Module_Find(mod_header->name)) {
 		        irc_dlclose(Mod);
 			remove(tmppath);
-			return (NULL);
+			return NULL;
 		}
 		mod = (Module *)Module_make(mod_header, Mod);
 		mod->tmp_file = strdup(tmppath);
@@ -396,34 +382,28 @@ char  *Module_Create(char *path_)
 		mod->compiler_version = compiler_version ? *compiler_version : 0;
 
 		irc_dlsym(Mod, "Mod_Init", Mod_Init);
-		if (!Mod_Init)
-		{
+		if (!Mod_Init) {
 			Module_free(mod);
-			return ("Unable to locate Mod_Init");
+			return "Unable to locate Mod_Init";
 		}
 		irc_dlsym(Mod, "Mod_Unload", Mod_Unload);
-		if (!Mod_Unload)
-		{
+		if (!Mod_Unload) {
 			Module_free(mod);
-			return ("Unable to locate Mod_Unload");
+			return "Unable to locate Mod_Unload";
 		}
 		irc_dlsym(Mod, "Mod_Load", Mod_Load);
-		if (!Mod_Load)
-		{
+		if (!Mod_Load) {
 			Module_free(mod);
-			return ("Unable to locate Mod_Load"); 
+			return "Unable to locate Mod_Load"; 
 		}
-		if (Module_Depend_Resolve(mod, path) == -1)
-		{
+		if (Module_Depend_Resolve(mod, path) == -1) {
 			Module_free(mod);
-			return ("Dependancy problem");
+			return "Dependency problem";
 		}
 		irc_dlsym(Mod, "Mod_Handle", Mod_Handle);
-		if (Mod_Handle)
-			*Mod_Handle = mod;
+		if (Mod_Handle) *Mod_Handle = mod;
 		irc_dlsym(Mod, "Mod_Test", Mod_Test);
-		if (Mod_Test)
-		{
+		if (Mod_Test) {
 			if (mod->mod_sys_version >= 0x320b8) {
 				if ((ret = (*Mod_Test)(&mod->modinfo)) < MOD_SUCCESS) {
 					ircsnprintf(errorbuf, sizeof(errorbuf), "Mod_Test returned %i",
@@ -444,23 +424,18 @@ char  *Module_Create(char *path_)
 				}
 			}
 		}
-		mod->flags = MODFLAG_TESTING;		
+		mod->flags = MODFLAG_TESTING;	
 		AddListItem(mod, Modules);
 		return NULL;
 	}
-	else
-	{
+	else {
 		/* Return the error .. */
 		return ((char *)irc_dlerror());
 	}
 	
-	if (path != path_ && path != pathbuf)
-		free(path);
-	
 #else /* !STATIC_LINKING */
 	return "We don't support dynamic linking";
 #endif
-	
 }
 
 void Module_DelayChildren(Module *m)
