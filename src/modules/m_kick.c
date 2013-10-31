@@ -156,7 +156,7 @@ CMD_FUNC(m_kick)
 						    "*** q: %s tried to kick you from channel %s (%s)",
 						    parv[0],
 						    chptr->chname, comment);
-						goto deny;
+						continue;
 					}
 				}
 
@@ -169,7 +169,7 @@ CMD_FUNC(m_kick)
 						sendto_one(sptr, err_str(ERR_CANNOTDOCOMMAND),
 							   me.name, sptr->name, "KICK",
 							   "channel is +Q");
-						goto deny;
+						continue;
 					}
 					sendto_snomask(SNO_EYES,
 						"*** OperOverride -- %s (%s@%s) KICK %s %s (%s)",
@@ -237,7 +237,7 @@ CMD_FUNC(m_kick)
 						sendto_one(sptr, err_str(ERR_CANNOTDOCOMMAND),
 							   me.name, sptr->name, "KICK",
 							   errbuf);
-						goto deny;
+						continue;
 					}	/* chanprot/chanowner */
 				}
 				
@@ -250,7 +250,7 @@ CMD_FUNC(m_kick)
 					sendto_one(sptr, err_str(ERR_CANNOTDOCOMMAND),
 						   me.name, sptr->name, "KICK",
 						   errbuf);
-					goto deny;
+					continue;
 				}
 
 				/* victim is +h, we are +h [operoverride is already taken care of 3 blocks above] */
@@ -262,14 +262,11 @@ CMD_FUNC(m_kick)
 					sendto_one(sptr, err_str(ERR_CANNOTDOCOMMAND),
 						   me.name, sptr->name, "KICK",
 						   errbuf);
-					goto deny;
+					continue;
 				}	/* halfop */
 
 				/* allowed (either coz access granted or a remote kick), so attack! */
 				goto attack;
-
-			      deny:
-				continue;
 
 			      attack:
 				if (MyConnect(sptr)) {
