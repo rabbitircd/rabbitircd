@@ -205,7 +205,6 @@ inline char *make_nick_user_host_r(char *namebuf, char *nick, char *name, char *
 {
 	char *s = namebuf;
 
-	bzero(namebuf, sizeof(namebuf));
 	nick = check_string(nick);
 	strlcpy(namebuf, nick, NICKLEN + 1);
 	s += strlen(s);
