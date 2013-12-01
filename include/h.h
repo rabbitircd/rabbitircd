@@ -557,7 +557,7 @@ extern void extcmode_free_paramlist(CmodeParam *);
 extern int do_chanflood(ChanFloodProt *, int);
 extern void do_chanflood_action(aChannel *, int, char *);
 extern char *channel_modef_string(ChanFloodProt *);
-extern void chmode_str(struct ChMode, char *, char *, size_t, size_t);
+extern void chmode_str(struct ChMode*, char *, char *, size_t, size_t);
 extern char *get_cptr_status(aClient *);
 extern char *get_snostr(long);
 #ifdef STATIC_LINKING
