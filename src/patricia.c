@@ -248,8 +248,6 @@ patricia_destroy(struct patricia_tree *dtree, void (*destroy_cb)(const char *key
 	struct patricia_iter state;
 	union patricia_elem *delem;
 
-	void *entry;
-
 	if (dtree == NULL)
 		return;
 
