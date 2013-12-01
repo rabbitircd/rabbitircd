@@ -103,7 +103,7 @@ DLLFUNC CMD_FUNC(m_setname)
     strcpy(tmpinfo, sptr->info);
     /* set the new name before we check, but don't send to servers unless it is ok */
     strcpy(sptr->info, parv[1]);
-    spamfilter_build_user_string(spamfilter_user, sptr->name, sptr);
+    spamfilter_build_user_string(spamfilter_user, sizeof(spamfilter_user), sptr->name, sptr);
     xx = dospamfilter(sptr, spamfilter_user, SPAMF_USER, NULL, 0, NULL);
     if (xx < 0) {
         if (sptr)

@@ -101,7 +101,7 @@ int  (*find_tkline_match_zap_ex)(aClient *cptr, aTKline **rettk);
 void (*send_list)(aClient *cptr, int numsend);
 unsigned char *(*StripColors)(unsigned char *text);
 const char *(*StripControlCodes)(unsigned char *text);
-void (*spamfilter_build_user_string)(char *buf, char *nick, aClient *acptr);
+void (*spamfilter_build_user_string)(char *buf, size_t buflen, char *nick, aClient *acptr);
 int (*is_silenced)(aClient *sptr, aClient *acptr);
 void (*send_protoctl_servers)(aClient *sptr, int response);
 int (*verify_link)(aClient *cptr, aClient *sptr, char *servername, ConfigItem_link **link_out);

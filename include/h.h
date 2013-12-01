@@ -670,7 +670,7 @@ extern MODVAR int (*dospamfilter_viruschan)(aClient *sptr, aTKline *tk, int type
 extern MODVAR void (*send_list)(aClient *cptr, int numsend);
 extern MODVAR unsigned char *(*StripColors)(unsigned char *text);
 extern MODVAR const char *(*StripControlCodes)(unsigned char *text);
-extern MODVAR void (*spamfilter_build_user_string)(char *buf, char *nick, aClient *acptr);
+extern MODVAR void (*spamfilter_build_user_string)(char *buf, size_t buflen, char *nick, aClient *acptr);
 extern MODVAR int (*is_silenced)(aClient *sptr, aClient *acptr);
 extern MODVAR void (*send_protoctl_servers)(aClient *sptr, int response);
 extern MODVAR int (*verify_link)(aClient *cptr, aClient *sptr, char *servername, ConfigItem_link **link_out);
