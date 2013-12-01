@@ -753,15 +753,14 @@ int short_motd(aClient *sptr)
                sendto_one(sptr, rpl_str(RPL_MOTD), me.name, sptr->name, "");
        }
 
-       motdline = NULL;
-       if (themotd)
-	       motdline = themotd->lines;
+       motdline = themotd->lines;
        while (motdline)
        {
                sendto_one(sptr, rpl_str(RPL_MOTD), me.name, sptr->name,
                    motdline->line);
                motdline = motdline->next;
        }
+
        sendto_one(sptr, rpl_str(RPL_ENDOFMOTD), me.name, sptr->name);
        return 0;
 }
