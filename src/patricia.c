@@ -253,7 +253,7 @@ patricia_destroy(struct patricia_tree *dtree, void (*destroy_cb)(const char *key
 	if (dtree == NULL)
 		return;
 
-	PATRICIA_FOREACH(entry, &state, dtree)
+	PATRICIA_FOREACH(&state, dtree)
 	{
 		delem = STATE_CUR(&state);
 

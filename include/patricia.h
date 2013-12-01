@@ -50,8 +50,8 @@ struct patricia_iter
 /*
  * this is a convenience macro for inlining iteration of dictionaries.
  */
-#define PATRICIA_FOREACH(element, state, dict) \
-	for (patricia_foreach_start((dict), (state)); (element = patricia_foreach_cur((dict), (state))); patricia_foreach_next((dict), (state)))
+#define PATRICIA_FOREACH(state, dict) \
+	for (patricia_foreach_start((dict), (state)); (patricia_foreach_cur((dict), (state))); patricia_foreach_next((dict), (state)))
 
 /*
  * patricia_create() creates a new patricia tree of the defined resolution.
