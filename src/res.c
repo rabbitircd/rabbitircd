@@ -554,9 +554,7 @@ struct IN_ADDR addr;
 	/* Remove last item, if we got too many.. */
 	if (unrealdns_num_cache >= DNS_MAX_ENTRIES)
 	{
-		for (c = cache_list; c->next; c = c->next);
-		if (!c)
-			abort(); /* impossible */
+		for (c = cache_list; c&&c->next; c = c->next);
 		unrealdns_removecacherecord(c);
 	}
 
