@@ -1567,7 +1567,7 @@ int	load_conf(char *filename, const char *original_path)
 			continue;
 		}
 	}
-	if (counter > 1 || my_inc->flag.type & INCLUDE_USED)
+	if (counter > 1 || (my_inc&&my_inc->flag.type & INCLUDE_USED))
 	{
 		config_error("%s:%d:include: Config file %s has been loaded before %d time."
 			     " You may include each file only once.",
@@ -7617,7 +7617,7 @@ int	_test_set(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 
 int	_test_loadmodule(struct config_ops *ops, ConfigFile *conf, ConfigEntry *ce)
 {
-	char *ret;
+	const char *ret;
 	if (!ce->ce_vardata)
 	{
 		config_status("%s:%i: loadmodule without filename",
