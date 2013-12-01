@@ -1034,7 +1034,7 @@ DLLFUNC CMD_FUNC(m_nick)
 			if (register_user(cptr, sptr, nick,
 			    sptr->user->username, NULL, NULL, NULL) == FLUSH_BUFFER)
 				return FLUSH_BUFFER;
-			strcpy(nick, sptr->name); /* don't ask, but I need this. do not remove! -- Syzop */
+			strncpy(nick, sptr->name, sizeof(nick)); /* don't ask, but I need this. do not remove! -- Syzop */
 			update_watch = 0;
 			newusr = 1;
 		}
