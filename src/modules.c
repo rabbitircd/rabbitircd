@@ -477,7 +477,14 @@ void Init_all_testing_modules(void)
 		next = mi->next;
 		if (!(mi->flags & MODFLAG_TESTING))
 			continue;
+
 		irc_dlsym(mi->dll, "Mod_Init", Mod_Init);
+                if (!Mod_Init) {
+                    config_error("Error loading %s: Could not resolve symbol Mod_Init", mi->header->name);
+                    Module_free(mi);
+                    continue;
+                }
+
 		if (mi->mod_sys_version >= 0x320b8) {
 			if ((ret = (*Mod_Init)(&mi->modinfo)) < MOD_SUCCESS) {
 				config_error("Error loading %s: Mod_Init returned %i",
