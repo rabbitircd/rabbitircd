@@ -83,6 +83,8 @@ DLLFUNC CMD_FUNC(m_setname)
     char tmpinfo[REALLEN + 1];
     char spamfilter_user[NICKLEN + USERLEN + HOSTLEN + REALLEN + 64];
 
+    if (!sptr) return 0;
+
  	if ((parc < 2) || BadPtr(parv[1]))
  	{
  		sendto_one(sptr, err_str(ERR_NEEDMOREPARAMS), me.name, parv[0], "SETNAME");
@@ -106,8 +108,7 @@ DLLFUNC CMD_FUNC(m_setname)
     spamfilter_build_user_string(spamfilter_user, sizeof(spamfilter_user), sptr->name, sptr);
     xx = dospamfilter(sptr, spamfilter_user, SPAMF_USER, NULL, 0, NULL);
     if (xx < 0) {
-        if (sptr)
-            strcpy(sptr->info, tmpinfo);
+        strcpy(sptr->info, tmpinfo);
         return xx;
     }
 
