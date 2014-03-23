@@ -291,7 +291,7 @@ const char* Module_Create(char *path_) {
         if (strlen(path)+1<sizeof(MODULE_SUFFIX) || strncmp(path, MODULE_SUFFIX, sizeof(MODULE_SUFFIX)-1)) { //paths without the module suffix (eg. .so) get the basedir prepended and the suffix appended (this is the usual case)
 		char dirbase[1024];
 		unreal_getpathname(SPATH, dirbase);
-                size_t pathsize = (dirbase[0]=='/'?0:2)+strlen(dirbase)+strlen(path)+sizeof(MODULE_SUFFIX); //includes null termination
+                size_t pathsize = (dirbase[0]=='/'?0:2)+strlen(dirbase)+1+strlen(path)+sizeof(MODULE_SUFFIX); //includes null termination
                 pathbuf = (char*)realloc(pathbuf, pathsize);
                 if (!pathbuf) return "Memory allocation failed!\n";
                 ircsnprintf(pathbuf, pathsize, "%s%s/%s%s", dirbase[0]=='/'? "": "./", dirbase, path, MODULE_SUFFIX);
