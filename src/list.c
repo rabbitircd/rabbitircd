@@ -707,7 +707,7 @@ int freed=0;
 
 #ifdef DEBUGMODE
 	if (freed)
-		ircd_log(LOG_ERROR, "cmodej_cleanup_structs: %d entries freed [%d bytes]", freed, freed * sizeof(aJFlood));
+		ircd_log(LOG_ERROR, "cmodej_cleanup_structs: %d entries freed [%lu bytes]", freed, freed * sizeof(aJFlood));
 #endif
 }
 

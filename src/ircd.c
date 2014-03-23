@@ -1423,9 +1423,9 @@ static void open_debugfile(void)
 		(void)strlcpy(cptr->sockhost, me.sockhost,
 		    sizeof cptr->sockhost);
 		(void)printf("isatty = %d ttyname = %#x\n",
-		    isatty(2), (u_int)ttyname(2));
+		    isatty(2), (u_int)(uint64_t)ttyname(2));
 		if (!(bootopt & BOOT_TTY)) {	/* leave debugging output on fd 2 */
-			(void)truncate(LOGFILE, 0);
+			if (truncate(LOGFILE, 0) <0) exit(-1);
 			if ((fd = open(LOGFILE, O_WRONLY | O_CREAT, 0600)) < 0)
 				if ((fd = open("/dev/null", O_WRONLY)) < 0)
 					exit(-1);
